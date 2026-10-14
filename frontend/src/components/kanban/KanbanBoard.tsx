@@ -308,7 +308,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
       )}
 
       {/* Kanban Columns Layout */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 items-start overflow-x-auto pb-4">
+      <div className="flex gap-4 items-start overflow-x-auto pb-6 pt-1 kanban-scrollbar">
         {COLUMNS.map((col) => {
           const colJobs = filteredJobs.filter((job) =>
             col.statuses.includes(job.status)
@@ -317,26 +317,26 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
           return (
             <div
               key={col.id}
-              className="flex flex-col rounded-xl border border-slate-200 bg-slate-50/70 p-3 min-w-[260px]"
+              className="flex flex-col rounded-xl border border-slate-200/90 bg-slate-50/80 p-3 w-[295px] min-w-[295px] shrink-0 shadow-xs"
             >
               {/* Column Header */}
               <div
-                className={`flex items-center justify-between rounded-lg border px-3 py-2 mb-3 shadow-xs font-medium text-xs ${col.headerColor}`}
+                className={`flex items-center justify-between rounded-lg border px-3 py-2.5 mb-3 shadow-xs font-medium text-xs ${col.headerColor}`}
               >
-                <div className="flex items-center gap-1.5 truncate">
+                <div className="flex items-center gap-2 min-w-0">
                   {col.icon}
-                  <span className="truncate">{col.title}</span>
+                  <span className="font-semibold truncate">{col.title}</span>
                 </div>
-                <span className="rounded-full bg-white/90 px-2 py-0.5 font-bold shadow-xs">
+                <span className="rounded-full bg-white/90 px-2 py-0.5 font-bold shadow-xs shrink-0 text-slate-700 ml-2">
                   {colJobs.length}
                 </span>
               </div>
 
               {/* Cards Container */}
-              <div className="space-y-3 min-h-[150px]">
+              <div className="space-y-3 min-h-[160px]">
                 {colJobs.length === 0 ? (
-                  <div className="rounded-lg border border-dashed border-slate-200 p-4 text-center">
-                    <p className="text-xs text-slate-400">Brak ofert</p>
+                  <div className="rounded-xl border border-dashed border-slate-200/90 bg-white/40 p-5 text-center flex flex-col items-center justify-center min-h-[120px]">
+                    <p className="text-xs text-slate-400 font-medium">Brak ofert</p>
                   </div>
                 ) : (
                   colJobs.map((job) => (

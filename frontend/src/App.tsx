@@ -108,7 +108,7 @@ export const App: React.FC = () => {
     <div className="min-h-screen bg-slate-50 flex flex-col font-sans text-slate-900">
       {/* Top Application Header */}
       <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/95 backdrop-blur-md px-6 py-3.5 shadow-xs">
-        <div className="flex items-center justify-between max-w-7xl mx-auto">
+        <div className="flex items-center justify-between max-w-[1800px] mx-auto">
           {/* Logo & Brand */}
           <div className="flex items-center gap-3">
             <div className="h-9 w-9 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-white shadow-sm shadow-blue-500/20">
@@ -187,7 +187,7 @@ export const App: React.FC = () => {
       </header>
 
       {/* Main App Container */}
-      <main className="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 py-6">
+      <main className="flex-1 max-w-[1800px] mx-auto w-full px-4 sm:px-6 py-6">
         {activeTab === "kanban" && (
           <div className="space-y-6">
             {/* Upcoming Interviews / Recruitment Events Widget */}
