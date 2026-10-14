@@ -2,6 +2,7 @@
 
 import json
 import logging
+import re
 from typing import Any
 
 import httpx
@@ -9,6 +10,23 @@ import httpx
 from app.config import settings
 
 logger = logging.getLogger(__name__)
+
+
+def _extract_json_data(text: str) -> Any:
+    """Safely extract and parse JSON object or array from LLM output."""
+    if not text:
+        raise ValueError("Pusta odpowiedź z modelu")
+    cleaned = text.strip()
+    if cleaned.startswith("```"):
+        cleaned = re.sub(r"^```(?:json)?\s*", "", cleaned)
+        cleaned = re.sub(r"\s*```$", "", cleaned)
+    try:
+        return json.loads(cleaned)
+    except json.JSONDecodeError:
+        match = re.search(r"(\{.*\}|\[.*\])", cleaned, re.DOTALL)
+        if match:
+            return json.loads(match.group(1))
+        raise
 
 
 class LLMClient:
@@ -26,13 +44,13 @@ class LLMClient:
         self,
         system_prompt: str,
         user_prompt: str,
-        fallback_data: dict[str, Any] | list[dict[str, Any]],
+        fallback_data: dict[str, Any] | list[dict[str, Any]] | None = None,
     ) -> Any:
         """Attempt local Ollama first; on timeout/error fall back to cloud API or fallback data."""
         # 1. Attempt local Ollama
         if settings.AUTO_PARSE_MODE in ("auto_ollama_fallback_api", "auto_ollama_only"):
             try:
-                async with httpx.AsyncClient(timeout=60.0) as client:
+                async with httpx.AsyncClient(timeout=90.0) as client:
                     resp = await client.post(
                         f"{self.ollama_base_url}/api/generate",
                         json={
@@ -41,18 +59,38 @@ class LLMClient:
                             "prompt": user_prompt,
                             "stream": False,
                             "format": "json",
+                            "think": False,
                         },
                     )
                     if resp.status_code == 200:
                         data = resp.json()
-                        raw_response = data.get("response", "{}")
-                        return json.loads(raw_response)
+                        raw_response = data.get("response", "").strip()
+                        # Fallback to thinking tokens if reasoning model generated JSON in think block
+                        if not raw_response:
+                            raw_response = data.get("thinking", "").strip()
+                        if raw_response:
+                            return _extract_json_data(raw_response)
+                    else:
+                        logger.warning(
+                            "Local Ollama returned HTTP %s: %s", resp.status_code, resp.text
+                        )
             except Exception as err:
-                logger.info("Local Ollama request skipped/failed: %s", err)
+                logger.warning("Local Ollama request failed (%s): %s", self.ollama_model, err)
 
-        # 2. Cloud Fallback if configured
+        # 2. Cloud Fallback if configured (only with valid non-placeholder keys)
+        has_valid_gemini = (
+            self.gemini_api_key
+            and not self.gemini_api_key.startswith("your_")
+            and len(self.gemini_api_key) > 10
+        )
+        has_valid_openai = (
+            self.openai_api_key
+            and not self.openai_api_key.startswith("your_")
+            and len(self.openai_api_key) > 10
+        )
+
         if settings.AUTO_PARSE_MODE in ("auto_ollama_fallback_api", "auto_api_only"):
-            if self.api_provider == "gemini" and self.gemini_api_key:
+            if self.api_provider == "gemini" and has_valid_gemini:
                 try:
                     import litellm
 
@@ -64,12 +102,31 @@ class LLMClient:
                             {"role": "user", "content": user_prompt},
                         ],
                         response_format={"type": "json_object"},
-                        timeout=15.0,
+                        timeout=30.0,
                     )
                     content = response.choices[0].message.content
-                    return json.loads(content)
+                    return _extract_json_data(content)
                 except Exception as err:
-                    logger.warning("Cloud LLM API call failed: %s", err)
+                    logger.warning("Cloud Gemini LLM API call failed: %s", err)
+
+            elif self.api_provider == "openai" and has_valid_openai:
+                try:
+                    import litellm
+
+                    response = await litellm.acompletion(
+                        model=self.api_model,
+                        api_key=self.openai_api_key,
+                        messages=[
+                            {"role": "system", "content": system_prompt},
+                            {"role": "user", "content": user_prompt},
+                        ],
+                        response_format={"type": "json_object"},
+                        timeout=30.0,
+                    )
+                    content = response.choices[0].message.content
+                    return _extract_json_data(content)
+                except Exception as err:
+                    logger.warning("Cloud OpenAI LLM API call failed: %s", err)
 
         # 3. Return fallback data if provided, or raise error if strict AI parsing was requested
         if fallback_data is not None:
@@ -77,7 +134,8 @@ class LLMClient:
             return fallback_data
 
         raise RuntimeError(
-            "Nie udało się połączyć z modelem AI. Uruchom lokalną Ollamę (np. 'ollama run qwen2.5:14b') "
+            f"Nie udało się połączyć z modelem AI ({self.ollama_model}). "
+            f"Upewnij się, że lokalna Ollama działa poprawnie ('ollama run {self.ollama_model}') "
             "lub uzupełnij klucz GEMINI_API_KEY / OPENAI_API_KEY w pliku .env."
         )
 
