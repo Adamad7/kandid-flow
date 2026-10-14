@@ -144,6 +144,136 @@ class CVGeneratorService:
         result["sections"] = sections
         return result
 
+    def _sanitize_and_ground_tailored_sections(
+        self,
+        baseline_sections: list[dict[str, Any]],
+        tailored_sections: list[dict[str, Any]],
+        job: JobOffer,
+        tailoring_mode: str,
+    ) -> list[dict[str, Any]]:
+        """Ground tailored sections strictly in baseline factual data to eliminate hallucinations."""
+        sanitized_sections: list[dict[str, Any]] = []
+
+        for base_sec in baseline_sections:
+            sec_id = base_sec.get("id") or base_sec.get("type")
+            sec_type = base_sec.get("type") or sec_id
+
+            # Find matching tailored block if produced by LLM
+            matching_tailored = None
+            for t_sec in tailored_sections:
+                if (t_sec.get("id") or t_sec.get("type")) == sec_id:
+                    matching_tailored = t_sec
+                    break
+
+            if not matching_tailored:
+                sanitized_sections.append(copy.deepcopy(base_sec))
+                continue
+
+            # In targeted mode, experience, projects, education, certificates are 100% baseline
+            if tailoring_mode == "targeted_summary_keywords" and sec_type in (
+                "experience",
+                "projects",
+                "education",
+                "certificates",
+            ):
+                sanitized_sections.append(copy.deepcopy(base_sec))
+                continue
+
+            if sec_type == "experience":
+                base_items = base_sec.get("items", [])
+                t_items = matching_tailored.get("items", [])
+                target_company_lower = (job.company_name or "").strip().lower()
+
+                grounded_items = []
+                for idx, base_item in enumerate(base_items):
+                    grounded_item = copy.deepcopy(base_item)
+                    base_comp_lower = base_item.get("company", "").strip().lower()
+                    base_pos_lower = base_item.get("position", "").strip().lower()
+
+                    # Find matching tailored item
+                    matched_t = None
+                    for candidate_t in t_items:
+                        cand_comp = candidate_t.get("company", "").strip().lower()
+                        # Reject if company matches the target employer applied to (clear hallucination)
+                        if target_company_lower and cand_comp == target_company_lower:
+                            continue
+                        if (
+                            cand_comp == base_comp_lower
+                            or candidate_t.get("position", "").strip().lower() == base_pos_lower
+                        ):
+                            matched_t = candidate_t
+                            break
+
+                    if not matched_t and idx < len(t_items):
+                        cand = t_items[idx]
+                        if not (
+                            target_company_lower
+                            and cand.get("company", "").strip().lower() == target_company_lower
+                        ):
+                            matched_t = cand
+
+                    # If tailored highlights are provided, apply them, but strictly preserve factual company, position, dates, location
+                    if (
+                        matched_t
+                        and "highlights" in matched_t
+                        and isinstance(matched_t["highlights"], list)
+                        and matched_t["highlights"]
+                    ):
+                        grounded_item["highlights"] = matched_t["highlights"]
+
+                    grounded_items.append(grounded_item)
+
+                tailored_block = copy.deepcopy(base_sec)
+                tailored_block["items"] = grounded_items
+                sanitized_sections.append(tailored_block)
+
+            elif sec_type == "projects":
+                base_items = base_sec.get("items", [])
+                t_items = matching_tailored.get("items", [])
+                grounded_projects = []
+
+                for idx, base_item in enumerate(base_items):
+                    grounded_proj = copy.deepcopy(base_item)
+                    base_name_lower = base_item.get("name", "").strip().lower()
+
+                    matched_t = None
+                    for candidate_t in t_items:
+                        if candidate_t.get("name", "").strip().lower() == base_name_lower:
+                            matched_t = candidate_t
+                            break
+                    if not matched_t and idx < len(t_items):
+                        matched_t = t_items[idx]
+
+                    if matched_t:
+                        if (
+                            "description" in matched_t
+                            and isinstance(matched_t["description"], str)
+                            and matched_t["description"].strip()
+                        ):
+                            grounded_proj["description"] = matched_t["description"]
+                        if (
+                            "technologies" in matched_t
+                            and isinstance(matched_t["technologies"], list)
+                            and matched_t["technologies"]
+                        ):
+                            grounded_proj["technologies"] = matched_t["technologies"]
+
+                    grounded_projects.append(grounded_proj)
+
+                tailored_block = copy.deepcopy(base_sec)
+                tailored_block["items"] = grounded_projects
+                sanitized_sections.append(tailored_block)
+
+            elif sec_type in ("education", "certificates"):
+                # Education & certificates are strictly factual from baseline
+                sanitized_sections.append(copy.deepcopy(base_sec))
+
+            else:
+                # summary, skills, clause, etc.
+                sanitized_sections.append(matching_tailored)
+
+        return sanitized_sections
+
     async def generate_tailored_cv(
         self,
         request: CVGenerateRequest,
@@ -170,10 +300,12 @@ class CVGeneratorService:
 
         if request.tailoring_mode == "targeted_summary_keywords":
             system_prompt = (
-                "You are an ATS-focused Resume Tailoring Assistant. "
-                "Tailor ONLY the 'summary', 'skills', and 'clause' blocks. "
-                "Keep all 'experience', 'projects', 'education', and 'certificates' "
-                "blocks strictly UNCHANGED."
+                "You are an expert ATS-focused Resume Tailoring Assistant.\n"
+                "CRITICAL GROUNDING RULES:\n"
+                "1. Tailor ONLY the 'summary', 'skills', and 'clause' blocks.\n"
+                "2. Keep all 'experience', 'projects', 'education', and 'certificates' blocks strictly UNCHANGED.\n"
+                "3. NEVER invent fake companies, fake job titles, fake dates, or fake projects.\n"
+                "4. Return the complete updated resume JSON."
             )
             user_prompt = (
                 f"Target Role: {role}\nTarget Company: {company}\n"
@@ -183,10 +315,17 @@ class CVGeneratorService:
             )
         else:
             system_prompt = (
-                "You are an ATS-focused Resume Tailoring Assistant. "
-                "Fully tailor the resume to emphasize alignment with the target role. "
-                "Customize the professional summary, highlight relevant experiences and projects, "
-                f"align skills, and set the GDPR clause specifically for {company}."
+                "You are an expert ATS-focused Resume Tailoring Assistant.\n"
+                "CRITICAL INVIOLABLE RULES FOR FACTUAL INTEGRITY:\n"
+                "1. NEVER INVENT FAKE COMPANIES, JOBS, DATES, OR WORK EXPERIENCES. "
+                "The candidate's past work experience entries (companies, job titles, dates) must match EXACTLY the baseline. "
+                "Do NOT add new jobs (e.g. do not invent that the candidate worked at the target company or in the target role).\n"
+                "2. NEVER INVENT FAKE PROJECTS. Only tailor descriptions of EXISTING projects in 'Baseline Resume JSON'. Do NOT add new fabricated projects.\n"
+                "3. FOR 'experience' SECTIONS: Keep existing company names, job titles, and dates. You may ONLY reword existing bullet points (highlights) to emphasize transferable skills (mentoring, problem-solving, communication, programming, automation) that align with the target role.\n"
+                "4. FOR 'summary': Rewrite the professional summary to present the candidate's genuine background as enthusiastic and well-suited for the target role.\n"
+                "5. FOR 'skills': Reorder and highlight existing relevant skills, or add relevant technical keywords from the candidate's tech domain.\n"
+                "6. FOR 'clause': Set the GDPR clause specifically for the target company.\n"
+                "7. Return the full resume in valid JSON matching the exact input structure."
             )
             user_prompt = (
                 f"Target Role: {role}\nTarget Company: {company}\n"
@@ -208,7 +347,15 @@ class CVGeneratorService:
         if not isinstance(tailored_data, dict) or "sections" not in tailored_data:
             tailored_data = deterministic_fallback
 
-        # Ensure name and contact are preserved
+        # Programmatic Grounding Guardrail: eliminate any hallucinated jobs or fake projects
+        tailored_data["sections"] = self._sanitize_and_ground_tailored_sections(
+            baseline_payload.get("sections", []),
+            tailored_data.get("sections", []),
+            job,
+            request.tailoring_mode,
+        )
+
+        # Ensure name, contact and language are strictly preserved
         tailored_data["full_name"] = full_name
         tailored_data["contact_info"] = contact_info
         tailored_data["language"] = request.language
@@ -302,6 +449,7 @@ class CVGeneratorService:
         system_prompt = (
             "You are an ATS Resume Editor. Refine a single resume section block "
             "according to candidate instructions. Maintain the exact JSON structure. "
+            "CRITICAL: Do NOT invent fake companies, fake positions, or fake projects. Maintain factual integrity. "
             "Return only the refined JSON block object."
         )
         user_prompt = (
