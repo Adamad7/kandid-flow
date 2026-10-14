@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KandidFlow — Asystent Ofert Pracy</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="popup-container">
+    <!-- Header -->
+    <header class="header">
+      <div class="logo-group">
+        <div class="logo-mark">
+          <span class="logo-core"></span>
+        </div>
+        <div class="logo-text">
+          <span class="brand-name">KandidFlow</span>
+          <span class="brand-tag">Kolektor</span>
+        </div>
+      </div>
+      <div class="header-actions">
+        <span id="connection-indicator" class="connection-pill checking" title="Status połączenia z serwerem">
+          <span class="indicator-dot"></span>
+          <span class="indicator-text">Łączenie...</span>
+        </span>
+        <button id="toggle-settings-btn" class="icon-btn" title="Ustawienia" aria-label="Ustawienia">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/>
+            <circle cx="12" cy="12" r="3"/>
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- Main Ingestion View -->
+    <main id="main-view" class="view active">
+      <!-- Extraction Card -->
+      <section class="offer-card" id="offer-card">
+        <div class="card-meta-row">
+          <span id="portal-badge" class="badge portal-generic">Wczytywanie...</span>
+          <span id="work-model-badge" class="badge work-model hidden">—</span>
+          <span id="salary-badge" class="badge salary hidden">—</span>
+        </div>
+
+        <h2 id="job-title" class="offer-title">Skanowanie strony w poszukiwaniu oferty...</h2>
+
+        <div class="offer-subdetails">
+          <div class="detail-item" id="company-wrapper">
+            <span class="detail-icon">🏢</span>
+            <span id="job-company" class="detail-text">—</span>
+          </div>
+          <div class="detail-item" id="location-wrapper">
+            <span class="detail-icon">📍</span>
+            <span id="job-location" class="detail-text">—</span>
+          </div>
+        </div>
+
+        <div class="canonical-url-row">
+          <span class="url-label">URL:</span>
+          <span id="canonical-url" class="canonical-url-text" title="Kanonikalny URL oferty">—</span>
+        </div>
+      </section>
+
+      <!-- Duplicate Check Alert Banner -->
+      <div id="duplicate-banner" class="alert-banner hidden">
+        <span class="alert-icon" id="duplicate-icon">ℹ️</span>
+        <div class="alert-content">
+          <div id="duplicate-title" class="alert-heading">Sprawdzanie bazy...</div>
+          <div id="duplicate-desc" class="alert-subtext"></div>
+        </div>
+      </div>
+
+      <!-- Notes Field -->
+      <div class="form-group">
+        <label for="custom-notes" class="field-label">
+          <span>Notatki do oferty</span>
+          <span class="optional-tag">(opcjonalnie)</span>
+        </label>
+        <textarea
+          id="custom-notes"
+          rows="3"
+          placeholder="np. Polecenie od Kamila, widełki do negocjacji, data kontaktu..."
+        ></textarea>
+      </div>
+
+      <!-- Actions -->
+      <div class="actions">
+        <button id="save-job-btn" class="primary-btn" disabled>
+          <span class="btn-spinner hidden" id="save-spinner"></span>
+          <span id="save-btn-text">Zapisz ofertę w KandidFlow</span>
+        </button>
+      </div>
+
+      <!-- Status Notification Message -->
+      <div id="status-message" class="status-banner hidden"></div>
+      
+      <!-- Quick link to dashboard after saving -->
+      <div id="dashboard-link-wrapper" class="dashboard-link-box hidden">
+        <a id="dashboard-link" href="http://localhost:5173" target="_blank" rel="noreferrer" class="link-btn">
+          🚀 Otwórz tablicę w KandidFlow &rarr;
+        </a>
+      </div>
+    </main>
+
+    <!-- Settings View -->
+    <section id="settings-view" class="view hidden">
+      <div class="settings-header">
+        <h2>Ustawienia połączenia</h2>
+        <p class="settings-subtitle">Skonfiguruj połączenie z lokalnym lub zdalnym serwerem KandidFlow.</p>
+      </div>
+
+      <div class="form-group">
+        <label for="backend-url" class="field-label">Adres serwera KandidFlow:</label>
+        <input
+          type="url"
+          id="backend-url"
+          placeholder="http://localhost:8000"
+          value="http://localhost:8000"
+          spellcheck="false"
+        >
+        <span class="field-hint">Domyślnie dla środowiska Docker: http://localhost:8000</span>
+      </div>
+
+      <div class="form-group">
+        <label for="api-token" class="field-label">Token autoryzacyjny API:</label>
+        <div class="password-wrapper">
+          <input
+            type="password"
+            id="api-token"
+            placeholder="Wklej wartość EXTENSION_API_TOKEN z pliku .env"
+            spellcheck="false"
+          >
+          <button type="button" id="toggle-token-visibility" class="toggle-pwd-btn" title="Pokaż / Ukryj token">👁️</button>
+        </div>
+        <span class="field-hint">Klucz zdefiniowany w zmiennej EXTENSION_API_TOKEN.</span>
+      </div>
+
+      <div class="settings-test-row">
+        <button type="button" id="test-connection-btn" class="secondary-btn">
+          <span class="btn-spinner hidden" id="test-spinner"></span>
+          <span>Testuj połączenie</span>
+        </button>
+        <span id="test-connection-result" class="test-result-text"></span>
+      </div>
+
+      <div class="actions">
+        <button id="save-settings-btn" class="primary-btn">Zapisz konfigurację</button>
+        <button id="back-to-main-btn" class="secondary-btn">Wróć</button>
+      </div>
+
+      <div id="settings-status-message" class="status-banner hidden"></div>
+    </section>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

@@ -1,0 +1,49 @@
+{
+  "manifest_version": 3,
+  "name": "KandidFlow — Asystent Ofert Pracy",
+  "version": "1.1.0",
+  "description": "Automatyczny kolektor ofert pracy dla platformy KandidFlow z Just Join IT, Pracuj.pl, No Fluff Jobs, LinkedIn i stron karier.",
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "KandidFlow — Zapisz ofertę",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "permissions": [
+    "activeTab",
+    "tabs",
+    "storage",
+    "scripting"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  "background": {
+    "service_worker": "src/background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "<all_urls>"
+      ],
+      "js": [
+        "src/utils.js",
+        "src/extractors/fallback.js",
+        "src/extractors/justjoin.js",
+        "src/extractors/pracuj.js",
+        "src/extractors/nofluffjobs.js",
+        "src/extractors/linkedin.js",
+        "src/content.js"
+      ],
+      "run_at": "document_idle"
+    }
+  ]
+}

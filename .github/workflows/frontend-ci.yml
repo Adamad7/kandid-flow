@@ -1,0 +1,38 @@
+name: Frontend CI (Docker)
+
+on:
+  push:
+    branches: [ "main", "master", "develop" ]
+    paths:
+      - "frontend/**"
+      - "docker-compose*.yml"
+      - ".env.example"
+      - ".github/workflows/frontend-ci.yml"
+  pull_request:
+    branches: [ "main", "master", "develop" ]
+    paths:
+      - "frontend/**"
+      - "docker-compose*.yml"
+      - ".env.example"
+      - ".github/workflows/frontend-ci.yml"
+
+jobs:
+  frontend-build-check:
+    name: Frontend TypeScript & Vite Build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Copy .env.example to .env
+        run: cp .env.example .env
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build frontend image
+        run: docker compose build frontend
+
+      - name: Run TypeScript & Vite Build inside Docker
+        run: docker compose run --rm frontend npm run build

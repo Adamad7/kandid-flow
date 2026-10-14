@@ -1,0 +1,73 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: kandid-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-kandid_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-kandid_secret_change_me}
+      POSTGRES_DB: ${POSTGRES_DB:-kandid_db}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER:-kandid_user} -d $${POSTGRES_DB:-kandid_db}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - kandid-network
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: kandid-backend
+    restart: unless-stopped
+    ports:
+      - "${BACKEND_PORT:-8000}:8000"
+    environment:
+      ENVIRONMENT: ${ENVIRONMENT:-development}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      DATABASE_URL: ${DATABASE_URL:-postgresql+asyncpg://${POSTGRES_USER:-kandid_user}:${POSTGRES_PASSWORD:-kandid_secret_change_me}@db:5432/${POSTGRES_DB:-kandid_db}}
+      EXTENSION_API_TOKEN: ${EXTENSION_API_TOKEN:-kandid_dev_secret_token_replace_in_production_32chars}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:5173,http://127.0.0.1:5173}
+      AUTO_PARSE_MODE: ${AUTO_PARSE_MODE:-auto_ollama_fallback_api}
+      OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://host.docker.internal:11434}
+      OLLAMA_MODEL: ${OLLAMA_MODEL:-qwen2.5:14b}
+      API_PROVIDER: ${API_PROVIDER:-gemini}
+      API_MODEL: ${API_MODEL:-gemini-2.5-flash}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - kandid-network
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: kandid-frontend
+    restart: unless-stopped
+    ports:
+      - "${FRONTEND_PORT:-5173}:5173"
+    environment:
+      VITE_API_URL: ${VITE_API_URL:-http://localhost:8000}
+    depends_on:
+      - backend
+    networks:
+      - kandid-network
+
+volumes:
+  postgres_data:
+    name: kandid-postgres-data
+
+networks:
+  kandid-network:
+    name: kandid-network
+    driver: bridge
