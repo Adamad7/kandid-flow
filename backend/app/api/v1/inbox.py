@@ -132,6 +132,7 @@ async def ingest_job_offer(
         work_model_details=payload.work_model_details,
         locations=payload.locations,
         location_raw=payload.location_raw,
+        application_deadline=payload.application_deadline,
         salary_min=payload.salary_min,
         salary_max=payload.salary_max,
         salary_currency=payload.salary_currency or "PLN",

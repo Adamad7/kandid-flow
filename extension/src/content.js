@@ -60,6 +60,7 @@
         description_text: document.body ? document.body.innerText.slice(0, 2000) : "",
         requirements_raw: [],
         locations: [],
+        application_deadline: null,
       };
     }
 

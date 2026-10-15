@@ -106,6 +106,13 @@
     const workModel = utils.detectWorkModel ? utils.detectWorkModel(descriptionText) : null;
     const salaryParsed = utils.parseSalary ? utils.parseSalary(descriptionText.slice(0, 1500)) : { raw: null, min: null, max: null, currency: "PLN" };
 
+    // Application Deadline
+    const ldData = utils.getJobPostingJsonLd ? utils.getJobPostingJsonLd(document) : null;
+    const applicationDeadline = utils.extractDeadline ? utils.extractDeadline(document, ldData) : null;
+    if (applicationDeadline) {
+      matchedSelectors.push("deadline");
+    }
+
     return {
       source_url: canonicalUrl,
       source_portal: "generic",
@@ -122,6 +129,7 @@
       description_html: descriptionHtml,
       description_text: descriptionText,
       requirements_raw: requirements.slice(0, 20), // Cap reasonable bullet count
+      application_deadline: applicationDeadline,
       custom_metadata: {
         page_title: document.title,
         extracted_at: new Date().toISOString(),

@@ -189,6 +189,7 @@ class JobParserWorker:
                     "experience_level (Junior/Mid/Senior/Lead), "
                     "work_model (remote/hybrid/onsite), "
                     "work_model_details (specifics e.g. 2 days office/mo), "
+                    "application_deadline (date in YYYY-MM-DD format if explicitly stated, or null), "
                     "company_name (if not evident, infer or leave as is), "
                     "role_title (cleaned title)."
                 )
@@ -230,6 +231,23 @@ class JobParserWorker:
                         job.work_model = model_val
                 if not job.work_model_details and parsed_data.get("work_model_details"):
                     job.work_model_details = parsed_data.get("work_model_details")
+                if not job.application_deadline and parsed_data.get("application_deadline"):
+                    try:
+                        from datetime import datetime
+                        d_str = str(parsed_data["application_deadline"]).strip()
+                        job.application_deadline = datetime.strptime(d_str[:10], "%Y-%m-%d").date()
+                    except (ValueError, TypeError):
+                        pass
+
+            # Fallback deadline extraction from raw_payload or description if not already set
+            if not job.application_deadline:
+                if raw_payload.get("application_deadline"):
+                    try:
+                        from datetime import datetime
+                        d_str = str(raw_payload["application_deadline"]).strip()
+                        job.application_deadline = datetime.strptime(d_str[:10], "%Y-%m-%d").date()
+                    except (ValueError, TypeError):
+                        pass
 
             job.structured_data = structured.model_dump(mode="json")
             job.status = "ready"

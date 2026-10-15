@@ -1,10 +1,10 @@
 """Pydantic schemas for Browser Extension inbox ingestion."""
 
-from datetime import datetime
+from datetime import date, datetime
 from typing import Literal
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 SourcePortalType = Literal["justjoin", "pracuj", "nofluffjobs", "linkedin", "generic"]
 WorkModelType = Literal["remote", "hybrid", "onsite"]
@@ -64,12 +64,37 @@ class ExtractedJobPayload(BaseModel):
     requirements_raw: list[str] = Field(
         default_factory=list, description="Extracted requirement bullet points"
     )
+    application_deadline: date | None = Field(
+        default=None, description="Application submission deadline date"
+    )
     notes: str | None = Field(
         default=None, description="Optional custom notes entered in the extension popup"
     )
     custom_metadata: ExtractorDiagnosticMetadata | None = Field(
         default=None, description="Extractor-specific diagnostic metadata"
     )
+
+    @field_validator("application_deadline", mode="before")
+    @classmethod
+    def parse_deadline(cls, v: object) -> date | None:
+        if not v:
+            return None
+        if isinstance(v, date) and not isinstance(v, datetime):
+            return v
+        if isinstance(v, datetime):
+            return v.date()
+        if isinstance(v, str):
+            clean = v.split("T")[0].split(" ")[0].strip()
+            if not clean:
+                return None
+            try:
+                if "." in clean:
+                    return datetime.strptime(clean, "%d.%m.%Y").date()
+                if "-" in clean:
+                    return datetime.strptime(clean, "%Y-%m-%d").date()
+            except (ValueError, TypeError):
+                return None
+        return None
 
     model_config = ConfigDict(extra="ignore")
 

@@ -409,6 +409,12 @@
       }
     }
 
+    // Application Deadline
+    const applicationDeadline = utils.extractDeadline ? utils.extractDeadline(document, ldData, nextOfferData) : null;
+    if (applicationDeadline) {
+      matchedSelectors.push("deadline");
+    }
+
     return {
       source_url: canonicalUrl,
       source_portal: "pracuj",
@@ -425,6 +431,7 @@
       description_html: descriptionHtml,
       description_text: descriptionText,
       requirements_raw: Array.from(new Set(requirements)),
+      application_deadline: applicationDeadline,
       custom_metadata: {
         page_title: document.title,
         extracted_at: new Date().toISOString(),

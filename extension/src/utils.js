@@ -457,6 +457,185 @@
     return cleanText(lines.join(" "));
   }
 
+  const POLISH_MONTHS = {
+    stycznia: "01",
+    styczeń: "01",
+    lutego: "02",
+    luty: "02",
+    marca: "03",
+    marzec: "03",
+    kwietnia: "04",
+    kwiecień: "04",
+    maja: "05",
+    maj: "05",
+    czerwca: "06",
+    czerwiec: "06",
+    lipca: "07",
+    lipiec: "07",
+    sierpnia: "08",
+    sierpień: "08",
+    września: "09",
+    wrzesień: "09",
+    października: "10",
+    październik: "10",
+    listopada: "11",
+    listopad: "11",
+    grudnia: "12",
+    grudzień: "12",
+  };
+
+  /**
+   * Normalizes various date string representations into YYYY-MM-DD format.
+   *
+   * @param {string} raw - Input raw date string
+   * @returns {string | null} YYYY-MM-DD date or null
+   */
+  function normalizeDateToIso(raw) {
+    if (!raw || typeof raw !== "string") return null;
+    const trimmed = raw.trim();
+
+    // Check ISO: 2026-11-20 or 2026-11-20T...
+    const isoMatch = trimmed.match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (isoMatch) {
+      return `${isoMatch[1]}-${isoMatch[2]}-${isoMatch[3]}`;
+    }
+
+    // Check DD.MM.YYYY or DD-MM-YYYY or DD/MM/YYYY
+    const dmyMatch = trimmed.match(/^(\d{1,2})[./-](\d{1,2})[./-](\d{4})/);
+    if (dmyMatch) {
+      const day = dmyMatch[1].padStart(2, "0");
+      const month = dmyMatch[2].padStart(2, "0");
+      const year = dmyMatch[3];
+      return `${year}-${month}-${day}`;
+    }
+
+    // Check Polish verbal month: 20 listopada 2026
+    const verbalMatch = trimmed.match(/(\d{1,2})\s+([a-ząćęłńóśźż]+)\s+(\d{4})/i);
+    if (verbalMatch) {
+      const day = verbalMatch[1].padStart(2, "0");
+      const monthKey = verbalMatch[2].toLowerCase();
+      const month = POLISH_MONTHS[monthKey];
+      const year = verbalMatch[3];
+      if (month) {
+        return `${year}-${month}-${day}`;
+      }
+    }
+
+    // Try new Date(trimmed)
+    try {
+      const parsed = new Date(trimmed);
+      if (!isNaN(parsed.getTime())) {
+        const y = parsed.getFullYear();
+        const m = String(parsed.getMonth() + 1).padStart(2, "0");
+        const d = String(parsed.getDate()).padStart(2, "0");
+        return `${y}-${m}-${d}`;
+      }
+    } catch {
+      // Ignore
+    }
+
+    return null;
+  }
+
+  /**
+   * Extracts application deadline from JSON-LD, metadata, DOM elements, or text patterns.
+   *
+   * @param {Document} doc - DOM document
+   * @param {object} [ldData] - Extracted JobPosting JSON-LD object
+   * @param {object} [extraData] - Portal specific state/attributes (e.g. Next.js state)
+   * @returns {string | null} Normalized YYYY-MM-DD date string, or null
+   */
+  function extractDeadline(doc, ldData, extraData) {
+    // 1. JSON-LD validThrough or expires
+    if (ldData) {
+      if (ldData.validThrough) {
+        const norm = normalizeDateToIso(ldData.validThrough);
+        if (norm) return norm;
+      }
+      if (ldData.expires) {
+        const norm = normalizeDateToIso(ldData.expires);
+        if (norm) return norm;
+      }
+    }
+
+    // 2. Extra data attributes (Pracuj Next.js or others)
+    if (extraData && typeof extraData === "object") {
+      const candidates = [
+        extraData.expirationDate,
+        extraData.dateTo,
+        extraData.validThrough,
+        extraData.offerExpirationDate,
+        extraData.attributes && extraData.attributes.expirationDate,
+        extraData.attributes && extraData.attributes.dateTo,
+        extraData.attributes && extraData.attributes.validThrough,
+      ];
+      for (const val of candidates) {
+        if (val) {
+          const norm = normalizeDateToIso(val);
+          if (norm) return norm;
+        }
+      }
+    }
+
+    if (!doc || !doc.querySelector) return null;
+
+    // 3. Meta tags & schema elements
+    const metaSelectors = [
+      'meta[property="og:expiration_time"]',
+      'meta[name="expires"]',
+      'meta[itemprop="validThrough"]',
+      'time[itemprop="validThrough"]',
+      '[data-test="text-expirationDate"]',
+      '[data-test-id="offer-expiration-date"]',
+      'time[datetime]',
+    ];
+    for (const sel of metaSelectors) {
+      const el = doc.querySelector(sel);
+      if (el) {
+        const val = el.getAttribute("content") || el.getAttribute("datetime") || el.textContent;
+        const norm = normalizeDateToIso(val);
+        if (norm) return norm;
+      }
+    }
+
+    // 4. Text regex patterns
+    const textContent = doc.body ? doc.body.innerText : "";
+    if (textContent) {
+      // "aplikuj do 2026-11-20" or "ważna do: 20.11.2026"
+      const dateMatch = textContent.match(
+        /(?:aplikuj do|ważna do|termin składania|termin zgłoszeń|termin aplikacji|deadline|valid until|expires)[:\s]+([0-9]{4}-[0-9]{2}-[0-9]{2}|[0-9]{1,2}[./-][0-9]{1,2}[./-][0-9]{4})/i
+      );
+      if (dateMatch && dateMatch[1]) {
+        const norm = normalizeDateToIso(dateMatch[1]);
+        if (norm) return norm;
+      }
+
+      // "ważna do 20 listopada 2026"
+      const verbalMatch = textContent.match(
+        /(?:aplikuj do|ważna do|do dnia)[:\s]+(\d{1,2}\s+[a-ząćęłńóśźż]+\s+\d{4})/i
+      );
+      if (verbalMatch && verbalMatch[1]) {
+        const norm = normalizeDateToIso(verbalMatch[1]);
+        if (norm) return norm;
+      }
+
+      // Relative: "do końca: 5 dni" -> calculate date
+      const relativeMatch = textContent.match(/(?:do końca|wygasa za|pozostało)[:\s]+(\d+)\s*dni/i);
+      if (relativeMatch && relativeMatch[1]) {
+        const days = parseInt(relativeMatch[1], 10);
+        if (!isNaN(days) && days > 0 && days < 365) {
+          const target = new Date(Date.now() + days * 24 * 60 * 60 * 1000);
+          const y = target.getFullYear();
+          const m = String(target.getMonth() + 1).padStart(2, "0");
+          const d = String(target.getDate()).padStart(2, "0");
+          return `${y}-${m}-${d}`;
+        }
+      }
+    }
+
+    return null;
+  }
+
   return {
     canonicalizeUrl,
     getCanonicalUrl,
@@ -467,5 +646,7 @@
     parseSalary,
     sanitizeDomNode,
     elementToStructuredText,
+    normalizeDateToIso,
+    extractDeadline,
   };
 });

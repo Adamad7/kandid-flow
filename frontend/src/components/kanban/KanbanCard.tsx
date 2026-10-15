@@ -206,7 +206,7 @@ export const KanbanCard: React.FC<KanbanCardProps> = ({
             }
             className="text-[11px]"
           >
-            <Clock className="h-3 w-3" />
+            <Clock className="h-3 w-3 mr-1" />
             {deadlineInfo.text}
           </Badge>
         </div>

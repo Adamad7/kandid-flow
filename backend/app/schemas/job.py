@@ -4,9 +4,30 @@ from datetime import date, datetime
 from typing import Literal
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from app.schemas.inbox import ExtractedJobPayload
+
+
+def _validate_deadline(v: object) -> date | None:
+    if not v:
+        return None
+    if isinstance(v, date) and not isinstance(v, datetime):
+        return v
+    if isinstance(v, datetime):
+        return v.date()
+    if isinstance(v, str):
+        clean = v.split("T")[0].split(" ")[0].strip()
+        if not clean:
+            return None
+        try:
+            if "." in clean:
+                return datetime.strptime(clean, "%d.%m.%Y").date()
+            if "-" in clean:
+                return datetime.strptime(clean, "%Y-%m-%d").date()
+        except (ValueError, TypeError):
+            return None
+    return None
 
 JobStatusType = Literal[
     "inbox", "parsing", "failed_parsing", "ready", "applied", "interview", "rejected", "offer"
@@ -84,6 +105,11 @@ class JobOfferBase(BaseModel):
         default=None, description="Personal candidate notes regarding this offer"
     )
 
+    @field_validator("application_deadline", mode="before")
+    @classmethod
+    def parse_deadline(cls, v: object) -> date | None:
+        return _validate_deadline(v)
+
 
 class JobOfferCreate(JobOfferBase):
     """Schema for creating a new Job Offer record."""
@@ -117,6 +143,11 @@ class JobOfferUpdate(BaseModel):
     contract_type: str | None = None
     structured_data: StructuredJobData | None = None
     notes: str | None = None
+
+    @field_validator("application_deadline", mode="before")
+    @classmethod
+    def parse_deadline(cls, v: object) -> date | None:
+        return _validate_deadline(v)
 
 
 class JobOfferRead(JobOfferBase):

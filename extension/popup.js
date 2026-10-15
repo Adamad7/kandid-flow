@@ -16,6 +16,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   const portalBadge = document.getElementById("portal-badge");
   const workModelBadge = document.getElementById("work-model-badge");
   const salaryBadge = document.getElementById("salary-badge");
+  const deadlineBadge = document.getElementById("deadline-badge");
   const jobTitleEl = document.getElementById("job-title");
   const jobCompanyEl = document.getElementById("job-company");
   const jobLocationEl = document.getElementById("job-location");
@@ -227,6 +228,14 @@ document.addEventListener("DOMContentLoaded", async () => {
       salaryBadge.classList.add("hidden");
     }
 
+    // Deadline Badge
+    if (payload.application_deadline) {
+      deadlineBadge.textContent = `Do: ${payload.application_deadline}`;
+      deadlineBadge.classList.remove("hidden");
+    } else {
+      deadlineBadge.classList.add("hidden");
+    }
+
     // Title & Company
     jobTitleEl.textContent = payload.title || "Oferta pracy bez tytułu";
     jobCompanyEl.textContent = payload.company || "Pracodawca nieokreślony";
@@ -353,6 +362,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       description_html: currentPayload.description_html || null,
       description_text: currentPayload.description_text || "",
       requirements_raw: currentPayload.requirements_raw || [],
+      application_deadline: currentPayload.application_deadline || null,
       notes: notesValue || null,
       custom_metadata: currentPayload.custom_metadata || null,
     };

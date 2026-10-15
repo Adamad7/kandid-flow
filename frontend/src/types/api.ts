@@ -76,6 +76,7 @@ export interface ExtractedJobPayload {
   description_html?: string | null;
   description_text: string;
   requirements_raw: string[];
+  application_deadline?: string | null;
   notes?: string | null;
   custom_metadata?: ExtractorDiagnosticMetadata | null;
 }
