@@ -636,6 +636,57 @@
     return null;
   }
 
+  /**
+   * Safely parses Schema.org baseSalary structure into min, max, currency, and clean raw string.
+   * Handles quantitative values where value is an object { minValue, maxValue }.
+   *
+   * @param {object} baseSalary - Schema.org baseSalary object
+   * @returns {{ raw: string | null, min: number | null, max: number | null, currency: string }}
+   */
+  function parseBaseSalary(baseSalary) {
+    if (!baseSalary || typeof baseSalary !== "object") {
+      return { raw: null, min: null, max: null, currency: "PLN" };
+    }
+    const val = typeof baseSalary.value === "object" && baseSalary.value !== null ? baseSalary.value : {};
+    let min = null;
+    let max = null;
+
+    if (typeof baseSalary.minValue === "number") min = Math.round(baseSalary.minValue);
+    else if (typeof val.minValue === "number") min = Math.round(val.minValue);
+    else if (typeof baseSalary.value === "number") min = Math.round(baseSalary.value);
+
+    if (typeof baseSalary.maxValue === "number") max = Math.round(baseSalary.maxValue);
+    else if (typeof val.maxValue === "number") max = Math.round(val.maxValue);
+    else if (typeof baseSalary.value === "number") max = Math.round(baseSalary.value);
+
+    const currency = baseSalary.currency || val.unitText || "PLN";
+
+    let raw = null;
+    if (min && max && min !== max) {
+      raw = `${min.toLocaleString("pl-PL")} - ${max.toLocaleString("pl-PL")} ${currency}`;
+    } else if (min) {
+      raw = `${min.toLocaleString("pl-PL")} ${currency}`;
+    } else if (max) {
+      raw = `${max.toLocaleString("pl-PL")} ${currency}`;
+    }
+
+    return { raw, min, max, currency };
+  }
+
+  /**
+   * Cleans location text by stripping leading/trailing dots, commas, plus-indicators, and whitespace.
+   *
+   * @param {string} text - Raw location text
+   * @returns {string} Clean location string
+   */
+  function cleanLocationText(text) {
+    if (!text || typeof text !== "string") return "";
+    return text
+      .replace(/\+\d+\s*Lokalizacj[ae]/gi, "")
+      .replace(/^[.,\s;/-]+|[.,\s;/-]+$/g, "")
+      .trim();
+  }
+
   return {
     canonicalizeUrl,
     getCanonicalUrl,
@@ -644,6 +695,8 @@
     cleanText,
     detectWorkModel,
     parseSalary,
+    parseBaseSalary,
+    cleanLocationText,
     sanitizeDomNode,
     elementToStructuredText,
     normalizeDateToIso,

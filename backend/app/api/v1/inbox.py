@@ -106,20 +106,45 @@ async def ingest_job_offer(
     res = await db.execute(stmt)
     existing = res.scalar_one_or_none()
 
+    raw_dict = payload.model_dump(mode="json")
+    raw_dict["source_url"] = canonical_url
+
     if existing:
         logger.info(
-            "Duplicate job offer found for URL %s, returning existing record",
+            "Job offer already exists for URL %s, updating with fresh extracted data",
             canonical_url,
         )
+        if payload.application_deadline is not None:
+            existing.application_deadline = payload.application_deadline
+        if payload.salary_min is not None:
+            existing.salary_min = payload.salary_min
+        if payload.salary_max is not None:
+            existing.salary_max = payload.salary_max
+        if payload.salary_currency:
+            existing.salary_currency = payload.salary_currency
+        if payload.locations:
+            existing.locations = payload.locations
+        if payload.location_raw:
+            existing.location_raw = payload.location_raw
+        if payload.work_model:
+            existing.work_model = payload.work_model
+        if payload.work_model_details:
+            existing.work_model_details = payload.work_model_details
+        if payload.company and not existing.company_name:
+            existing.company_name = payload.company
+        if payload.title and not existing.role_title:
+            existing.role_title = payload.title
+        if payload.notes:
+            existing.notes = payload.notes
+        existing.raw_payload = raw_dict
+        await db.commit()
+        await db.refresh(existing)
         return InboxResponse(
             id=existing.id,
             status=existing.status,
-            message="Offer already captured and tracked in pipeline",
+            message="Oferta została zaktualizowana w bazie",
             created_at=existing.created_at,
         )
-
-    raw_dict = payload.model_dump(mode="json")
-    raw_dict["source_url"] = canonical_url
 
     job_offer = JobOffer(
         source_url=canonical_url,

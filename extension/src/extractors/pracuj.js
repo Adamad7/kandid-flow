@@ -168,14 +168,12 @@
 
     // Fallback to JSON-LD baseSalary
     if (!salaryRaw && ldData && ldData.baseSalary) {
-      const bs = ldData.baseSalary;
-      salaryMin = bs.minValue || bs.value || null;
-      salaryMax = bs.maxValue || bs.value || null;
-      salaryCurrency = bs.currency || "PLN";
-      if (salaryMin && salaryMax && salaryMin !== salaryMax) {
-        salaryRaw = `${salaryMin} - ${salaryMax} ${salaryCurrency}`;
-      } else if (salaryMin) {
-        salaryRaw = `${salaryMin} ${salaryCurrency}`;
+      const parsedBs = utils.parseBaseSalary ? utils.parseBaseSalary(ldData.baseSalary) : null;
+      if (parsedBs && (parsedBs.min != null || parsedBs.max != null || parsedBs.raw)) {
+        salaryMin = parsedBs.min;
+        salaryMax = parsedBs.max;
+        salaryCurrency = parsedBs.currency || "PLN";
+        salaryRaw = parsedBs.raw;
       }
     }
 

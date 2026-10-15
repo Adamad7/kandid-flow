@@ -110,14 +110,12 @@
 
     // Fallback to JSON-LD baseSalary
     if (!salaryRaw && ldData && ldData.baseSalary) {
-      const bs = ldData.baseSalary;
-      salaryMin = bs.minValue || bs.value || null;
-      salaryMax = bs.maxValue || bs.value || null;
-      salaryCurrency = bs.currency || "PLN";
-      if (salaryMin && salaryMax && salaryMin !== salaryMax) {
-        salaryRaw = `${salaryMin} - ${salaryMax} ${salaryCurrency}`;
-      } else if (salaryMin) {
-        salaryRaw = `${salaryMin} ${salaryCurrency}`;
+      const parsedBs = utils.parseBaseSalary ? utils.parseBaseSalary(ldData.baseSalary) : null;
+      if (parsedBs && (parsedBs.min != null || parsedBs.max != null || parsedBs.raw)) {
+        salaryMin = parsedBs.min;
+        salaryMax = parsedBs.max;
+        salaryCurrency = parsedBs.currency || "PLN";
+        salaryRaw = parsedBs.raw;
       }
     }
 
@@ -147,43 +145,58 @@
       }
     });
 
-    // Check location pin in DOM
-    const locationPinEl = document.querySelector(
-      'svg.lucide-map-pin, [class*="lucide-map-pin"], [data-test-id="offer-location"], div[class*="location"]'
-    );
-    if (locationPinEl) {
-      // Traverse up to find container text
-      const container = locationPinEl.closest('div[tabindex="0"]') || locationPinEl.parentElement;
-      if (container) {
-        // Clone and remove chevron icons
-        const clone = container.cloneNode(true);
-        const chevrons = clone.querySelectorAll('svg, [class*="chevron"]');
-        chevrons.forEach((c) => c.remove());
-        const locText = utils.cleanText(clone.textContent).replace(/\+\d+\s*Lokalizacj[ae]/i, "").trim();
-        if (locText) {
-          locationRaw = locText;
-          matchedSelectors.push('svg.lucide-map-pin');
+    // Extract location: JSON-LD is cleanest and structured
+    if (ldData && ldData.jobLocation) {
+      const addr = ldData.jobLocation.address || {};
+      const locality = addr.addressLocality || ldData.jobLocation.name;
+      const street = addr.streetAddress && addr.streetAddress !== "." ? addr.streetAddress : null;
+      if (locality && locality !== ".") {
+        const cleanLocality = utils.cleanLocationText ? utils.cleanLocationText(locality) : locality.trim();
+        if (cleanLocality) {
+          locationRaw = street ? `${street}, ${cleanLocality}` : cleanLocality;
+          locations.push(cleanLocality);
+          matchedSelectors.push('script[type="application/ld+json"].jobLocation');
         }
       }
     }
 
-    // If location still not found, check JSON-LD
-    if (!locationRaw && ldData && ldData.jobLocation) {
-      const addr = ldData.jobLocation.address || {};
-      const locality = addr.addressLocality || ldData.jobLocation.name;
-      const street = addr.streetAddress;
-      if (locality) {
-        locationRaw = street ? `${street}, ${locality}` : locality;
-        locations.push(locality);
+    // Also check location pin in DOM
+    const locationPinEl = document.querySelector(
+      'svg.lucide-map-pin, [class*="lucide-map-pin"], [data-test-id="offer-location"]'
+    );
+    if (locationPinEl) {
+      const container = locationPinEl.closest('div[tabindex="0"]') || locationPinEl.parentElement;
+      if (container) {
+        const clone = container.cloneNode(true);
+        const chevrons = clone.querySelectorAll('svg, [class*="chevron"]');
+        chevrons.forEach((c) => c.remove());
+        const locText = utils.cleanLocationText
+          ? utils.cleanLocationText(clone.textContent)
+          : utils.cleanText(clone.textContent).replace(/^[.,\s]+/, "").trim();
+        if (locText && locText !== "." && !locationRaw) {
+          locationRaw = locText;
+          matchedSelectors.push('svg.lucide-map-pin');
+        }
+        if (locText && locText !== ".") {
+          const parts = locText
+            .split(/[,;/+]+/)
+            .map((s) => (utils.cleanLocationText ? utils.cleanLocationText(s) : s.trim()))
+            .filter((s) => s.length > 1 && s !== "." && !/^\d+/.test(s));
+          for (const p of parts) {
+            if (!locations.includes(p)) locations.push(p);
+          }
+        }
       }
     }
 
     if (locationRaw) {
       const parts = locationRaw
         .split(/[,;/+]+/)
-        .map((s) => s.trim())
-        .filter((s) => s.length > 1 && !/^\d+/.test(s));
-      locations.push(...parts);
+        .map((s) => (utils.cleanLocationText ? utils.cleanLocationText(s) : s.trim()))
+        .filter((s) => s.length > 1 && s !== "." && !/^\d+/.test(s));
+      for (const p of parts) {
+        if (!locations.includes(p)) locations.push(p);
+      }
       if (!workModel && utils.detectWorkModel) {
         workModel = utils.detectWorkModel(locationRaw);
       }

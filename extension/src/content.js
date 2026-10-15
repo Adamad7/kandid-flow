@@ -73,6 +73,7 @@
       if (request.action === "PING") {
         sendResponse({
           status: "ok",
+          version: "1.3.0",
           portal: detectPortal(),
           url: window.location.href,
         });

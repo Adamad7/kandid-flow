@@ -107,17 +107,6 @@ export const JobDetailsModal: React.FC<JobDetailsModalProps> = ({
     }
   };
 
-  const handleDeadlineChange = async (newDeadline: string | null) => {
-    try {
-      const updated = await api.jobs.update(job.id, {
-        application_deadline: newDeadline || null,
-      });
-      onJobUpdated(updated);
-    } catch {
-      alert("Nie udało się zaktualizować terminu aplikacji.");
-    }
-  };
-
   const handleReparse = async (mode: "ai" | "traditional" = "ai") => {
     try {
       setIsReparsing(true);
@@ -207,17 +196,6 @@ export const JobDetailsModal: React.FC<JobDetailsModalProps> = ({
                 <option value="offer">Oferta</option>
                 <option value="rejected">Odrzucone</option>
               </select>
-            </div>
-
-            <div className="flex items-center gap-2">
-              <label className="text-xs text-slate-500 font-medium">Termin:</label>
-              <input
-                type="date"
-                value={job.application_deadline ? job.application_deadline.slice(0, 10) : ""}
-                onChange={(e) => handleDeadlineChange(e.target.value || null)}
-                className="text-xs font-medium rounded-lg border border-slate-300 bg-white px-2 py-1 text-slate-800 shadow-xs focus:ring-2 focus:ring-blue-500"
-                title="Termin zakończenia przyjmowania aplikacji"
-              />
             </div>
 
             {job.source_url && (

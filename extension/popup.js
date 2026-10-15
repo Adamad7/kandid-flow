@@ -114,18 +114,20 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   }
 
+  const CURRENT_EXTRACTOR_VERSION = "1.3.0";
+
   /**
-   * Injects content scripts into tab if not already present.
+   * Injects content scripts into tab if not already present or outdated.
    */
   async function ensureContentScriptInjected(tabId) {
     try {
-      // First ping to check if listener already responds
+      // First ping to check if listener already responds with current version
       const pingResponse = await chrome.tabs.sendMessage(tabId, { action: "PING" }).catch(() => null);
-      if (pingResponse && pingResponse.status === "ok") {
+      if (pingResponse && pingResponse.status === "ok" && pingResponse.version === CURRENT_EXTRACTOR_VERSION) {
         return true;
       }
 
-      // If not responding, inject files sequentially
+      // If not responding or outdated, inject files sequentially
       await chrome.scripting.executeScript({
         target: { tabId },
         files: [
@@ -215,12 +217,16 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 
     // Salary Badge
-    if (payload.salary_raw) {
+    const hasValidRawSalary = payload.salary_raw && typeof payload.salary_raw === "string" && !payload.salary_raw.includes("[object");
+    const hasValidMinSalary = typeof payload.salary_min === "number" && !isNaN(payload.salary_min);
+    const hasValidMaxSalary = typeof payload.salary_max === "number" && !isNaN(payload.salary_max);
+
+    if (hasValidRawSalary) {
       salaryBadge.textContent = payload.salary_raw;
       salaryBadge.classList.remove("hidden");
-    } else if (payload.salary_min || payload.salary_max) {
-      const minStr = payload.salary_min ? payload.salary_min.toLocaleString("pl-PL") : "";
-      const maxStr = payload.salary_max ? payload.salary_max.toLocaleString("pl-PL") : "";
+    } else if (hasValidMinSalary || hasValidMaxSalary) {
+      const minStr = hasValidMinSalary ? payload.salary_min.toLocaleString("pl-PL") : "";
+      const maxStr = hasValidMaxSalary ? payload.salary_max.toLocaleString("pl-PL") : "";
       const range = minStr && maxStr ? `${minStr} - ${maxStr}` : minStr || maxStr;
       salaryBadge.textContent = `${range} ${payload.salary_currency || "PLN"}`;
       salaryBadge.classList.remove("hidden");
@@ -230,7 +236,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     // Deadline Badge
     if (payload.application_deadline) {
-      deadlineBadge.textContent = `Do: ${payload.application_deadline}`;
+      deadlineBadge.textContent = `📅 Termin: ${payload.application_deadline}`;
       deadlineBadge.classList.remove("hidden");
     } else {
       deadlineBadge.classList.add("hidden");
@@ -241,10 +247,18 @@ document.addEventListener("DOMContentLoaded", async () => {
     jobCompanyEl.textContent = payload.company || "Pracodawca nieokreślony";
 
     // Location
-    if (payload.locations && payload.locations.length > 0) {
-      jobLocationEl.textContent = payload.locations.join(", ");
-    } else if (payload.location_raw) {
-      jobLocationEl.textContent = payload.location_raw;
+    const cleanLocs = (payload.locations || [])
+      .map((l) => (l || "").replace(/^[.,\s;/-]+|[.,\s;/-]+$/g, "").trim())
+      .filter((l) => l.length > 1 && l !== "." && l !== ",");
+    const cleanRaw = (payload.location_raw || "")
+      .replace(/\+\d+\s*Lokalizacj[ae]/gi, "")
+      .replace(/^[.,\s;/-]+|[.,\s;/-]+$/g, "")
+      .trim();
+
+    if (cleanLocs.length > 0) {
+      jobLocationEl.textContent = cleanLocs.join(", ");
+    } else if (cleanRaw && cleanRaw !== "." && cleanRaw !== ",") {
+      jobLocationEl.textContent = cleanRaw;
     } else {
       jobLocationEl.textContent = "Lokalizacja niepodana";
     }
