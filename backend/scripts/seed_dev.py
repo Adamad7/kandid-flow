@@ -72,7 +72,7 @@ async def seed() -> None:
                 {
                     "id": "summary",
                     "type": "summary",
-                    "title": "Podsumowanie zawodowe",
+                    "title": "O mnie",
                     "content": (
                         "Junior DevOps / Platform Engineer z praktycznym doświadczeniem "
                         "w automatyzacji CI/CD, konteneryzacji Docker oraz orkiestracji "
@@ -242,7 +242,7 @@ async def seed() -> None:
                     {
                         "id": "summary",
                         "type": "summary",
-                        "title": "Podsumowanie zawodowe",
+                        "title": "O mnie",
                         "content": (
                             "Inżynier DevOps zorientowany na automatyzację CI/CD, konteneryzację "
                             "i architekturę chmurową AWS/Kubernetes."
@@ -328,7 +328,7 @@ async def seed() -> None:
                     {
                         "id": "summary",
                         "type": "summary",
-                        "title": "Podsumowanie zawodowe",
+                        "title": "O mnie",
                         "content": (
                             "Programista aplikacji mobilnych Flutter z doświadczeniem "
                             "w budowaniu responsywnych aplikacji wieloplatformowych (iOS/Android) "

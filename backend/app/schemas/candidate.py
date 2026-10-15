@@ -90,7 +90,7 @@ class SummarySectionBlock(BaseModel):
 
     id: str = Field(default="summary", description="Section identifier")
     type: Literal["summary"] = Field(default="summary", description="Section discriminator")
-    title: str = Field(default="Podsumowanie zawodowe", description="Header title")
+    title: str = Field(default="O mnie", description="Header title")
     content: str = Field(default="", description="Tailored text content of summary")
 
     model_config = ConfigDict(extra="ignore")

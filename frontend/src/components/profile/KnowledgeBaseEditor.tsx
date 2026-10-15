@@ -78,7 +78,7 @@ export const KnowledgeBaseEditor: React.FC = () => {
         {
           id: "summary",
           type: "summary",
-          title: "Podsumowanie zawodowe",
+          title: "O mnie",
           content: "Doświadczony inżynier oprogramowania zorientowany na wyniki.",
         },
         {
@@ -653,7 +653,7 @@ export const KnowledgeBaseEditor: React.FC = () => {
           </label>
           <div className="flex flex-wrap gap-3">
             {[
-              { id: "summary", label: "Podsumowanie" },
+              { id: "summary", label: "O mnie" },
               { id: "skills", label: "Umiejętności" },
               { id: "experience", label: "Doświadczenie" },
               { id: "projects", label: "Projekty" },
@@ -688,7 +688,7 @@ export const KnowledgeBaseEditor: React.FC = () => {
           <div className="flex items-center gap-2">
             <User className="h-5 w-5 text-indigo-600" />
             <h3 className="font-semibold text-slate-900">
-              Podsumowanie zawodowe (Summary)
+              O mnie (Summary)
             </h3>
           </div>
         </div>

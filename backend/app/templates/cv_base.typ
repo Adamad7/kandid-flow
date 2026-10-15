@@ -23,7 +23,7 @@
 // Localization Dictionary
 #let dict = (
   pl: (
-    summary: "Podsumowanie zawodowe",
+    summary: "O mnie",
     skills: "Umiejętności techniczne",
     experience: "Doświadczenie zawodowe",
     projects: "Projekty",

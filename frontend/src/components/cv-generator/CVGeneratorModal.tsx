@@ -340,7 +340,7 @@ export const CVGeneratorModal: React.FC<CVGeneratorModalProps> = ({
               </label>
               <div className="flex flex-wrap gap-2">
                 {[
-                  { id: "summary", label: "Podsumowanie" },
+                  { id: "summary", label: "O mnie" },
                   { id: "skills", label: "Umiejętności" },
                   { id: "experience", label: "Doświadczenie" },
                   { id: "projects", label: "Projekty" },

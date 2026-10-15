@@ -72,7 +72,7 @@ export const PresetsManager: React.FC = () => {
       {
         id: "summary",
         type: "summary",
-        title: "Podsumowanie zawodowe",
+        title: "O mnie",
         content:
           "Doświadczony specjalista skupiony na dostarczaniu wartości biznesowej i czystej architektury oprogramowania.",
       },

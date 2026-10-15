@@ -19,7 +19,7 @@ def test_compile_to_svg_success():
             {
                 "id": "summary",
                 "type": "summary",
-                "title": "Podsumowanie",
+                "title": "O mnie",
                 "content": "Inżynier platformowy testowy.",
             },
             {
