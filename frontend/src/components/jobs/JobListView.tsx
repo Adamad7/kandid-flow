@@ -69,6 +69,21 @@ export const JobListView: React.FC<JobListViewProps> = ({
   // Action menu state
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
 
+  // Close menu on click outside
+  useEffect(() => {
+    const handleGlobalClick = (e: MouseEvent) => {
+      if (!(e.target as HTMLElement).closest(".action-menu-container")) {
+        setOpenMenuId(null);
+      }
+    };
+    if (openMenuId) {
+      window.addEventListener("click", handleGlobalClick);
+    }
+    return () => {
+      window.removeEventListener("click", handleGlobalClick);
+    };
+  }, [openMenuId]);
+
   const fetchJobs = async () => {
     try {
       setIsLoading(true);
@@ -434,9 +449,9 @@ export const JobListView: React.FC<JobListViewProps> = ({
       </div>
 
       {/* Main List Container */}
-      <div className="rounded-xl border border-slate-200 bg-white shadow-xs overflow-hidden">
+      <div className="rounded-xl border border-slate-200 bg-white shadow-xs">
         {/* Table / List Header */}
-        <div className="bg-slate-50 border-b border-slate-200 px-6 py-3.5 hidden md:grid md:grid-cols-12 gap-4 text-xs font-semibold text-slate-600 select-none">
+        <div className="bg-slate-50 border-b border-slate-200 px-6 py-3.5 hidden md:grid md:grid-cols-12 gap-4 text-xs font-semibold text-slate-600 select-none rounded-t-xl">
           {/* Stanowisko (Sortable) */}
           <div
             onClick={() => handleToggleSort("role_title")}
@@ -496,7 +511,7 @@ export const JobListView: React.FC<JobListViewProps> = ({
           </div>
         ) : (
           <div className="divide-y divide-slate-100">
-            {filteredAndSortedJobs.map((job) => {
+            {filteredAndSortedJobs.map((job, index) => {
               const salaryText = formatSalary(
                 job.salary_min,
                 job.salary_max,
@@ -505,6 +520,7 @@ export const JobListView: React.FC<JobListViewProps> = ({
               const deadlineInfo = formatDeadline(job.application_deadline);
               const isReparsing = reparsingIds.has(job.id);
               const isMenuOpen = openMenuId === job.id;
+              const isNearBottom = index >= Math.max(1, filteredAndSortedJobs.length - 3);
 
               return (
                 <div
@@ -615,7 +631,10 @@ export const JobListView: React.FC<JobListViewProps> = ({
                     </div>
 
                     {/* Actions Menu */}
-                    <div className="relative shrink-0" onClick={(e) => e.stopPropagation()}>
+                    <div
+                      className="relative shrink-0 action-menu-container"
+                      onClick={(e) => e.stopPropagation()}
+                    >
                       <button
                         type="button"
                         onClick={() => setOpenMenuId(isMenuOpen ? null : job.id)}
@@ -627,7 +646,9 @@ export const JobListView: React.FC<JobListViewProps> = ({
 
                       {isMenuOpen && (
                         <div
-                          className="absolute right-0 top-8 z-30 w-48 rounded-xl border border-slate-200 bg-white py-1.5 shadow-xl"
+                          className={`absolute right-0 ${
+                            isNearBottom ? "bottom-8" : "top-8"
+                          } z-50 w-48 rounded-xl border border-slate-200 bg-white py-1.5 shadow-xl`}
                           onMouseLeave={() => setOpenMenuId(null)}
                         >
                           <button
@@ -738,7 +759,7 @@ export const JobListView: React.FC<JobListViewProps> = ({
         )}
 
         {/* Footer info banner */}
-        <div className="bg-slate-50 border-t border-slate-200 px-6 py-3 flex items-center justify-between text-xs text-slate-500">
+        <div className="bg-slate-50 border-t border-slate-200 px-6 py-3 flex items-center justify-between text-xs text-slate-500 rounded-b-xl">
           <span>
             Wyświetlono {filteredAndSortedJobs.length} z {jobs.length} ofert
           </span>
