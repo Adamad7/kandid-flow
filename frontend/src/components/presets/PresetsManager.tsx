@@ -12,7 +12,6 @@ import { api } from "../../lib/api";
 import type {
   BaseCVPresetCreate,
   BaseCVPresetRead,
-  BaseCVPresetUpdate,
   CandidateSectionBlock,
   CVLayoutSchema,
   CVPreviewResponse,
@@ -22,16 +21,18 @@ import { Input } from "../ui/Input";
 import { Select } from "../ui/Select";
 import { Modal } from "../ui/Modal";
 import { Badge } from "../ui/Badge";
+import { PresetEditor } from "./PresetEditor";
 
 export const PresetsManager: React.FC = () => {
   const [presets, setPresets] = useState<BaseCVPresetRead[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Editor Modal State
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [editingPreset, setEditingPreset] = useState<BaseCVPresetRead | null>(
-    null
-  );
+  // Active full split-view editor preset
+  const [activeEditingPreset, setActiveEditingPreset] =
+    useState<BaseCVPresetRead | null>(null);
+
+  // Quick Create Modal State
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [formTitle, setFormTitle] = useState("");
   const [formLanguage, setFormLanguage] = useState<"pl" | "en">("pl");
   const [formSections, setFormSections] = useState<CandidateSectionBlock[]>([]);
@@ -65,7 +66,6 @@ export const PresetsManager: React.FC = () => {
   }, []);
 
   const openCreateModal = () => {
-    setEditingPreset(null);
     setFormTitle("");
     setFormLanguage("pl");
     setFormSections([
@@ -81,8 +81,8 @@ export const PresetsManager: React.FC = () => {
         type: "skills",
         title: "Umiejętności",
         items: [
-          { category: "Języki i Frameworki", skills: ["Flutter", "Dart", "TypeScript"] },
-          { category: "Architektura i Narzędzia", skills: ["Bloc", "Git", "CI/CD", "Docker"] },
+          { category: "Języki i Frameworki", skills: ["TypeScript", "Python", "Docker"] },
+          { category: "Narzędzia i Chmura", skills: ["Git", "CI/CD", "PostgreSQL", "AWS"] },
         ],
       },
       {
@@ -91,14 +91,14 @@ export const PresetsManager: React.FC = () => {
         title: "Doświadczenie zawodowe",
         items: [
           {
-            position: "Senior Developer",
-            company: "Przykładowa Firma",
+            position: "Senior Specialist",
+            company: "Firma IT",
             location: "Warszawa",
             start_date: "2021",
             end_date: "present",
             highlights: [
-              "Rozwój i skalowanie aplikacji mobilnych i webowych",
-              "Prowadzenie code review i mentoring zespołu programistów",
+              "Rozwój i skalowanie architektury aplikacji produkcyjnych",
+              "Automatyzacja procesów wdrożeniowych i optymalizacja systemów",
             ],
           },
         ],
@@ -109,13 +109,13 @@ export const PresetsManager: React.FC = () => {
         title: "Kluczowe projekty",
         items: [
           {
-            name: "Platforma Mobilna",
-            role: "Architekt Rozwiązania",
+            name: "Główny Projekt",
+            role: "Architekt / Lead Developer",
             url: "https://github.com",
             start_date: "2023",
-            end_date: "2024",
-            description: "Wdrożenie nowej architektury modularnej w aplikacji produkcyjnej.",
-            technologies: ["Flutter", "Dart", "Firebase"],
+            end_date: "present",
+            description: "Wdrożenie nowej architektury modularnej o wysokiej skalowalności.",
+            technologies: ["React", "TypeScript", "FastAPI"],
           },
         ],
       },
@@ -141,20 +141,10 @@ export const PresetsManager: React.FC = () => {
           "Wyrażam zgodę na przetwarzanie moich danych osobowych dla potrzeb niezbędnych do realizacji procesu rekrutacji zgodnie z RODO.",
       },
     ]);
-    setIsEditModalOpen(true);
+    setIsCreateModalOpen(true);
   };
 
-  const openEditModal = (preset: BaseCVPresetRead) => {
-    setEditingPreset(preset);
-    setFormTitle(preset.title);
-    setFormLanguage((preset.language as "pl" | "en") || "pl");
-
-    const layout = preset.layout_schema;
-    setFormSections(layout?.sections || []);
-    setIsEditModalOpen(true);
-  };
-
-  const handleSavePreset = async (e: React.FormEvent) => {
+  const handleCreatePreset = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formTitle.trim()) {
       alert("Proszę podać nazwę szablonu.");
@@ -168,26 +158,19 @@ export const PresetsManager: React.FC = () => {
         sections: formSections,
       };
 
-      if (editingPreset) {
-        const updateData: BaseCVPresetUpdate = {
-          title: formTitle,
-          language: formLanguage,
-          layout_schema,
-        };
-        await api.presets.update(editingPreset.id, updateData);
-      } else {
-        const createData: BaseCVPresetCreate = {
-          title: formTitle,
-          language: formLanguage,
-          layout_schema,
-        };
-        await api.presets.create(createData);
-      }
+      const createData: BaseCVPresetCreate = {
+        title: formTitle.trim(),
+        language: formLanguage,
+        layout_schema,
+      };
+      const created = await api.presets.create(createData);
 
-      setIsEditModalOpen(false);
+      setIsCreateModalOpen(false);
       await fetchPresets();
+      // Immediately open detailed split-view editor for the newly created preset!
+      setActiveEditingPreset(created);
     } catch {
-      alert("Błąd podczas zapisywania szablonu bazowego.");
+      alert("Błąd podczas tworzenia nowego szablonu bazowego.");
     } finally {
       setIsSubmitting(false);
     }
@@ -218,12 +201,31 @@ export const PresetsManager: React.FC = () => {
     try {
       const res = await api.presets.preview(preset.id);
       setPreviewResult(res);
-    } catch (err: unknown) {
+    } catch {
       setPreviewError("Błąd kompilacji szablonu w silniku Typst.");
     } finally {
       setIsPreviewLoading(false);
     }
   };
+
+  // If a preset is currently being edited in split-view:
+  if (activeEditingPreset) {
+    return (
+      <PresetEditor
+        preset={activeEditingPreset}
+        onBack={() => {
+          setActiveEditingPreset(null);
+          fetchPresets();
+        }}
+        onSaved={(updated) => {
+          setActiveEditingPreset(updated);
+          setPresets((prev) =>
+            prev.map((p) => (p.id === updated.id ? updated : p))
+          );
+        }}
+      />
+    );
+  }
 
   return (
     <div className="space-y-6 max-w-6xl mx-auto pb-12">
@@ -234,7 +236,7 @@ export const PresetsManager: React.FC = () => {
             Szablony bazowe CV (Archetypy ról)
           </h2>
           <p className="text-xs text-slate-500 mt-1">
-            Zdefiniuj gotowe profile stanowiskowe (np. Flutter Developer, DevOps, Fullstack) do natychmiastowego generowania i dopasowywania CV
+            Zdefiniuj gotowe profile stanowiskowe (np. Flutter Developer, DevOps, Fullstack) do natychmiastowego generowania i dopasowywania CV ze split-view podglądu Typst
           </p>
         </div>
 
@@ -250,50 +252,55 @@ export const PresetsManager: React.FC = () => {
           Ładowanie szablonów bazowych...
         </div>
       ) : presets.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-slate-200 bg-white p-12 text-center">
-          <Layers className="mx-auto h-12 w-12 text-slate-300 mb-3" />
-          <h3 className="font-semibold text-slate-800">
+        <div className="p-12 text-center bg-white rounded-xl border border-dashed border-slate-300">
+          <Layers className="h-10 w-10 text-slate-300 mx-auto mb-3" />
+          <h3 className="text-sm font-semibold text-slate-800">
             Brak szablonów bazowych
           </h3>
-          <p className="text-xs text-slate-500 mt-1 mb-4 max-w-sm mx-auto">
-            Stwórz swój pierwszy archetyp stanowiskowy, aby móc błyskawicznie generować dopasowane CV pod konkretne role IT.
+          <p className="text-xs text-slate-500 max-w-sm mx-auto mt-1 mb-4">
+            Stwórz pierwszy szablon stanowiskowy, aby AI mogło sprofilować Twoje CV bezpośrednio pod konkretne domeny technologiczne.
           </p>
           <Button variant="primary" onClick={openCreateModal}>
-            <Plus className="h-4 w-4 mr-1.5" />
+            <Plus className="h-4 w-4 mr-1" />
             Utwórz pierwszy szablon
           </Button>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
           {presets.map((p) => {
-            const sectionCount = p.layout_schema?.sections?.length || 0;
+            const layout = p.layout_schema;
+            const sections = Array.isArray(layout)
+              ? layout
+              : layout?.sections || [];
+            const sectionCount = sections.length;
+
             return (
               <div
                 key={p.id}
-                className="group rounded-xl border border-slate-200 bg-white p-5 shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between"
+                className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between"
               >
                 <div>
-                  <div className="flex items-center justify-between gap-2 mb-2">
-                    <Badge variant="info" className="uppercase font-mono">
-                      {p.language}
+                  <div className="flex items-start justify-between gap-2 mb-2">
+                    <h3 className="font-bold text-slate-900 text-base line-clamp-1">
+                      {p.title}
+                    </h3>
+                    <Badge variant={p.language === "pl" ? "default" : "secondary"}>
+                      {p.language.toUpperCase()}
                     </Badge>
-                    <span className="text-xs text-slate-400">
-                      {sectionCount} sekcji
-                    </span>
                   </div>
 
-                  <h3 className="font-bold text-slate-900 text-base group-hover:text-blue-600 transition-colors">
-                    {p.title}
-                  </h3>
+                  <p className="text-xs text-slate-500 mb-4">
+                    Zmodyfikowano: {new Date(p.updated_at).toLocaleDateString("pl-PL")}
+                  </p>
 
-                  {/* Sections Preview List */}
-                  <div className="mt-3 flex flex-wrap gap-1.5">
-                    {p.layout_schema?.sections?.slice(0, 4).map((sec, idx) => (
+                  {/* Badges of sections */}
+                  <div className="flex flex-wrap gap-1.5">
+                    {sections.slice(0, 4).map((s, idx) => (
                       <span
                         key={idx}
-                        className="rounded bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-600"
+                        className="rounded bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-600 border border-slate-200"
                       >
-                        {sec.title || sec.type}
+                        {s.title || s.type}
                       </span>
                     ))}
                     {sectionCount > 4 && (
@@ -308,27 +315,28 @@ export const PresetsManager: React.FC = () => {
                 <div className="pt-4 mt-4 border-t border-slate-100 flex items-center justify-between gap-2">
                   <Button
                     size="sm"
-                    variant="outline"
-                    onClick={() => handleOpenPreview(p)}
+                    variant="primary"
+                    onClick={() => setActiveEditingPreset(p)}
                     className="text-xs flex-1"
                   >
-                    <Eye className="h-3.5 w-3.5 mr-1" />
-                    Podgląd Typst
+                    <Edit2 className="h-3.5 w-3.5 mr-1" />
+                    Edytuj szablon (Split View)
+                  </Button>
+
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => handleOpenPreview(p)}
+                    className="text-xs px-2.5"
+                    title="Szybki podgląd Typst"
+                  >
+                    <Eye className="h-3.5 w-3.5" />
                   </Button>
 
                   <button
                     type="button"
-                    onClick={() => openEditModal(p)}
-                    className="p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg"
-                    title="Edytuj szablon"
-                  >
-                    <Edit2 className="h-4 w-4" />
-                  </button>
-
-                  <button
-                    type="button"
                     onClick={() => handleDeletePreset(p)}
-                    className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg"
+                    className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
                     title="Usuń szablon"
                   >
                     <Trash2 className="h-4 w-4" />
@@ -340,14 +348,14 @@ export const PresetsManager: React.FC = () => {
         </div>
       )}
 
-      {/* Edit / Create Preset Modal */}
+      {/* Quick Create Preset Modal */}
       <Modal
-        isOpen={isEditModalOpen}
-        onClose={() => setIsEditModalOpen(false)}
-        title={editingPreset ? `Edycja szablonu: ${editingPreset.title}` : "Nowy szablon bazowy CV"}
-        maxWidth="2xl"
+        isOpen={isCreateModalOpen}
+        onClose={() => setIsCreateModalOpen(false)}
+        title="Nowy szablon bazowy CV"
+        maxWidth="xl"
       >
-        <form onSubmit={handleSavePreset} className="space-y-5">
+        <form onSubmit={handleCreatePreset} className="space-y-5">
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="sm:col-span-2">
               <Input
@@ -371,15 +379,15 @@ export const PresetsManager: React.FC = () => {
           <div>
             <div className="flex items-center justify-between mb-2">
               <label className="text-xs font-semibold uppercase tracking-wider text-slate-700">
-                Zawarte sekcje ({formSections.length})
+                Początkowe sekcje ({formSections.length})
               </label>
             </div>
 
-            <div className="space-y-3">
+            <div className="space-y-2 max-h-56 overflow-y-auto">
               {formSections.map((sec, idx) => (
                 <div
                   key={idx}
-                  className="rounded-lg border border-slate-200 bg-slate-50 p-3 flex items-center justify-between gap-3 text-sm"
+                  className="rounded-lg border border-slate-200 bg-slate-50 p-2.5 flex items-center justify-between gap-3 text-xs"
                 >
                   <div className="flex items-center gap-2">
                     <span className="font-semibold text-slate-800">
@@ -398,7 +406,7 @@ export const PresetsManager: React.FC = () => {
                       )
                     }
                     className="text-slate-400 hover:text-rose-600 p-1"
-                    title="Usuń tę sekcję z szablonu"
+                    title="Usuń sekcję"
                   >
                     <Trash2 className="h-3.5 w-3.5" />
                   </button>
@@ -407,87 +415,102 @@ export const PresetsManager: React.FC = () => {
             </div>
           </div>
 
+          <p className="text-xs text-slate-500">
+            Po utworzeniu szablonu zostaniesz automatycznie przeniesiony do pełnego edytora split-view z podglądem na żywo.
+          </p>
+
           <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
             <Button
               type="button"
               variant="outline"
-              onClick={() => setIsEditModalOpen(false)}
+              onClick={() => setIsCreateModalOpen(false)}
             >
               Anuluj
             </Button>
             <Button type="submit" variant="primary" isLoading={isSubmitting}>
-              {editingPreset ? "Zapisz zmiany" : "Utwórz szablon"}
+              Utwórz i przejdź do edycji
             </Button>
           </div>
         </form>
       </Modal>
 
-      {/* Live SVG Preview Modal */}
+      {/* Live SVG Preview Modal for Quick Preview */}
       {previewPreset && (
         <Modal
           isOpen={!!previewPreset}
           onClose={() => setPreviewPreset(null)}
-          title={`Podgląd wektorowy Typst: ${previewPreset.title}`}
+          title={`Podgląd Typst: ${previewPreset.title}`}
           maxWidth="4xl"
         >
           <div className="space-y-4">
             <div className="flex items-center justify-between bg-slate-100 px-4 py-2 rounded-lg">
               <span className="text-xs text-slate-600">
-                Silnik Typst kompiluje layout do natywnych wektorów SVG dla każdej strony.
+                Silnik Typst kompiluje layout do wektorów SVG dla każdej strony.
               </span>
 
               <div className="flex items-center gap-2">
                 <Button
                   size="sm"
-                  variant="outline"
-                  onClick={() => setZoomScale((s) => Math.max(0.6, s - 0.1))}
-                  className="h-7 w-7 p-0"
-                  title="Oddal"
+                  variant="primary"
+                  onClick={() => {
+                    const toEdit = previewPreset;
+                    setPreviewPreset(null);
+                    setActiveEditingPreset(toEdit);
+                  }}
+                  className="text-xs h-7"
                 >
-                  <ZoomOut className="h-3.5 w-3.5" />
+                  <Edit2 className="h-3 w-3 mr-1" />
+                  Otwórz w edytorze
                 </Button>
-                <span className="text-xs font-mono font-medium text-slate-700 w-12 text-center">
-                  {Math.round(zoomScale * 100)}%
-                </span>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => setZoomScale((s) => Math.min(1.6, s + 0.1))}
-                  className="h-7 w-7 p-0"
-                  title="Przybliż"
-                >
-                  <ZoomIn className="h-3.5 w-3.5" />
-                </Button>
+                <div className="flex items-center bg-white rounded-md border border-slate-200">
+                  <button
+                    type="button"
+                    onClick={() => setZoomScale((s) => Math.max(0.5, s - 0.1))}
+                    className="p-1 text-slate-600 hover:text-slate-900"
+                  >
+                    <ZoomOut className="h-3.5 w-3.5" />
+                  </button>
+                  <span className="text-xs px-2 font-mono">
+                    {Math.round(zoomScale * 100)}%
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setZoomScale((s) => Math.min(1.5, s + 0.1))}
+                    className="p-1 text-slate-600 hover:text-slate-900"
+                  >
+                    <ZoomIn className="h-3.5 w-3.5" />
+                  </button>
+                </div>
               </div>
             </div>
 
             {isPreviewLoading ? (
-              <div className="py-20 text-center text-sm text-slate-400 animate-pulse">
-                Kompilacja szablonu za pomocą Typst...
+              <div className="py-24 text-center text-sm text-slate-400 animate-pulse">
+                Kompilacja Typst w toku...
               </div>
             ) : previewError ? (
-              <div className="rounded-lg bg-rose-50 p-4 text-xs text-rose-700">
+              <div className="p-4 bg-rose-50 text-rose-700 rounded-lg text-sm border border-rose-200">
                 {previewError}
               </div>
-            ) : previewResult ? (
-              <div className="bg-slate-200/80 p-6 rounded-xl overflow-auto max-h-[70vh] flex flex-col items-center gap-6">
-                {previewResult.svg_pages.map((svgString, pIndex) => (
+            ) : (
+              <div className="max-h-[70vh] overflow-auto flex flex-col items-center gap-6 p-4 bg-slate-200/50 rounded-lg">
+                {previewResult?.svg_pages.map((svg, idx) => (
                   <div
-                    key={pIndex}
-                    className="relative bg-white shadow-xl rounded transition-transform"
-                    style={{ transform: `scale(${zoomScale})`, transformOrigin: "top center" }}
+                    key={idx}
+                    className="bg-white shadow-xl rounded-sm transition-transform duration-200"
+                    style={{
+                      transform: `scale(${zoomScale})`,
+                      transformOrigin: "top center",
+                    }}
                   >
                     <div
-                      className="typst-page-svg"
-                      dangerouslySetInnerHTML={{ __html: svgString }}
+                      className="typst-page-svg select-text"
+                      dangerouslySetInnerHTML={{ __html: svg }}
                     />
-                    <div className="absolute bottom-2 right-4 text-[10px] text-slate-400 font-mono">
-                      Strona {pIndex + 1} z {previewResult.svg_pages.length}
-                    </div>
                   </div>
                 ))}
               </div>
-            ) : null}
+            )}
           </div>
         </Modal>
       )}
