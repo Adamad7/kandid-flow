@@ -66,6 +66,11 @@ export const KnowledgeBaseEditor: React.FC = () => {
   ]);
   const [sections, setSections] = useState<CandidateSectionBlock[]>([]);
 
+  // Raw text states for comma-separated inputs to allow typing commas, trailing spaces, special chars
+  // Keyed by category index or project index
+  const [skillTagsRaw, setSkillTagsRaw] = useState<Record<number, string>>({});
+  const [projectTechsRaw, setProjectTechsRaw] = useState<Record<number, string>>({});
+
   useEffect(() => {
     fetchProfile();
   }, []);
@@ -85,6 +90,26 @@ export const KnowledgeBaseEditor: React.FC = () => {
       setContactInfo(cInfo);
       setDefaultSections(defSecs);
       setSections(secs);
+
+      // Initialize raw text for skills
+      const sSec = secs.find((s) => s.type === "skills") as SkillsSectionBlock | undefined;
+      if (sSec?.items) {
+        const rawMap: Record<number, string> = {};
+        sSec.items.forEach((cat, idx) => {
+          rawMap[idx] = cat.skills.join(", ");
+        });
+        setSkillTagsRaw(rawMap);
+      }
+
+      // Initialize raw text for project technologies
+      const pSec = secs.find((s) => s.type === "projects") as ProjectsSectionBlock | undefined;
+      if (pSec?.items) {
+        const rawPMap: Record<number, string> = {};
+        pSec.items.forEach((proj, idx) => {
+          rawPMap[idx] = (proj.technologies || []).join(", ");
+        });
+        setProjectTechsRaw(rawPMap);
+      }
 
       setInitialFullName(fName);
       setInitialContactInfo(JSON.parse(JSON.stringify(cInfo)));
@@ -176,6 +201,16 @@ export const KnowledgeBaseEditor: React.FC = () => {
       setContactInfo(cInfo);
       setDefaultSections(defSecs);
       setSections(secs);
+
+      const rawMap: Record<number, string> = {
+        0: "TypeScript, Python, Go",
+        1: "React, FastAPI, Tailwind CSS",
+      };
+      setSkillTagsRaw(rawMap);
+
+      setProjectTechsRaw({
+        0: "React, TypeScript, FastAPI, PostgreSQL",
+      });
 
       setInitialFullName(fName);
       setInitialContactInfo(JSON.parse(JSON.stringify(cInfo)));
@@ -284,9 +319,12 @@ export const KnowledgeBaseEditor: React.FC = () => {
       prev.map((sec) => {
         if (sec.type === "skills") {
           const s = sec as SkillsSectionBlock;
+          const nextItems = [...s.items, { category: "Nowa kategoria", skills: [] }];
+          const newIdx = nextItems.length - 1;
+          setSkillTagsRaw((r) => ({ ...r, [newIdx]: "" }));
           return {
             ...s,
-            items: [...s.items, { category: "Nowa kategoria", skills: [] }],
+            items: nextItems,
           };
         }
         return sec;
@@ -299,9 +337,16 @@ export const KnowledgeBaseEditor: React.FC = () => {
       prev.map((sec) => {
         if (sec.type === "skills") {
           const s = sec as SkillsSectionBlock;
+          const items = s.items.filter((_, idx) => idx !== catIndex);
+          // Re-index skillTagsRaw
+          const nextRaw: Record<number, string> = {};
+          items.forEach((item, idx) => {
+            nextRaw[idx] = item.skills.join(", ");
+          });
+          setSkillTagsRaw(nextRaw);
           return {
             ...s,
-            items: s.items.filter((_, idx) => idx !== catIndex),
+            items,
           };
         }
         return sec;
@@ -323,11 +368,16 @@ export const KnowledgeBaseEditor: React.FC = () => {
     );
   };
 
-  const updateSkillCategoryTags = (catIndex: number, tagsStr: string) => {
-    const skills = tagsStr
+  const handleSkillTagsChange = (catIndex: number, rawValue: string) => {
+    // 1. Keep the exact raw text so user can freely type commas, spaces, dashes, etc.
+    setSkillTagsRaw((prev) => ({ ...prev, [catIndex]: rawValue }));
+
+    // 2. Parse into list of items for the actual data model
+    const skills = rawValue
       .split(",")
       .map((t) => t.trim())
       .filter(Boolean);
+
     setSections((prev) =>
       prev.map((sec) => {
         if (sec.type === "skills") {
@@ -350,6 +400,7 @@ export const KnowledgeBaseEditor: React.FC = () => {
           return {
             ...s,
             items: [
+              ...s.items,
               {
                 position: "Stanowisko",
                 company: "Nazwa Firmy",
@@ -358,7 +409,6 @@ export const KnowledgeBaseEditor: React.FC = () => {
                 end_date: "present",
                 highlights: ["Główny zakres obowiązków i osiągnięcia"],
               },
-              ...s.items,
             ],
           };
         }
@@ -406,20 +456,23 @@ export const KnowledgeBaseEditor: React.FC = () => {
       prev.map((sec) => {
         if (sec.type === "projects") {
           const s = sec as ProjectsSectionBlock;
+          const nextItems = [
+            ...s.items,
+            {
+              name: "Nazwa Projektu",
+              role: "Rola",
+              url: "",
+              start_date: "2024",
+              end_date: "present",
+              description: "Opis architektury i celu projektu",
+              technologies: ["React", "TypeScript"],
+            },
+          ];
+          const newIdx = nextItems.length - 1;
+          setProjectTechsRaw((r) => ({ ...r, [newIdx]: "React, TypeScript" }));
           return {
             ...s,
-            items: [
-              {
-                name: "Nazwa Projektu",
-                role: "Rola",
-                url: "",
-                start_date: "2024",
-                end_date: "present",
-                description: "Opis architektury i celu projektu",
-                technologies: ["React", "TypeScript"],
-              },
-              ...s.items,
-            ],
+            items: nextItems,
           };
         }
         return sec;
@@ -445,14 +498,41 @@ export const KnowledgeBaseEditor: React.FC = () => {
     );
   };
 
+  const handleProjectTechsChange = (index: number, rawValue: string) => {
+    setProjectTechsRaw((prev) => ({ ...prev, [index]: rawValue }));
+
+    const technologies = rawValue
+      .split(",")
+      .map((t) => t.trim())
+      .filter(Boolean);
+
+    setSections((prev) =>
+      prev.map((sec) => {
+        if (sec.type === "projects") {
+          const s = sec as ProjectsSectionBlock;
+          const items = [...s.items];
+          items[index] = { ...items[index], technologies };
+          return { ...s, items };
+        }
+        return sec;
+      })
+    );
+  };
+
   const removeProjectItem = (index: number) => {
     setSections((prev) =>
       prev.map((sec) => {
         if (sec.type === "projects") {
           const s = sec as ProjectsSectionBlock;
+          const items = s.items.filter((_, idx) => idx !== index);
+          const nextRaw: Record<number, string> = {};
+          items.forEach((proj, idx) => {
+            nextRaw[idx] = (proj.technologies || []).join(", ");
+          });
+          setProjectTechsRaw(nextRaw);
           return {
             ...s,
-            items: s.items.filter((_, idx) => idx !== index),
+            items,
           };
         }
         return sec;
@@ -469,6 +549,7 @@ export const KnowledgeBaseEditor: React.FC = () => {
           return {
             ...s,
             items: [
+              ...s.items,
               {
                 institution: "Uczelnia / Szkoła",
                 degree: "Inżynier / Magister",
@@ -476,7 +557,6 @@ export const KnowledgeBaseEditor: React.FC = () => {
                 start_date: "2018",
                 end_date: "2022",
               },
-              ...s.items,
             ],
           };
         }
@@ -545,12 +625,12 @@ export const KnowledgeBaseEditor: React.FC = () => {
           return {
             ...s,
             items: [
+              ...s.items,
               {
                 name: "Nowy certyfikat",
                 issuer: "Wydawca",
                 issue_date: "2024",
               },
-              ...s.items,
             ],
           };
         }
@@ -733,7 +813,6 @@ export const KnowledgeBaseEditor: React.FC = () => {
               Dane kontaktowe i identyfikacja
             </h3>
           </div>
-          {renderSectionSaveButton("contact", isContactDirty)}
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -798,44 +877,44 @@ export const KnowledgeBaseEditor: React.FC = () => {
         </div>
 
         {/* Default sections selector */}
-        <div className="pt-4 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-          <div className="space-y-2">
-            <label className="block text-xs font-semibold uppercase tracking-wider text-slate-700">
-              Domyślnie zaznaczane sekcje przy generowaniu CV:
-            </label>
-            <div className="flex flex-wrap gap-2.5">
-              {[
-                { id: "summary", label: "O mnie" },
-                { id: "skills", label: "Umiejętności" },
-                { id: "experience", label: "Doświadczenie" },
-                { id: "projects", label: "Projekty" },
-                { id: "education", label: "Edukacja" },
-                { id: "certificates", label: "Certyfikaty" },
-                { id: "clause", label: "Klauzula RODO" },
-                ...customSections.map((cs) => ({ id: cs.id, label: cs.title || "Własna" })),
-              ].map((sec) => (
-                <label
-                  key={sec.id}
-                  className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border text-xs font-medium cursor-pointer transition-colors ${
-                    defaultSections.includes(sec.id)
-                      ? "bg-blue-50 border-blue-300 text-blue-700"
-                      : "bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100"
-                  }`}
-                >
-                  <input
-                    type="checkbox"
-                    checked={defaultSections.includes(sec.id)}
-                    onChange={() => toggleDefaultSection(sec.id)}
-                    className="rounded border-slate-300 text-blue-600 focus:ring-blue-500 h-3.5 w-3.5"
-                  />
-                  {sec.label}
-                </label>
-              ))}
-            </div>
+        <div className="pt-4 border-t border-slate-100 flex flex-col gap-3">
+          <label className="block text-xs font-semibold uppercase tracking-wider text-slate-700">
+            Domyślnie zaznaczane sekcje przy generowaniu CV:
+          </label>
+          <div className="flex flex-wrap gap-2.5">
+            {[
+              { id: "summary", label: "O mnie" },
+              { id: "skills", label: "Umiejętności" },
+              { id: "experience", label: "Doświadczenie" },
+              { id: "projects", label: "Projekty" },
+              { id: "education", label: "Edukacja" },
+              { id: "certificates", label: "Certyfikaty" },
+              { id: "clause", label: "Klauzula RODO" },
+              ...customSections.map((cs) => ({ id: cs.id, label: cs.title || "Własna" })),
+            ].map((sec) => (
+              <label
+                key={sec.id}
+                className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border text-xs font-medium cursor-pointer transition-colors ${
+                  defaultSections.includes(sec.id)
+                    ? "bg-blue-50 border-blue-300 text-blue-700"
+                    : "bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100"
+                }`}
+              >
+                <input
+                  type="checkbox"
+                  checked={defaultSections.includes(sec.id)}
+                  onChange={() => toggleDefaultSection(sec.id)}
+                  className="rounded border-slate-300 text-blue-600 focus:ring-blue-500 h-3.5 w-3.5"
+                />
+                {sec.label}
+              </label>
+            ))}
           </div>
-          <div className="self-end sm:self-auto">
-            {renderSectionSaveButton("defaults", isDefaultsDirty)}
-          </div>
+        </div>
+
+        {/* Bottom Save Action for Contact & Preferences */}
+        <div className="pt-3 border-t border-slate-100 flex justify-end">
+          {renderSectionSaveButton("contact", isContactDirty || isDefaultsDirty)}
         </div>
       </div>
 
@@ -854,7 +933,6 @@ export const KnowledgeBaseEditor: React.FC = () => {
               />
               <span className="text-xs text-slate-400 font-mono">(Summary)</span>
             </div>
-            {renderSectionSaveButton("summary", isSectionDirty("summary"))}
           </div>
           <Textarea
             value={summarySection.content}
@@ -862,6 +940,11 @@ export const KnowledgeBaseEditor: React.FC = () => {
             placeholder="Napisz krótki biogram opisujący Twoje kluczowe kompetencje, lata doświadczenia i domenę..."
             rows={4}
           />
+
+          {/* Bottom Save Action */}
+          <div className="pt-3 border-t border-slate-100 flex justify-end">
+            {renderSectionSaveButton("summary", isSectionDirty("summary"))}
+          </div>
         </div>
       )}
 
@@ -879,13 +962,6 @@ export const KnowledgeBaseEditor: React.FC = () => {
                 placeholder="Tytuł sekcji"
               />
               <span className="text-xs text-slate-400 font-mono">(Skills)</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <Button size="sm" variant="outline" onClick={addSkillCategory} className="text-xs h-8">
-                <Plus className="h-3.5 w-3.5 mr-1" />
-                Dodaj kategorię
-              </Button>
-              {renderSectionSaveButton(skillsSection.id, isSectionDirty(skillsSection.id))}
             </div>
           </div>
 
@@ -918,9 +994,9 @@ export const KnowledgeBaseEditor: React.FC = () => {
 
                 <Input
                   label="Lista umiejętności (rozdzielone przecinkami)"
-                  value={cat.skills.join(", ")}
-                  onChange={(e) => updateSkillCategoryTags(idx, e.target.value)}
-                  placeholder="np. Python, Docker, Komunikatywność, Zarządzanie czasem"
+                  value={skillTagsRaw[idx] ?? cat.skills.join(", ")}
+                  onChange={(e) => handleSkillTagsChange(idx, e.target.value)}
+                  placeholder="np. Python, Docker, Komunikatywność, C/C++, CI/CD"
                 />
 
                 <div className="flex flex-wrap gap-1.5 pt-1">
@@ -935,6 +1011,15 @@ export const KnowledgeBaseEditor: React.FC = () => {
                 </div>
               </div>
             ))}
+          </div>
+
+          {/* Bottom Actions for Skills: Add Category & Save Section */}
+          <div className="pt-3 border-t border-slate-100 flex items-center justify-between">
+            <Button size="sm" variant="outline" onClick={addSkillCategory} className="text-xs h-8">
+              <Plus className="h-3.5 w-3.5 mr-1" />
+              Dodaj kategorię
+            </Button>
+            {renderSectionSaveButton(skillsSection.id, isSectionDirty(skillsSection.id))}
           </div>
         </div>
       )}
@@ -953,13 +1038,6 @@ export const KnowledgeBaseEditor: React.FC = () => {
                 placeholder="Tytuł sekcji"
               />
               <span className="text-xs text-slate-400 font-mono">(Experience)</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <Button size="sm" variant="outline" onClick={addExperienceItem} className="text-xs h-8">
-                <Plus className="h-3.5 w-3.5 mr-1" />
-                Dodaj stanowisko
-              </Button>
-              {renderSectionSaveButton(expSection.id, isSectionDirty(expSection.id))}
             </div>
           </div>
 
@@ -1044,6 +1122,15 @@ export const KnowledgeBaseEditor: React.FC = () => {
               </div>
             ))}
           </div>
+
+          {/* Bottom Actions for Experience: Add Position & Save Section */}
+          <div className="pt-3 border-t border-slate-100 flex items-center justify-between">
+            <Button size="sm" variant="outline" onClick={addExperienceItem} className="text-xs h-8">
+              <Plus className="h-3.5 w-3.5 mr-1" />
+              Dodaj stanowisko
+            </Button>
+            {renderSectionSaveButton(expSection.id, isSectionDirty(expSection.id))}
+          </div>
         </div>
       )}
 
@@ -1061,13 +1148,6 @@ export const KnowledgeBaseEditor: React.FC = () => {
                 placeholder="Tytuł sekcji"
               />
               <span className="text-xs text-slate-400 font-mono">(Projects)</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <Button size="sm" variant="outline" onClick={addProjectItem} className="text-xs h-8">
-                <Plus className="h-3.5 w-3.5 mr-1" />
-                Dodaj projekt
-              </Button>
-              {renderSectionSaveButton(projectsSection.id, isSectionDirty(projectsSection.id))}
             </div>
           </div>
 
@@ -1145,21 +1225,21 @@ export const KnowledgeBaseEditor: React.FC = () => {
 
                 <Input
                   label="Użyte technologie (rozdzielone przecinkami)"
-                  value={proj.technologies.join(", ")}
-                  onChange={(e) =>
-                    updateProjectItem(
-                      idx,
-                      "technologies",
-                      e.target.value
-                        .split(",")
-                        .map((t) => t.trim())
-                        .filter(Boolean)
-                    )
-                  }
+                  value={projectTechsRaw[idx] ?? proj.technologies.join(", ")}
+                  onChange={(e) => handleProjectTechsChange(idx, e.target.value)}
                   placeholder="np. React, TypeScript, Vite, Tailwind CSS"
                 />
               </div>
             ))}
+          </div>
+
+          {/* Bottom Actions for Projects: Add Project & Save Section */}
+          <div className="pt-3 border-t border-slate-100 flex items-center justify-between">
+            <Button size="sm" variant="outline" onClick={addProjectItem} className="text-xs h-8">
+              <Plus className="h-3.5 w-3.5 mr-1" />
+              Dodaj projekt
+            </Button>
+            {renderSectionSaveButton(projectsSection.id, isSectionDirty(projectsSection.id))}
           </div>
         </div>
       )}
@@ -1178,13 +1258,6 @@ export const KnowledgeBaseEditor: React.FC = () => {
                 placeholder="Tytuł sekcji"
               />
               <span className="text-xs text-slate-400 font-mono">(Education)</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <Button size="sm" variant="outline" onClick={addEducationItem} className="text-xs h-8">
-                <Plus className="h-3.5 w-3.5 mr-1" />
-                Dodaj edukację
-              </Button>
-              {renderSectionSaveButton(eduSection.id, isSectionDirty(eduSection.id))}
             </div>
           </div>
 
@@ -1255,6 +1328,15 @@ export const KnowledgeBaseEditor: React.FC = () => {
               </div>
             ))}
           </div>
+
+          {/* Bottom Actions for Education: Add Entry & Save Section */}
+          <div className="pt-3 border-t border-slate-100 flex items-center justify-between">
+            <Button size="sm" variant="outline" onClick={addEducationItem} className="text-xs h-8">
+              <Plus className="h-3.5 w-3.5 mr-1" />
+              Dodaj edukację
+            </Button>
+            {renderSectionSaveButton(eduSection.id, isSectionDirty(eduSection.id))}
+          </div>
         </div>
       )}
 
@@ -1272,13 +1354,6 @@ export const KnowledgeBaseEditor: React.FC = () => {
                 placeholder="Tytuł sekcji"
               />
               <span className="text-xs text-slate-400 font-mono">(Certificates)</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <Button size="sm" variant="outline" onClick={addCertificateItem} className="text-xs h-8">
-                <Plus className="h-3.5 w-3.5 mr-1" />
-                Dodaj certyfikat
-              </Button>
-              {renderSectionSaveButton(certsSection.id, isSectionDirty(certsSection.id))}
             </div>
           </div>
 
@@ -1331,6 +1406,15 @@ export const KnowledgeBaseEditor: React.FC = () => {
               </div>
             ))}
           </div>
+
+          {/* Bottom Actions for Certificates: Add Cert & Save Section */}
+          <div className="pt-3 border-t border-slate-100 flex items-center justify-between">
+            <Button size="sm" variant="outline" onClick={addCertificateItem} className="text-xs h-8">
+              <Plus className="h-3.5 w-3.5 mr-1" />
+              Dodaj certyfikat
+            </Button>
+            {renderSectionSaveButton(certsSection.id, isSectionDirty(certsSection.id))}
+          </div>
         </div>
       )}
 
@@ -1350,17 +1434,14 @@ export const KnowledgeBaseEditor: React.FC = () => {
                   className="font-semibold text-slate-900 text-base bg-transparent border-b border-dashed border-slate-300 hover:border-blue-500 focus:border-blue-500 focus:outline-none px-1 py-0.5 w-full max-w-md"
                 />
               </div>
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => removeSection(cs.id)}
-                  className="text-slate-400 hover:text-rose-600 p-1.5 rounded transition-colors mr-1"
-                  title="Usuń sekcję"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </button>
-                {renderSectionSaveButton(cs.id, isDirty)}
-              </div>
+              <button
+                type="button"
+                onClick={() => removeSection(cs.id)}
+                className="text-slate-400 hover:text-rose-600 p-1.5 rounded transition-colors"
+                title="Usuń sekcję"
+              >
+                <Trash2 className="h-4 w-4" />
+              </button>
             </div>
 
             <Textarea
@@ -1378,6 +1459,11 @@ export const KnowledgeBaseEditor: React.FC = () => {
               placeholder="Angielski - C1 (Biegle)&#10;Niemiecki - B1 (Podstawowy)"
               rows={3}
             />
+
+            {/* Bottom Save Action for Custom Section */}
+            <div className="pt-3 border-t border-slate-100 flex justify-end">
+              {renderSectionSaveButton(cs.id, isDirty)}
+            </div>
           </div>
         );
       })}
@@ -1410,7 +1496,6 @@ export const KnowledgeBaseEditor: React.FC = () => {
               />
               <span className="text-xs text-slate-400 font-mono">(RODO / GDPR)</span>
             </div>
-            {renderSectionSaveButton(clauseSection.id, isSectionDirty(clauseSection.id))}
           </div>
           <Textarea
             value={clauseSection.content || ""}
@@ -1418,6 +1503,11 @@ export const KnowledgeBaseEditor: React.FC = () => {
             rows={3}
             placeholder="Treść klauzuli zgody na przetwarzanie danych osobowych..."
           />
+
+          {/* Bottom Save Action for Clause */}
+          <div className="pt-3 border-t border-slate-100 flex justify-end">
+            {renderSectionSaveButton(clauseSection.id, isSectionDirty(clauseSection.id))}
+          </div>
         </div>
       )}
 
