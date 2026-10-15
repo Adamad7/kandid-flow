@@ -1,20 +1,23 @@
 name: Frontend CI (Docker)
 
+# NOTE: Automatic CI is temporarily disabled during rapid development.
+# To re-enable, uncomment the 'push' and 'pull_request' sections below.
 on:
-  push:
-    branches: [ "main", "master", "develop" ]
-    paths:
-      - "frontend/**"
-      - "docker-compose*.yml"
-      - ".env.example"
-      - ".github/workflows/frontend-ci.yml"
-  pull_request:
-    branches: [ "main", "master", "develop" ]
-    paths:
-      - "frontend/**"
-      - "docker-compose*.yml"
-      - ".env.example"
-      - ".github/workflows/frontend-ci.yml"
+  workflow_dispatch:
+#   push:
+#     branches: [ "main", "master", "develop" ]
+#     paths:
+#       - "frontend/**"
+#       - "docker-compose*.yml"
+#       - ".env.example"
+#       - ".github/workflows/frontend-ci.yml"
+#   pull_request:
+#     branches: [ "main", "master", "develop" ]
+#     paths:
+#       - "frontend/**"
+#       - "docker-compose*.yml"
+#       - ".env.example"
+#       - ".github/workflows/frontend-ci.yml"
 
 jobs:
   frontend-build-check:
