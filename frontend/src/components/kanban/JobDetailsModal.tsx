@@ -12,6 +12,7 @@ import {
   Layers,
   Edit3,
   Cpu,
+  X,
 } from "lucide-react";
 import { api } from "../../lib/api";
 import type {
@@ -132,11 +133,12 @@ export const JobDetailsModal: React.FC<JobDetailsModalProps> = ({
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      maxWidth="3xl"
-      className="p-0 overflow-hidden"
+      maxWidth="4xl"
+      className="p-0 overflow-hidden w-full max-w-4xl h-[85vh] max-h-[85vh] flex flex-col"
+      contentClassName="p-0 flex flex-col flex-1 overflow-hidden h-full"
     >
       {/* Header Container */}
-      <div className="bg-slate-50 border-b border-slate-200 px-6 py-5">
+      <div className="bg-slate-50 border-b border-slate-200 px-6 py-5 shrink-0">
         <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
           <div>
             <div className="flex flex-wrap items-center gap-2 mb-1.5">
@@ -180,15 +182,16 @@ export const JobDetailsModal: React.FC<JobDetailsModalProps> = ({
           </div>
 
           <div className="flex flex-col items-end gap-2 shrink-0">
-            <div className="flex items-center gap-2">
-              <label className="text-xs text-slate-500 font-medium">Status:</label>
-              <select
-                value={job.status}
-                onChange={(e) =>
-                  handleStatusChange(e.target.value as JobStatusType)
-                }
-                className="text-xs font-medium rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-slate-800 shadow-xs focus:ring-2 focus:ring-blue-500"
-              >
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2">
+                <label className="text-xs text-slate-500 font-medium">Status:</label>
+                <select
+                  value={job.status}
+                  onChange={(e) =>
+                    handleStatusChange(e.target.value as JobStatusType)
+                  }
+                  className="text-xs font-medium rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-slate-800 shadow-xs focus:ring-2 focus:ring-blue-500"
+                >
                 <option value="inbox">Do przetworzenia</option>
                 <option value="ready">Gotowe do aplikacji</option>
                 <option value="applied">Zaaplikowano</option>
@@ -197,6 +200,15 @@ export const JobDetailsModal: React.FC<JobDetailsModalProps> = ({
                 <option value="rejected">Odrzucone</option>
               </select>
             </div>
+            <button
+              type="button"
+              onClick={onClose}
+              className="rounded-lg p-1 text-slate-400 hover:bg-slate-200/70 hover:text-slate-700 transition-colors focus:outline-none"
+              aria-label="Zamknij"
+            >
+              <X className="h-5 w-5" />
+            </button>
+          </div>
 
             {job.source_url && (
               <a
@@ -268,8 +280,8 @@ export const JobDetailsModal: React.FC<JobDetailsModalProps> = ({
       </div>
 
       {/* Navigation Tabs */}
-      <div className="border-b border-slate-200 bg-white px-6">
-        <nav className="flex space-x-6 text-sm font-medium">
+      <div className="border-b border-slate-200 bg-white px-6 shrink-0">
+        <nav className="flex space-x-6 text-sm font-medium overflow-x-auto">
           <button
             type="button"
             onClick={() => setActiveTab("structured")}
@@ -332,7 +344,7 @@ export const JobDetailsModal: React.FC<JobDetailsModalProps> = ({
       </div>
 
       {/* Tab Contents */}
-      <div className="p-6 overflow-y-auto max-h-[55vh]">
+      <div className="p-6 overflow-y-auto flex-1">
         {activeTab === "structured" && (
           <div className="space-y-6">
             {structured ? (
@@ -548,13 +560,14 @@ export const JobDetailsModal: React.FC<JobDetailsModalProps> = ({
         )}
 
         {activeTab === "notes" && (
-          <div className="space-y-4">
+          <div className="space-y-4 flex flex-col h-full">
             <Textarea
               label="Prywatne notatki o ofercie"
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               placeholder="Zapisz swoje przemyślenia, pytania do rekrutera, proponowaną stawkę lub uwagi ze spotkań..."
-              rows={6}
+              rows={8}
+              className="min-h-[180px]"
             />
             <div className="flex justify-end">
               <Button
@@ -577,7 +590,7 @@ export const JobDetailsModal: React.FC<JobDetailsModalProps> = ({
       </div>
 
       {/* Footer */}
-      <div className="border-t border-slate-200 bg-slate-50 px-6 py-4 flex items-center justify-between">
+      <div className="border-t border-slate-200 bg-slate-50 px-6 py-4 flex items-center justify-between shrink-0">
         <div className="flex items-center gap-2">
           <Button
             size="sm"

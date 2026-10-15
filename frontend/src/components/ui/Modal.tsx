@@ -9,6 +9,7 @@ export interface ModalProps {
   description?: string;
   children: React.ReactNode;
   className?: string;
+  contentClassName?: string;
   maxWidth?: "sm" | "md" | "lg" | "xl" | "2xl" | "3xl" | "4xl" | "5xl" | "full";
 }
 
@@ -19,6 +20,7 @@ export const Modal: React.FC<ModalProps> = ({
   description,
   children,
   className,
+  contentClassName,
   maxWidth = "lg",
 }) => {
   useEffect(() => {
@@ -91,7 +93,7 @@ export const Modal: React.FC<ModalProps> = ({
           </div>
         )}
 
-        <div className="overflow-y-auto p-6 flex-1">{children}</div>
+        <div className={cn("overflow-y-auto p-6 flex-1", contentClassName)}>{children}</div>
       </div>
     </div>
   );
