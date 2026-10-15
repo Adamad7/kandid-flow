@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "KandidFlow — Asystent Ofert Pracy",
-  "version": "1.3.0",
+  "version": "1.3.1",
   "description": "Automatyczny kolektor ofert pracy dla platformy KandidFlow z Just Join IT, Pracuj.pl, No Fluff Jobs, LinkedIn i stron karier.",
   "icons": {
     "16": "icons/icon16.png",

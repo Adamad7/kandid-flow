@@ -546,28 +546,97 @@
    * @returns {string | null} Normalized YYYY-MM-DD date string, or null
    */
   function extractDeadline(doc, ldData, extraData) {
-    // 1. JSON-LD validThrough or expires
-    if (ldData) {
-      if (ldData.validThrough) {
-        const norm = normalizeDateToIso(ldData.validThrough);
-        if (norm) return norm;
-      }
-      if (ldData.expires) {
-        const norm = normalizeDateToIso(ldData.expires);
-        if (norm) return norm;
+    if (!doc) return null;
+
+    // 1. Check targeted DOM elements first (Pracuj, JustJoin badges/countdowns, specific data-test attributes)
+    if (doc.querySelector) {
+      const specificSelectors = [
+        '[data-test="text-expirationDate"]',
+        '[data-test-id="offer-expiration-date"]',
+        '[data-test-id*="deadline"]',
+        '[data-test-id*="expiration"]',
+        'span[class*="labelExtraSmall"]',
+        'span[class*="MuiTypography-labelExtraSmall"]',
+        'time[itemprop="validThrough"]',
+        'meta[property="og:expiration_time"]',
+        'meta[name="expires"]',
+      ];
+      for (const sel of specificSelectors) {
+        const el = doc.querySelector(sel);
+        if (el) {
+          const rawVal = el.getAttribute("content") || el.getAttribute("datetime") || el.textContent || "";
+          // Check for date in text: (until 18.10.2026) or 18.10.2026
+          const dMatch =
+            rawVal.match(
+              /(?:\(until|\(do|until|do|aplikuj do|ważna do|do dnia)[:\s]+([0-9]{4}-[0-9]{2}-[0-9]{2}|[0-9]{1,2}[./-][0-9]{1,2}[./-][0-9]{4})/i
+            ) || rawVal.match(/\((?:until|do)\s*([0-9]{1,2}[./-][0-9]{1,2}[./-][0-9]{4})\)/i);
+
+          if (dMatch && dMatch[1]) {
+            const norm = normalizeDateToIso(dMatch[1]);
+            if (norm) return norm;
+          }
+
+          const norm = normalizeDateToIso(rawVal);
+          if (norm) return norm;
+        }
       }
     }
 
-    // 2. Extra data attributes (Pracuj Next.js or others)
+    // 2. Visible text regex patterns on doc.body
+    const textContent = doc.body ? (doc.body.innerText || doc.body.textContent || "") : "";
+    if (textContent) {
+      // Direct parenthetical: (until 18.10.2026) or (do 18.10.2026)
+      const parenMatch = textContent.match(
+        /\((?:until|do)\s*([0-9]{1,2}[./-][0-9]{1,2}[./-][0-9]{4}|[0-9]{4}-[0-9]{2}-[0-9]{2})\)/i
+      );
+      if (parenMatch && parenMatch[1]) {
+        const norm = normalizeDateToIso(parenMatch[1]);
+        if (norm) return norm;
+      }
+
+      // "aplikuj do 2026-11-20", "ważna do: 20.11.2026", "until 18.10.2026", "do 18.10.2026"
+      const dateMatch = textContent.match(
+        /(?:\(until|\(do|until|do|aplikuj do|ważna do|termin składania|termin zgłoszeń|termin aplikacji|deadline|valid until|expires)[:\s]+([0-9]{4}-[0-9]{2}-[0-9]{2}|[0-9]{1,2}[./-][0-9]{1,2}[./-][0-9]{4})/i
+      );
+      if (dateMatch && dateMatch[1]) {
+        const norm = normalizeDateToIso(dateMatch[1]);
+        if (norm) return norm;
+      }
+
+      // Verbal date: "ważna do 20 listopada 2026", "aplikuj do 18 października 2026"
+      const verbalMatch = textContent.match(
+        /(?:aplikuj do|ważna do|do dnia|do)[:\s]+(\d{1,2}\s+[a-ząćęłńóśźż]+\s+\d{4})/i
+      );
+      if (verbalMatch && verbalMatch[1]) {
+        const norm = normalizeDateToIso(verbalMatch[1]);
+        if (norm) return norm;
+      }
+
+      // Relative: "3 day left", "3 days left", "pozostało: 5 dni", "wygasa za 3 dni"
+      const relativeMatch = textContent.match(
+        /(?:do końca|wygasa za|pozostało|left)[:\s]+(\d+)\s*(?:dni|dzień|days|day)|(\d+)\s*(?:dni|dzień|days|day)\s*left/i
+      );
+      const relDays = relativeMatch ? relativeMatch[1] || relativeMatch[2] : null;
+      if (relDays) {
+        const days = parseInt(relDays, 10);
+        if (!isNaN(days) && days > 0 && days < 365) {
+          const target = new Date(Date.now() + days * 24 * 60 * 60 * 1000);
+          const y = target.getFullYear();
+          const m = String(target.getMonth() + 1).padStart(2, "0");
+          const d = String(target.getDate()).padStart(2, "0");
+          return `${y}-${m}-${d}`;
+        }
+      }
+    }
+
+    // 3. Extra portal data attributes (Pracuj Next.js or others)
     if (extraData && typeof extraData === "object") {
       const candidates = [
         extraData.expirationDate,
         extraData.dateTo,
-        extraData.validThrough,
         extraData.offerExpirationDate,
         extraData.attributes && extraData.attributes.expirationDate,
         extraData.attributes && extraData.attributes.dateTo,
-        extraData.attributes && extraData.attributes.validThrough,
       ];
       for (const val of candidates) {
         if (val) {
@@ -577,59 +646,15 @@
       }
     }
 
-    if (!doc || !doc.querySelector) return null;
-
-    // 3. Meta tags & schema elements
-    const metaSelectors = [
-      'meta[property="og:expiration_time"]',
-      'meta[name="expires"]',
-      'meta[itemprop="validThrough"]',
-      'time[itemprop="validThrough"]',
-      '[data-test="text-expirationDate"]',
-      '[data-test-id="offer-expiration-date"]',
-      'time[datetime]',
-    ];
-    for (const sel of metaSelectors) {
-      const el = doc.querySelector(sel);
-      if (el) {
-        const val = el.getAttribute("content") || el.getAttribute("datetime") || el.textContent;
-        const norm = normalizeDateToIso(val);
+    // 4. Fallback: JSON-LD validThrough or expires (used only when no explicit recruiter deadline is present on the page)
+    if (ldData) {
+      if (ldData.validThrough) {
+        const norm = normalizeDateToIso(ldData.validThrough);
         if (norm) return norm;
       }
-    }
-
-    // 4. Text regex patterns
-    const textContent = doc.body ? doc.body.innerText : "";
-    if (textContent) {
-      // "aplikuj do 2026-11-20" or "ważna do: 20.11.2026"
-      const dateMatch = textContent.match(
-        /(?:aplikuj do|ważna do|termin składania|termin zgłoszeń|termin aplikacji|deadline|valid until|expires)[:\s]+([0-9]{4}-[0-9]{2}-[0-9]{2}|[0-9]{1,2}[./-][0-9]{1,2}[./-][0-9]{4})/i
-      );
-      if (dateMatch && dateMatch[1]) {
-        const norm = normalizeDateToIso(dateMatch[1]);
+      if (ldData.expires) {
+        const norm = normalizeDateToIso(ldData.expires);
         if (norm) return norm;
-      }
-
-      // "ważna do 20 listopada 2026"
-      const verbalMatch = textContent.match(
-        /(?:aplikuj do|ważna do|do dnia)[:\s]+(\d{1,2}\s+[a-ząćęłńóśźż]+\s+\d{4})/i
-      );
-      if (verbalMatch && verbalMatch[1]) {
-        const norm = normalizeDateToIso(verbalMatch[1]);
-        if (norm) return norm;
-      }
-
-      // Relative: "do końca: 5 dni" -> calculate date
-      const relativeMatch = textContent.match(/(?:do końca|wygasa za|pozostało)[:\s]+(\d+)\s*dni/i);
-      if (relativeMatch && relativeMatch[1]) {
-        const days = parseInt(relativeMatch[1], 10);
-        if (!isNaN(days) && days > 0 && days < 365) {
-          const target = new Date(Date.now() + days * 24 * 60 * 60 * 1000);
-          const y = target.getFullYear();
-          const m = String(target.getMonth() + 1).padStart(2, "0");
-          const d = String(target.getDate()).padStart(2, "0");
-          return `${y}-${m}-${d}`;
-        }
       }
     }
 

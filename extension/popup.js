@@ -114,7 +114,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   }
 
-  const CURRENT_EXTRACTOR_VERSION = "1.3.0";
+  const CURRENT_EXTRACTOR_VERSION = "1.3.1";
 
   /**
    * Injects content scripts into tab if not already present or outdated.
