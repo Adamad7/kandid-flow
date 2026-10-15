@@ -101,7 +101,7 @@ class SkillsSectionBlock(BaseModel):
 
     id: str = Field(default="skills", description="Section identifier")
     type: Literal["skills"] = Field(default="skills", description="Section discriminator")
-    title: str = Field(default="Umiejętności techniczne", description="Header title")
+    title: str = Field(default="Umiejętności", description="Header title")
     items: list[SkillCategoryItem] = Field(
         default_factory=list, description="List of skill categories"
     )

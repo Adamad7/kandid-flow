@@ -79,7 +79,7 @@ export const PresetsManager: React.FC = () => {
       {
         id: "skills",
         type: "skills",
-        title: "Umiejętności techniczne",
+        title: "Umiejętności",
         items: [
           { category: "Języki i Frameworki", skills: ["Flutter", "Dart", "TypeScript"] },
           { category: "Architektura i Narzędzia", skills: ["Bloc", "Git", "CI/CD", "Docker"] },

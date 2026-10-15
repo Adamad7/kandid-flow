@@ -82,7 +82,7 @@ async def seed() -> None:
                 {
                     "id": "skills",
                     "type": "skills",
-                    "title": "Umiejętności techniczne",
+                    "title": "Umiejętności",
                     "items": [
                         {
                             "category": "Platform & Cloud",
@@ -251,7 +251,7 @@ async def seed() -> None:
                     {
                         "id": "skills",
                         "type": "skills",
-                        "title": "Umiejętności techniczne",
+                        "title": "Umiejętności",
                         "items": [
                             {
                                 "category": "DevOps & Cloud",
@@ -338,7 +338,7 @@ async def seed() -> None:
                     {
                         "id": "skills",
                         "type": "skills",
-                        "title": "Umiejętności techniczne",
+                        "title": "Umiejętności",
                         "items": [
                             {
                                 "category": "Mobile & Frontend",

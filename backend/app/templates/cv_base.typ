@@ -24,7 +24,7 @@
 #let dict = (
   pl: (
     summary: "O mnie",
-    skills: "Umiejętności techniczne",
+    skills: "Umiejętności",
     experience: "Doświadczenie zawodowe",
     projects: "Projekty",
     education: "Edukacja",
