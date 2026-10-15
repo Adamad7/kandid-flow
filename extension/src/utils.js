@@ -170,10 +170,13 @@
         return `${parsed.protocol}//${parsed.hostname}${cleanPath}`;
       }
 
-      // Just Join IT: offers path
+      // Just Join IT: offers path (normalize legacy /oferta-pracy/ to /job-offer/)
       if (host.includes("justjoin.it")) {
-        // e.g. /offers/company-role-slug, /job-offer/company-role-slug, /oferta-pracy/company-role-slug
-        const cleanPath = parsed.pathname.replace(/\/+$/, "");
+        // e.g. /job-offer/company-role-slug, legacy /oferta-pracy/company-role-slug
+        let cleanPath = parsed.pathname.replace(/\/+$/, "");
+        if (cleanPath.startsWith("/oferta-pracy/")) {
+          cleanPath = cleanPath.replace(/^\/oferta-pracy\//, "/job-offer/");
+        }
         return `${parsed.protocol}//${parsed.hostname}${cleanPath}`;
       }
 

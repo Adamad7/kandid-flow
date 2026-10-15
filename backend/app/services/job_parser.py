@@ -59,6 +59,11 @@ def canonicalize_url(url: str) -> str:
     if len(path) > 1 and path.endswith("/"):
         path = path.rstrip("/")
 
+    # Just Join IT: normalize /oferta-pracy/ to /job-offer/
+    netloc = parsed.netloc.lower()
+    if "justjoin.it" in netloc and path.startswith("/oferta-pracy/"):
+        path = "/job-offer/" + path[len("/oferta-pracy/"):]
+
     # Reconstruct without fragment and with cleaned query
     normalized = urlunparse(
         (

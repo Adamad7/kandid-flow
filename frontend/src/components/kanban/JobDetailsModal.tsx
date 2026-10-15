@@ -23,7 +23,7 @@ import {
   PORTAL_LABELS,
   WORK_MODEL_LABELS,
 } from "../../lib/constants";
-import { formatDeadline, formatSalary } from "../../lib/formatters";
+import { formatDeadline, formatSalary, normalizeJobOfferUrl } from "../../lib/formatters";
 import { RecruitmentTimeline } from "../events/RecruitmentTimeline";
 import { Button } from "../ui/Button";
 import { Badge } from "../ui/Badge";
@@ -200,7 +200,7 @@ export const JobDetailsModal: React.FC<JobDetailsModalProps> = ({
 
             {job.source_url && (
               <a
-                href={job.source_url}
+                href={normalizeJobOfferUrl(job.source_url)}
                 target="_blank"
                 rel="noreferrer"
                 className="inline-flex items-center gap-1 text-xs text-blue-600 hover:text-blue-800 hover:underline"
