@@ -9,6 +9,8 @@ import {
   Users,
   Award,
   XCircle,
+  LayoutDashboard,
+  List,
 } from "lucide-react";
 import { api } from "../../lib/api";
 import type {
@@ -24,6 +26,7 @@ interface KanbanBoardProps {
   onSelectJob: (job: JobOfferRead) => void;
   onGenerateCV: (job: JobOfferRead) => void;
   refreshTrigger?: number;
+  onSwitchView?: (view: "kanban" | "list") => void;
 }
 
 interface ColumnDef {
@@ -83,6 +86,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
   onSelectJob,
   onGenerateCV,
   refreshTrigger,
+  onSwitchView,
 }) => {
   const [jobs, setJobs] = useState<JobOfferRead[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -254,6 +258,29 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
           >
             <RefreshCw className="h-3.5 w-3.5" />
           </Button>
+
+          {onSwitchView && (
+            <div className="flex items-center border border-slate-200 rounded-lg p-0.5 bg-slate-50 ml-1">
+              <button
+                type="button"
+                onClick={() => onSwitchView("kanban")}
+                className="flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-semibold bg-white text-slate-900 shadow-xs"
+                title="Widok tablicy Kanban"
+              >
+                <LayoutDashboard className="h-3.5 w-3.5 text-blue-600" />
+                <span className="hidden sm:inline">Tablica</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => onSwitchView("list")}
+                className="flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-semibold text-slate-600 hover:text-slate-900 transition-colors"
+                title="Widok listy ofert"
+              >
+                <List className="h-3.5 w-3.5" />
+                <span className="hidden sm:inline">Lista</span>
+              </button>
+            </div>
+          )}
         </div>
       </div>
 

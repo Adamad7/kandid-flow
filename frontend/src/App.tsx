@@ -5,6 +5,7 @@ import {
   Layers,
   Settings,
   Briefcase,
+  List,
 } from "lucide-react";
 import type {
   CVVersionRead,
@@ -18,9 +19,10 @@ import { CVEditor } from "./components/cv-editor/CVEditor";
 import { KnowledgeBaseEditor } from "./components/profile/KnowledgeBaseEditor";
 import { PresetsManager } from "./components/presets/PresetsManager";
 import { SettingsView } from "./components/settings/SettingsView";
+import { JobListView } from "./components/jobs/JobListView";
 import { api } from "./lib/api";
 
-type ActiveTab = "kanban" | "profile" | "presets" | "settings";
+type ActiveTab = "kanban" | "list" | "profile" | "presets" | "settings";
 
 export const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState<ActiveTab>("kanban");
@@ -146,6 +148,19 @@ export const App: React.FC = () => {
 
             <button
               type="button"
+              onClick={() => setActiveTab("list")}
+              className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold transition-colors ${
+                activeTab === "list"
+                  ? "bg-slate-900 text-white shadow-xs"
+                  : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
+              }`}
+            >
+              <List className="h-4 w-4" />
+              <span className="hidden sm:inline">Lista ofert</span>
+            </button>
+
+            <button
+              type="button"
               onClick={() => setActiveTab("profile")}
               className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold transition-colors ${
                 activeTab === "profile"
@@ -198,6 +213,22 @@ export const App: React.FC = () => {
               onSelectJob={handleSelectJob}
               onGenerateCV={handleOpenCVGenerator}
               refreshTrigger={refreshTrigger}
+              onSwitchView={(v) => setActiveTab(v)}
+            />
+          </div>
+        )}
+
+        {activeTab === "list" && (
+          <div className="space-y-6">
+            {/* Upcoming Interviews / Recruitment Events Widget */}
+            <UpcomingEventsWidget onSelectJob={handleSelectJobById} />
+
+            {/* List View */}
+            <JobListView
+              onSelectJob={handleSelectJob}
+              onGenerateCV={handleOpenCVGenerator}
+              refreshTrigger={refreshTrigger}
+              onSwitchView={(v) => setActiveTab(v)}
             />
           </div>
         )}
