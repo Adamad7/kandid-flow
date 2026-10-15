@@ -203,41 +203,45 @@ export const App: React.FC = () => {
 
       {/* Main App Container */}
       <main className="flex-1 max-w-[1800px] mx-auto w-full px-4 sm:px-6 py-6">
-        {activeTab === "kanban" && (
-          <div className="space-y-6">
-            {/* Upcoming Interviews / Recruitment Events Widget */}
-            <UpcomingEventsWidget onSelectJob={handleSelectJobById} />
+        {/* Upcoming Interviews / Recruitment Events Widget (shared between Kanban and List views) */}
+        <div
+          className={
+            activeTab === "kanban" || activeTab === "list" ? "mb-6" : "hidden"
+          }
+        >
+          <UpcomingEventsWidget onSelectJob={handleSelectJobById} />
+        </div>
 
-            {/* Kanban Pipeline Board */}
-            <KanbanBoard
-              onSelectJob={handleSelectJob}
-              onGenerateCV={handleOpenCVGenerator}
-              refreshTrigger={refreshTrigger}
-              onSwitchView={(v) => setActiveTab(v)}
-            />
-          </div>
-        )}
+        {/* Tab Views */}
+        <div className={activeTab === "kanban" ? "block" : "hidden"}>
+          <KanbanBoard
+            onSelectJob={handleSelectJob}
+            onGenerateCV={handleOpenCVGenerator}
+            refreshTrigger={refreshTrigger}
+            onSwitchView={(v) => setActiveTab(v)}
+          />
+        </div>
 
-        {activeTab === "list" && (
-          <div className="space-y-6">
-            {/* Upcoming Interviews / Recruitment Events Widget */}
-            <UpcomingEventsWidget onSelectJob={handleSelectJobById} />
+        <div className={activeTab === "list" ? "block" : "hidden"}>
+          <JobListView
+            onSelectJob={handleSelectJob}
+            onGenerateCV={handleOpenCVGenerator}
+            refreshTrigger={refreshTrigger}
+            onSwitchView={(v) => setActiveTab(v)}
+          />
+        </div>
 
-            {/* List View */}
-            <JobListView
-              onSelectJob={handleSelectJob}
-              onGenerateCV={handleOpenCVGenerator}
-              refreshTrigger={refreshTrigger}
-              onSwitchView={(v) => setActiveTab(v)}
-            />
-          </div>
-        )}
+        <div className={activeTab === "profile" ? "block" : "hidden"}>
+          <KnowledgeBaseEditor />
+        </div>
 
-        {activeTab === "profile" && <KnowledgeBaseEditor />}
+        <div className={activeTab === "presets" ? "block" : "hidden"}>
+          <PresetsManager />
+        </div>
 
-        {activeTab === "presets" && <PresetsManager />}
-
-        {activeTab === "settings" && <SettingsView />}
+        <div className={activeTab === "settings" ? "block" : "hidden"}>
+          <SettingsView />
+        </div>
       </main>
 
       {/* Job Details Modal */}
