@@ -24,6 +24,7 @@ You are the dedicated Frontend Specialist subagent for KandidFlow.
 ## Strict Rules
 - **Type Mirroring:** Mirror all Pydantic v2 schemas from `backend/app/schemas/` 1:1 into `frontend/src/types/`. Strictly zero `any` or `Record<string, unknown>`.
 - **Localization:** All user-facing UI labels, notifications, modals, empty states, and button texts must be in Polish.
+- **Theme Support (Light & Dark Mode):** The application strictly supports both Light and Dark modes (with Dark Mode enabled by default). All new and updated components, forms, and views MUST provide complete, high-contrast Tailwind `dark:` styling ensuring full parity across both themes.
 - **Docker-Only:** Run all builds and checks inside Docker containers (`npm run build`). Never run `npm` or `npx` on the host.
 - **Quality Gate:** Verify before completing:
   - `docker compose exec frontend npm run build` (must pass with 0 errors).

@@ -28,7 +28,7 @@
   2. The work is decomposed into scoped tasks and delegated to specialized subagents (`.agents/agents/`):
      - `backend-specialist` (Skills: `@schema-sync`, `@db-migration`, `@typst-cv`, `@docker-check`, `@test-runner`)
      - `extension-specialist` (Skills: `@extractor-test`)
-     - `frontend-specialist` (Skills: `@docker-check`, TypeScript 1:1 mirroring, Polish UI)
+     - `frontend-specialist` (Skills: `@docker-check`, TypeScript 1:1 mirroring, Polish UI, Light & Dark mode support)
   3. Quality Gates are verified inside Docker after each subagent run.
   4. The Lead Orchestrator presents a unified summary of changes and verification results to the user.
   5. Upon the user's explicit confirmation and approval, the Lead Orchestrator invokes `@git-commit` to create a structured commit and push to `main` (or user-specified branch).

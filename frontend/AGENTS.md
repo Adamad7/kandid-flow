@@ -8,6 +8,7 @@
 - **Stack:** React 18/19, Vite, TypeScript, Tailwind CSS, shadcn/ui.
 - **Strict Type Mirroring:** Every interface in `frontend/src/types/` MUST mirror `backend/app/schemas/` 1:1. Using `any` or `Record<string, unknown>` is strictly forbidden.
 - **Localization:** All user-facing labels, buttons, empty states, and notifications MUST be written in Polish.
+- **Theme Support (Light & Dark Mode):** The application strictly supports both Light and Dark modes (with Dark Mode enabled by default via `useTheme`). All new and updated UI components, dialogs, inputs, and views MUST provide complete, high-contrast Tailwind `dark:` variant styling, ensuring visual harmony and zero clipping or illegible text across both themes.
 - **Core Views & Features:**
   1. **Kanban & Job Queue:** Filtering (work model, deadlines, salary), parsing status indicators (`parsing` spinner, `failed_parsing` retry trigger), and "Upcoming Interviews" widget.
   2. **Job Details & Recruitment Timeline:** Full CRUD for `recruitment_events`.
