@@ -14,7 +14,21 @@
 })(typeof self !== "undefined" ? self : this, function () {
   "use strict";
 
-  const VERSION = "1.3.1";
+  const VERSION = "1.3.2";
+
+  const COMPANY_BLACKLIST_REGEX =
+    /^(o nas|kariera|o nas i kariera|about us|career|zobacz profil firmy|opis|opis stanowiska|o firmie|tech stack|lokalizacja|wymagania|just join it|justjoin)$/i;
+
+  function isBlacklistedCompany(name) {
+    if (!name || typeof name !== "string") return true;
+    const trimmed = name.trim();
+    if (!trimmed) return true;
+    const lower = trimmed.toLowerCase();
+    if (lower.includes("just-join-it") || lower.includes("o nas i kariera")) {
+      return true;
+    }
+    return COMPANY_BLACKLIST_REGEX.test(trimmed);
+  }
 
   function extractJustJoin() {
     const utils = (window.KandidFlow && window.KandidFlow.utils) || {};
@@ -53,32 +67,59 @@
 
     // 2. Company Name
     let company = null;
-    const companyCandidates = [
-      '[data-test-id="company-name"]',
-      'h2[class*="company-name"]',
-      'a[href*="/brands/story/"] h2',
-      'a[href*="/brands/story/"]',
-      'a.company_all_offers_link',
-      'h2',
-      'a[href*="/companies/"]',
-      'div[class*="company-name"]',
-    ];
-    for (const sel of companyCandidates) {
-      const el = document.querySelector(sel);
-      if (el && el.textContent.trim()) {
-        const text = utils.cleanText(el.textContent);
-        // Exclude generic section titles if h2 matched something like "Opis stanowiska"
-        if (text && !/^(opis|o firmie|tech stack|lokalizacja|wymagania)$/i.test(text)) {
-          // If text starts with "Praca ", strip it
-          company = text.replace(/^Praca\s+/i, "").trim();
-          matchedSelectors.push(sel);
-          break;
+
+    // 2.1 Check JSON-LD (ldData.hiringOrganization) first
+    if (ldData && ldData.hiringOrganization) {
+      const org = ldData.hiringOrganization;
+      const orgName = typeof org === "string" ? org : (org && org.name ? org.name : null);
+      if (orgName) {
+        const cleanedOrg = utils.cleanText ? utils.cleanText(orgName) : orgName.trim();
+        const candidate = cleanedOrg.replace(/^Praca\s+/i, "").trim();
+        if (candidate && !isBlacklistedCompany(candidate)) {
+          company = candidate;
+          matchedSelectors.push('script[type="application/ld+json"].hiringOrganization');
         }
       }
     }
-    if (!company && ldData && ldData.hiringOrganization) {
-      const org = ldData.hiringOrganization;
-      company = utils.cleanText(typeof org === "string" ? org : org.name);
+
+    // 2.2 Refactor DOM companyCandidates and logic
+    if (!company) {
+      const companyCandidates = [
+        '[data-test-id="company-name"]',
+        'h2[class*="company-name"]',
+        'a.company_all_offers_link',
+        'a[href*="/brands/story/"]:not([href*="just-join-it"]) h2',
+        'a[href*="/brands/story/"]:not([href*="just-join-it"])',
+        'h2',
+        'a[href*="/companies/"]',
+        'div[class*="company-name"]',
+      ];
+      for (const sel of companyCandidates) {
+        const el = document.querySelector(sel);
+        if (el && el.textContent.trim()) {
+          const rawText = utils.cleanText ? utils.cleanText(el.textContent) : el.textContent.trim();
+          const candidate = rawText.replace(/^Praca\s+/i, "").trim();
+          if (candidate && !isBlacklistedCompany(candidate)) {
+            company = candidate;
+            matchedSelectors.push(sel);
+            break;
+          }
+        }
+      }
+    }
+
+    // 2.3 Fallback to document.title
+    if (!company && document.title) {
+      const titleParts = document.title.split(" - ");
+      if (titleParts.length > 1) {
+        const titleCandidate = titleParts.slice(1).join(" - ");
+        const cleanedTitle = utils.cleanText ? utils.cleanText(titleCandidate) : titleCandidate.trim();
+        const candidate = cleanedTitle.replace(/^Praca\s+/i, "").trim();
+        if (candidate && !isBlacklistedCompany(candidate)) {
+          company = candidate;
+          matchedSelectors.push("document.title.company");
+        }
+      }
     }
 
     // 3. Salary

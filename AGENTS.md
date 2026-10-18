@@ -2,7 +2,7 @@
 
 ## 1. Inviolable Rules (Złote Zasady)
 
-1. **Architecture & Specs Reference:** Before modifying database models, API contracts, or system architecture, always inspect `@SPECIFICATION.md` and generate an **Implementation Plan** artifact for review.
+1. **Architecture & Plan Approval Gate:** Before modifying code, database models, API contracts, or system architecture, always inspect `@SPECIFICATION.md` and generate an **Implementation Plan** artifact for review (with `RequestFeedback: true`). The Lead Orchestrator **MUST STOP** calling tools and await explicit user confirmation. Spawning subagents, modifying files, or executing tasks without the user's prior approval of the plan is **STRICTLY FORBIDDEN**.
 2. **Docker-Only Execution (NEVER Run on Host):**
    - **STRICTLY FORBIDDEN on host:** `pip`, `uv`, `poetry`, `npm`, `npx`, `ruff`, `tsc`, `alembic`, or running dev servers directly on the host machine.
    - All runtime environments, dependencies, database migrations, linters, and build steps MUST execute inside Docker containers via `docker compose exec <service> <command>` or `docker compose run --rm <service> <command>`.
@@ -23,12 +23,17 @@
 ## 3. Interaction & Subagent Orchestration Workflow
 - **Single Point of Contact:** The user interacts exclusively with the **Lead Orchestrator** in the chat.
 - **Project Status & Diagnostics:** The Lead Orchestrator inspects `@SPECIFICATION.md`, git logs, and Docker container health to answer project status questions.
-- **Feature Requests & Bug Fixes:**
-  1. The Lead Orchestrator performs impact analysis and generates an **Implementation Plan** artifact.
-  2. The work is decomposed into scoped tasks and delegated to specialized subagents (`.agents/agents/`):
-     - `backend-specialist` (Skills: `@schema-sync`, `@db-migration`, `@typst-cv`, `@docker-check`, `@test-runner`)
-     - `extension-specialist` (Skills: `@extractor-test`)
-     - `frontend-specialist` (Skills: `@docker-check`, TypeScript 1:1 mirroring, Polish UI, Light & Dark mode support)
-  3. Quality Gates are verified inside Docker after each subagent run.
-  4. The Lead Orchestrator presents a unified summary of changes and verification results to the user.
-  5. Upon the user's explicit confirmation and approval, the Lead Orchestrator invokes `@git-commit` to create a structured commit and push to `main` (or user-specified branch).
+- **Feature Requests & Bug Fixes (Three-Phase Workflow):**
+  - **Phase 1: Planning & Approval Gate (Mandatory Stop)**
+    1. The Lead Orchestrator performs impact analysis against `@SPECIFICATION.md` and generates an **Implementation Plan** artifact (with `RequestFeedback: true`).
+    2. The Lead Orchestrator presents the plan to the user, asks for approval, and **STOPS calling tools**. No subagents or modifications may run until the user confirms.
+  - **Phase 2: Execution & Subagent Delegation**
+    1. Once the user approves the plan, the Lead Orchestrator decomposes tasks and delegates them to specialized subagents (`.agents/agents/`):
+       - `backend-specialist` (Skills: `@schema-sync`, `@db-migration`, `@typst-cv`, `@docker-check`, `@test-runner`)
+       - `extension-specialist` (Skills: `@extractor-test`)
+       - `frontend-specialist` (Skills: `@docker-check`, TypeScript 1:1 mirroring, Polish UI, Light & Dark mode support)
+    2. Quality Gates are verified inside Docker after each subagent run.
+  - **Phase 3: Review & Git Release Gate**
+    1. The Lead Orchestrator presents a unified summary of changes and verification results to the user.
+    2. The Lead Orchestrator explicitly asks the user whether to commit and push changes.
+    3. Upon the user's explicit confirmation and approval, the Lead Orchestrator invokes `@git-commit` to create a structured commit and push to `main` (or user-specified branch).
