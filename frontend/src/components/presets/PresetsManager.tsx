@@ -230,12 +230,12 @@ export const PresetsManager: React.FC = () => {
   return (
     <div className="space-y-6 max-w-6xl mx-auto pb-12">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-6 rounded-xl border border-slate-200 shadow-sm dark:border-slate-800 dark:bg-slate-900">
         <div>
-          <h2 className="text-xl font-bold text-slate-900">
+          <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100">
             Szablony bazowe CV (Archetypy ról)
           </h2>
-          <p className="text-xs text-slate-500 mt-1">
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
             Zdefiniuj gotowe profile stanowiskowe (np. Flutter Developer, DevOps, Fullstack) do natychmiastowego generowania i dopasowywania CV ze split-view podglądu Typst
           </p>
         </div>
@@ -248,16 +248,16 @@ export const PresetsManager: React.FC = () => {
 
       {/* Grid of Presets */}
       {isLoading ? (
-        <div className="py-12 text-center text-sm text-slate-400 animate-pulse">
+        <div className="py-12 text-center text-sm text-slate-400 dark:text-slate-500 animate-pulse">
           Ładowanie szablonów bazowych...
         </div>
       ) : presets.length === 0 ? (
-        <div className="p-12 text-center bg-white rounded-xl border border-dashed border-slate-300">
-          <Layers className="h-10 w-10 text-slate-300 mx-auto mb-3" />
-          <h3 className="text-sm font-semibold text-slate-800">
+        <div className="p-12 text-center bg-white rounded-xl border border-dashed border-slate-300 dark:border-slate-800 dark:bg-slate-900">
+          <Layers className="h-10 w-10 text-slate-300 dark:text-slate-600 mx-auto mb-3" />
+          <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-200">
             Brak szablonów bazowych
           </h3>
-          <p className="text-xs text-slate-500 max-w-sm mx-auto mt-1 mb-4">
+          <p className="text-xs text-slate-500 dark:text-slate-400 max-w-sm mx-auto mt-1 mb-4">
             Stwórz pierwszy szablon stanowiskowy, aby AI mogło sprofilować Twoje CV bezpośrednio pod konkretne domeny technologiczne.
           </p>
           <Button variant="primary" onClick={openCreateModal}>
@@ -277,11 +277,11 @@ export const PresetsManager: React.FC = () => {
             return (
               <div
                 key={p.id}
-                className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between"
+                className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between dark:border-slate-800 dark:bg-slate-900"
               >
                 <div>
                   <div className="flex items-start justify-between gap-2 mb-2">
-                    <h3 className="font-bold text-slate-900 text-base line-clamp-1">
+                    <h3 className="font-bold text-slate-900 dark:text-slate-100 text-base line-clamp-1">
                       {p.title}
                     </h3>
                     <Badge variant={p.language === "pl" ? "default" : "secondary"}>
@@ -289,7 +289,7 @@ export const PresetsManager: React.FC = () => {
                     </Badge>
                   </div>
 
-                  <p className="text-xs text-slate-500 mb-4">
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">
                     Zmodyfikowano: {new Date(p.updated_at).toLocaleDateString("pl-PL")}
                   </p>
 
@@ -298,13 +298,13 @@ export const PresetsManager: React.FC = () => {
                     {sections.slice(0, 4).map((s, idx) => (
                       <span
                         key={idx}
-                        className="rounded bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-600 border border-slate-200"
+                        className="rounded bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-600 border border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700"
                       >
                         {s.title || s.type}
                       </span>
                     ))}
                     {sectionCount > 4 && (
-                      <span className="text-[11px] text-slate-400 self-center">
+                      <span className="text-[11px] text-slate-400 dark:text-slate-500 self-center">
                         +{sectionCount - 4}
                       </span>
                     )}
@@ -312,7 +312,7 @@ export const PresetsManager: React.FC = () => {
                 </div>
 
                 {/* Actions */}
-                <div className="pt-4 mt-4 border-t border-slate-100 flex items-center justify-between gap-2">
+                <div className="pt-4 mt-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-2">
                   <Button
                     size="sm"
                     variant="primary"
@@ -336,7 +336,7 @@ export const PresetsManager: React.FC = () => {
                   <button
                     type="button"
                     onClick={() => handleDeletePreset(p)}
-                    className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
+                    className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:text-slate-500 dark:hover:text-rose-400 dark:hover:bg-rose-950/50 rounded-lg transition-colors"
                     title="Usuń szablon"
                   >
                     <Trash2 className="h-4 w-4" />
@@ -378,7 +378,7 @@ export const PresetsManager: React.FC = () => {
 
           <div>
             <div className="flex items-center justify-between mb-2">
-              <label className="text-xs font-semibold uppercase tracking-wider text-slate-700">
+              <label className="text-xs font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-300">
                 Początkowe sekcje ({formSections.length})
               </label>
             </div>
@@ -387,10 +387,10 @@ export const PresetsManager: React.FC = () => {
               {formSections.map((sec, idx) => (
                 <div
                   key={idx}
-                  className="rounded-lg border border-slate-200 bg-slate-50 p-2.5 flex items-center justify-between gap-3 text-xs"
+                  className="rounded-lg border border-slate-200 bg-slate-50 p-2.5 flex items-center justify-between gap-3 text-xs dark:border-slate-800 dark:bg-slate-800/60"
                 >
                   <div className="flex items-center gap-2">
-                    <span className="font-semibold text-slate-800">
+                    <span className="font-semibold text-slate-800 dark:text-slate-200">
                       {sec.title || sec.type}
                     </span>
                     <Badge variant="outline" className="text-[10px]">
@@ -405,7 +405,7 @@ export const PresetsManager: React.FC = () => {
                         prev.filter((_, sIdx) => sIdx !== idx)
                       )
                     }
-                    className="text-slate-400 hover:text-rose-600 p-1"
+                    className="text-slate-400 hover:text-rose-600 dark:text-slate-500 dark:hover:text-rose-400 p-1"
                     title="Usuń sekcję"
                   >
                     <Trash2 className="h-3.5 w-3.5" />
@@ -415,11 +415,11 @@ export const PresetsManager: React.FC = () => {
             </div>
           </div>
 
-          <p className="text-xs text-slate-500">
+          <p className="text-xs text-slate-500 dark:text-slate-400">
             Po utworzeniu szablonu zostaniesz automatycznie przeniesiony do pełnego edytora split-view z podglądem na żywo.
           </p>
 
-          <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
+          <div className="flex justify-end gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
             <Button
               type="button"
               variant="outline"
@@ -443,8 +443,8 @@ export const PresetsManager: React.FC = () => {
           maxWidth="4xl"
         >
           <div className="space-y-4">
-            <div className="flex items-center justify-between bg-slate-100 px-4 py-2 rounded-lg">
-              <span className="text-xs text-slate-600">
+            <div className="flex items-center justify-between bg-slate-100 dark:bg-slate-800 px-4 py-2 rounded-lg">
+              <span className="text-xs text-slate-600 dark:text-slate-300">
                 Silnik Typst kompiluje layout do wektorów SVG dla każdej strony.
               </span>
 
@@ -462,21 +462,21 @@ export const PresetsManager: React.FC = () => {
                   <Edit2 className="h-3 w-3 mr-1" />
                   Otwórz w edytorze
                 </Button>
-                <div className="flex items-center bg-white rounded-md border border-slate-200">
+                <div className="flex items-center bg-white dark:bg-slate-900 rounded-md border border-slate-200 dark:border-slate-700">
                   <button
                     type="button"
                     onClick={() => setZoomScale((s) => Math.max(0.5, s - 0.1))}
-                    className="p-1 text-slate-600 hover:text-slate-900"
+                    className="p-1 text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
                   >
                     <ZoomOut className="h-3.5 w-3.5" />
                   </button>
-                  <span className="text-xs px-2 font-mono">
+                  <span className="text-xs px-2 font-mono dark:text-slate-200">
                     {Math.round(zoomScale * 100)}%
                   </span>
                   <button
                     type="button"
                     onClick={() => setZoomScale((s) => Math.min(1.5, s + 0.1))}
-                    className="p-1 text-slate-600 hover:text-slate-900"
+                    className="p-1 text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
                   >
                     <ZoomIn className="h-3.5 w-3.5" />
                   </button>
@@ -485,15 +485,15 @@ export const PresetsManager: React.FC = () => {
             </div>
 
             {isPreviewLoading ? (
-              <div className="py-24 text-center text-sm text-slate-400 animate-pulse">
+              <div className="py-24 text-center text-sm text-slate-400 dark:text-slate-500 animate-pulse">
                 Kompilacja Typst w toku...
               </div>
             ) : previewError ? (
-              <div className="p-4 bg-rose-50 text-rose-700 rounded-lg text-sm border border-rose-200">
+              <div className="p-4 bg-rose-50 text-rose-700 rounded-lg text-sm border border-rose-200 dark:bg-rose-950/50 dark:border-rose-900 dark:text-rose-300">
                 {previewError}
               </div>
             ) : (
-              <div className="max-h-[70vh] overflow-auto flex flex-col items-center gap-6 p-4 bg-slate-200/50 rounded-lg">
+              <div className="max-h-[70vh] overflow-auto flex flex-col items-center gap-6 p-4 bg-slate-200/50 dark:bg-slate-950 rounded-lg">
                 {previewResult?.svg_pages.map((svg, idx) => (
                   <div
                     key={idx}

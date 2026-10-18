@@ -154,10 +154,10 @@ export const CVGeneratorModal: React.FC<CVGeneratorModalProps> = ({
           </div>
 
           <div className="space-y-2 max-w-md">
-            <h3 className="text-lg font-bold text-slate-900">
+            <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100">
               Inteligentne dopasowywanie CV w toku...
             </h3>
-            <p className="text-sm font-medium text-blue-600 animate-pulse">
+            <p className="text-sm font-medium text-blue-600 dark:text-blue-400 animate-pulse">
               {stages[generationStage]}
             </p>
           </div>
@@ -169,14 +169,14 @@ export const CVGeneratorModal: React.FC<CVGeneratorModalProps> = ({
                 key={idx}
                 className={`h-2 rounded-full transition-all duration-500 ${
                   idx <= generationStage
-                    ? "w-8 bg-blue-600"
-                    : "w-2 bg-slate-200"
+                    ? "w-8 bg-blue-600 dark:bg-blue-500"
+                    : "w-2 bg-slate-200 dark:bg-slate-800"
                 }`}
               />
             ))}
           </div>
 
-          <p className="text-xs text-slate-400 max-w-xs">
+          <p className="text-xs text-slate-400 dark:text-slate-500 max-w-xs">
             Model językowy weryfikuje Twoje doświadczenie z wymaganiami oferty,
             formułując uderzające punkty osiągnięć.
           </p>
@@ -185,7 +185,7 @@ export const CVGeneratorModal: React.FC<CVGeneratorModalProps> = ({
         /* Configuration Form View */
         <div className="space-y-6">
           {errorMessage && (
-            <div className="rounded-lg bg-rose-50 border border-rose-200 p-3 text-xs text-rose-700 flex items-center gap-2">
+            <div className="rounded-lg bg-rose-50 border border-rose-200 p-3 text-xs text-rose-700 dark:bg-rose-950/50 dark:border-rose-900 dark:text-rose-300 flex items-center gap-2">
               <AlertCircle className="h-4 w-4 shrink-0" />
               <span>{errorMessage}</span>
             </div>
@@ -193,7 +193,7 @@ export const CVGeneratorModal: React.FC<CVGeneratorModalProps> = ({
 
           {/* 1. Baseline Selection */}
           <div className="space-y-3">
-            <label className="block text-xs font-semibold uppercase tracking-wider text-slate-700">
+            <label className="block text-xs font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-300">
               1. Wybierz punkt wyjścia (Baseline):
             </label>
 
@@ -202,22 +202,22 @@ export const CVGeneratorModal: React.FC<CVGeneratorModalProps> = ({
                 onClick={() => setBaselineType("profile")}
                 className={`rounded-xl border p-4 cursor-pointer transition-all ${
                   baselineType === "profile"
-                    ? "border-blue-600 bg-blue-50/50 shadow-xs ring-1 ring-blue-600"
-                    : "border-slate-200 hover:border-slate-300 bg-white"
+                    ? "border-blue-600 bg-blue-50/50 shadow-xs ring-1 ring-blue-600 dark:bg-blue-950/40 dark:border-blue-500"
+                    : "border-slate-200 hover:border-slate-300 bg-white dark:border-slate-800 dark:bg-slate-900 dark:hover:border-slate-700"
                 }`}
               >
                 <div className="flex items-center justify-between mb-1.5">
                   <div className="flex items-center gap-2">
-                    <User className="h-4 w-4 text-blue-600" />
-                    <span className="font-semibold text-sm text-slate-900">
+                    <User className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                    <span className="font-semibold text-sm text-slate-900 dark:text-slate-100">
                       Moja baza wiedzy
                     </span>
                   </div>
                   {baselineType === "profile" && (
-                    <CheckCircle2 className="h-4 w-4 text-blue-600" />
+                    <CheckCircle2 className="h-4 w-4 text-blue-600 dark:text-blue-400" />
                   )}
                 </div>
-                <p className="text-xs text-slate-500">
+                <p className="text-xs text-slate-500 dark:text-slate-400">
                   Wykorzystaj kompletny profil kandydata i automatycznie wybierz najtrafniejsze sekcje.
                 </p>
               </div>
@@ -226,22 +226,22 @@ export const CVGeneratorModal: React.FC<CVGeneratorModalProps> = ({
                 onClick={() => setBaselineType("preset")}
                 className={`rounded-xl border p-4 cursor-pointer transition-all ${
                   baselineType === "preset"
-                    ? "border-blue-600 bg-blue-50/50 shadow-xs ring-1 ring-blue-600"
-                    : "border-slate-200 hover:border-slate-300 bg-white"
+                    ? "border-blue-600 bg-blue-50/50 shadow-xs ring-1 ring-blue-600 dark:bg-blue-950/40 dark:border-blue-500"
+                    : "border-slate-200 hover:border-slate-300 bg-white dark:border-slate-800 dark:bg-slate-900 dark:hover:border-slate-700"
                 }`}
               >
                 <div className="flex items-center justify-between mb-1.5">
                   <div className="flex items-center gap-2">
-                    <Layers className="h-4 w-4 text-indigo-600" />
-                    <span className="font-semibold text-sm text-slate-900">
+                    <Layers className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
+                    <span className="font-semibold text-sm text-slate-900 dark:text-slate-100">
                       Szablon bazowy (Archetyp)
                     </span>
                   </div>
                   {baselineType === "preset" && (
-                    <CheckCircle2 className="h-4 w-4 text-blue-600" />
+                    <CheckCircle2 className="h-4 w-4 text-blue-600 dark:text-blue-400" />
                   )}
                 </div>
-                <p className="text-xs text-slate-500">
+                <p className="text-xs text-slate-500 dark:text-slate-400">
                   Użyj predefiniowanego wzorca stanowiskowego (np. Flutter Dev, DevOps) jako fundamentu.
                 </p>
               </div>
@@ -250,9 +250,9 @@ export const CVGeneratorModal: React.FC<CVGeneratorModalProps> = ({
             {baselineType === "preset" && (
               <div className="pt-1">
                 {isLoadingPresets ? (
-                  <p className="text-xs text-slate-400">Ładowanie szablonów...</p>
+                  <p className="text-xs text-slate-400 dark:text-slate-500">Ładowanie szablonów...</p>
                 ) : presets.length === 0 ? (
-                  <p className="text-xs text-amber-600">
+                  <p className="text-xs text-amber-600 dark:text-amber-400">
                     Brak szablonów bazowych. Utwórz szablon w zakładce "Szablony bazowe" lub wybierz Bazę wiedzy.
                   </p>
                 ) : (
@@ -274,7 +274,7 @@ export const CVGeneratorModal: React.FC<CVGeneratorModalProps> = ({
 
           {/* 2. Tailoring Mode */}
           <div className="space-y-3">
-            <label className="block text-xs font-semibold uppercase tracking-wider text-slate-700">
+            <label className="block text-xs font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-300">
               2. Tryb dostosowania AI:
             </label>
 
@@ -283,19 +283,19 @@ export const CVGeneratorModal: React.FC<CVGeneratorModalProps> = ({
                 onClick={() => setTailoringMode("targeted_summary_keywords")}
                 className={`rounded-xl border p-4 cursor-pointer transition-all ${
                   tailoringMode === "targeted_summary_keywords"
-                    ? "border-blue-600 bg-blue-50/50 shadow-xs ring-1 ring-blue-600"
-                    : "border-slate-200 hover:border-slate-300 bg-white"
+                    ? "border-blue-600 bg-blue-50/50 shadow-xs ring-1 ring-blue-600 dark:bg-blue-950/40 dark:border-blue-500"
+                    : "border-slate-200 hover:border-slate-300 bg-white dark:border-slate-800 dark:bg-slate-900 dark:hover:border-slate-700"
                 }`}
               >
                 <div className="flex items-center justify-between mb-1.5">
-                  <span className="font-semibold text-sm text-slate-900">
+                  <span className="font-semibold text-sm text-slate-900 dark:text-slate-100">
                     Słowa kluczowe i podsumowanie
                   </span>
                   {tailoringMode === "targeted_summary_keywords" && (
-                    <CheckCircle2 className="h-4 w-4 text-blue-600" />
+                    <CheckCircle2 className="h-4 w-4 text-blue-600 dark:text-blue-400" />
                   )}
                 </div>
-                <p className="text-xs text-slate-500">
+                <p className="text-xs text-slate-500 dark:text-slate-400">
                   Zachowuje chronologię doświadczeń, modyfikując podsumowanie oraz akcentując kluczowe umiejętności pod ATS.
                 </p>
               </div>
@@ -304,19 +304,19 @@ export const CVGeneratorModal: React.FC<CVGeneratorModalProps> = ({
                 onClick={() => setTailoringMode("full")}
                 className={`rounded-xl border p-4 cursor-pointer transition-all ${
                   tailoringMode === "full"
-                    ? "border-blue-600 bg-blue-50/50 shadow-xs ring-1 ring-blue-600"
-                    : "border-slate-200 hover:border-slate-300 bg-white"
+                    ? "border-blue-600 bg-blue-50/50 shadow-xs ring-1 ring-blue-600 dark:bg-blue-950/40 dark:border-blue-500"
+                    : "border-slate-200 hover:border-slate-300 bg-white dark:border-slate-800 dark:bg-slate-900 dark:hover:border-slate-700"
                 }`}
               >
                 <div className="flex items-center justify-between mb-1.5">
-                  <span className="font-semibold text-sm text-slate-900">
+                  <span className="font-semibold text-sm text-slate-900 dark:text-slate-100">
                     Pełne dostosowanie sekcji
                   </span>
                   {tailoringMode === "full" && (
-                    <CheckCircle2 className="h-4 w-4 text-blue-600" />
+                    <CheckCircle2 className="h-4 w-4 text-blue-600 dark:text-blue-400" />
                   )}
                 </div>
-                <p className="text-xs text-slate-500">
+                <p className="text-xs text-slate-500 dark:text-slate-400">
                   Przebudowuje i akcentuje punkty osiągnięć w doświadczeniu i projektach, precyzyjnie odpowiadając na profil oferty.
                 </p>
               </div>
@@ -335,7 +335,7 @@ export const CVGeneratorModal: React.FC<CVGeneratorModalProps> = ({
             </Select>
 
             <div className="sm:col-span-2">
-              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-700 mb-1.5">
+              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">
                 Sekcje do wygenerowania:
               </label>
               <div className="flex flex-wrap gap-2">
@@ -353,8 +353,8 @@ export const CVGeneratorModal: React.FC<CVGeneratorModalProps> = ({
                     onClick={() => toggleSection(s.id)}
                     className={`px-2.5 py-1 rounded-md text-xs font-medium border transition-colors ${
                       selectedSections.includes(s.id)
-                        ? "bg-blue-600 text-white border-blue-600"
-                        : "bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100"
+                        ? "bg-blue-600 text-white border-blue-600 dark:bg-blue-600 dark:border-blue-600"
+                        : "bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700 dark:hover:bg-slate-700"
                     }`}
                   >
                     {s.label}
@@ -374,7 +374,7 @@ export const CVGeneratorModal: React.FC<CVGeneratorModalProps> = ({
           />
 
           {/* Dialog Actions */}
-          <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
+          <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
             <Button variant="outline" onClick={onClose}>
               Anuluj
             </Button>

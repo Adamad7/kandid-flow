@@ -272,27 +272,27 @@ export const CVEditor: React.FC<CVEditorProps> = ({
   ) as ClauseSectionBlock | undefined;
 
   return (
-    <div className="flex flex-col h-[calc(100vh-4.5rem)] -m-6 bg-slate-50 overflow-hidden">
+    <div className="flex flex-col h-[calc(100vh-4.5rem)] -m-6 bg-slate-50 dark:bg-slate-950 overflow-hidden">
       {/* Top Navbar */}
-      <header className="border-b border-slate-200 bg-white px-6 py-3 shrink-0 flex items-center justify-between gap-4 shadow-xs">
+      <header className="border-b border-slate-200 bg-white px-6 py-3 shrink-0 flex items-center justify-between gap-4 shadow-xs dark:border-slate-800 dark:bg-slate-900">
         <div className="flex items-center gap-3 truncate">
           <Button
             size="sm"
             variant="ghost"
             onClick={onBack}
-            className="text-xs h-8 text-slate-600"
+            className="text-xs h-8 text-slate-600 dark:text-slate-400 dark:hover:text-white"
           >
             <ArrowLeft className="h-4 w-4 mr-1.5" />
             Wróć do ofert
           </Button>
 
-          <div className="h-4 w-px bg-slate-200" />
+          <div className="h-4 w-px bg-slate-200 dark:bg-slate-800" />
 
           <div className="truncate">
-            <h2 className="font-bold text-slate-900 text-sm truncate flex items-center gap-2">
+            <h2 className="font-bold text-slate-900 dark:text-slate-100 text-sm truncate flex items-center gap-2">
               <span>{job.role_title || "CV bez tytułu"}</span>
-              <span className="text-slate-400 font-normal">w</span>
-              <span className="text-slate-700 font-medium">{job.company_name}</span>
+              <span className="text-slate-400 dark:text-slate-500 font-normal">w</span>
+              <span className="text-slate-700 dark:text-slate-300 font-medium">{job.company_name}</span>
             </h2>
           </div>
         </div>
@@ -303,7 +303,7 @@ export const CVEditor: React.FC<CVEditorProps> = ({
           <div className="flex items-center gap-1.5">
             <label
               htmlFor="cv-version-select"
-              className="text-[11px] font-semibold text-slate-500 uppercase whitespace-nowrap"
+              className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase whitespace-nowrap"
             >
               Wersja:
             </label>
@@ -316,7 +316,7 @@ export const CVEditor: React.FC<CVEditorProps> = ({
                   handleSwitchVersion(selected);
                 }
               }}
-              className="h-8 rounded-lg border border-slate-300 bg-white px-2.5 py-1 text-xs font-semibold text-slate-800 shadow-xs transition-colors focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
+              className="h-8 rounded-lg border border-slate-300 bg-white px-2.5 py-1 text-xs font-semibold text-slate-800 shadow-xs transition-colors focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
             >
               {allVersions.map((v) => (
                 <option key={v.id} value={v.id}>
@@ -327,14 +327,14 @@ export const CVEditor: React.FC<CVEditorProps> = ({
           </div>
 
           {/* Mobile Edit/Preview Tabs (visible < lg) */}
-          <div className="flex lg:hidden bg-slate-100 rounded-lg p-0.5 border border-slate-200">
+          <div className="flex lg:hidden bg-slate-100 dark:bg-slate-800 rounded-lg p-0.5 border border-slate-200 dark:border-slate-700">
             <button
               type="button"
               onClick={() => setMobileTab("edit")}
               className={`px-3 py-1 text-xs font-medium rounded-md ${
                 mobileTab === "edit"
-                  ? "bg-white text-slate-900 shadow-xs"
-                  : "text-slate-600"
+                  ? "bg-white text-slate-900 shadow-xs dark:bg-slate-900 dark:text-white"
+                  : "text-slate-600 dark:text-slate-400"
               }`}
             >
               Edycja
@@ -344,8 +344,8 @@ export const CVEditor: React.FC<CVEditorProps> = ({
               onClick={() => setMobileTab("preview")}
               className={`px-3 py-1 text-xs font-medium rounded-md ${
                 mobileTab === "preview"
-                  ? "bg-white text-slate-900 shadow-xs"
-                  : "text-slate-600"
+                  ? "bg-white text-slate-900 shadow-xs dark:bg-slate-900 dark:text-white"
+                  : "text-slate-600 dark:text-slate-400"
               }`}
             >
               Podgląd
@@ -354,7 +354,7 @@ export const CVEditor: React.FC<CVEditorProps> = ({
 
           {/* Save Status / Button */}
           {saveSuccess && (
-            <span className="hidden sm:flex items-center gap-1 text-xs font-medium text-emerald-600 bg-emerald-50 px-2 py-1 rounded">
+            <span className="hidden sm:flex items-center gap-1 text-xs font-medium text-emerald-600 bg-emerald-50 px-2 py-1 rounded dark:bg-emerald-950/50 dark:text-emerald-300 dark:border dark:border-emerald-800">
               <Check className="h-3.5 w-3.5" />
               Zapisano
             </span>
@@ -382,10 +382,10 @@ export const CVEditor: React.FC<CVEditorProps> = ({
           }`}
         >
           {/* Candidate Full Name and Basic Info */}
-          <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-xs space-y-4">
-            <div className="flex items-center gap-2 border-b border-slate-100 pb-2.5">
-              <User className="h-4 w-4 text-blue-600" />
-              <h3 className="font-semibold text-sm text-slate-900">
+          <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-xs space-y-4 dark:border-slate-800 dark:bg-slate-900">
+            <div className="flex items-center gap-2 border-b border-slate-100 dark:border-slate-800 pb-2.5">
+              <User className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+              <h3 className="font-semibold text-sm text-slate-900 dark:text-slate-100">
                 Nagłówek dokumentu
               </h3>
             </div>
@@ -400,11 +400,11 @@ export const CVEditor: React.FC<CVEditorProps> = ({
 
           {/* Summary Block */}
           {summaryBlock && (
-            <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-xs space-y-3">
-              <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
+            <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-xs space-y-3 dark:border-slate-800 dark:bg-slate-900">
+              <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2.5">
                 <div className="flex items-center gap-2">
-                  <FileText className="h-4 w-4 text-indigo-600" />
-                  <h4 className="font-semibold text-sm text-slate-900">
+                  <FileText className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
+                  <h4 className="font-semibold text-sm text-slate-900 dark:text-slate-100">
                     {summaryBlock.title}
                   </h4>
                 </div>
@@ -414,7 +414,7 @@ export const CVEditor: React.FC<CVEditorProps> = ({
                   size="sm"
                   variant="outline"
                   onClick={() => openRefineModal("summary")}
-                  className="text-xs h-7 text-indigo-600 border-indigo-200 hover:bg-indigo-50"
+                  className="text-xs h-7 text-indigo-600 border-indigo-200 hover:bg-indigo-50 dark:border-indigo-800 dark:text-indigo-400 dark:hover:bg-slate-800"
                 >
                   <Sparkles className="h-3 w-3 mr-1" />
                   Udoskonal z AI
@@ -432,11 +432,11 @@ export const CVEditor: React.FC<CVEditorProps> = ({
 
           {/* Skills Block */}
           {skillsBlock && (
-            <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-xs space-y-3">
-              <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
+            <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-xs space-y-3 dark:border-slate-800 dark:bg-slate-900">
+              <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2.5">
                 <div className="flex items-center gap-2">
-                  <Code className="h-4 w-4 text-emerald-600" />
-                  <h4 className="font-semibold text-sm text-slate-900">
+                  <Code className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                  <h4 className="font-semibold text-sm text-slate-900 dark:text-slate-100">
                     {skillsBlock.title}
                   </h4>
                 </div>
@@ -445,7 +445,7 @@ export const CVEditor: React.FC<CVEditorProps> = ({
                   size="sm"
                   variant="outline"
                   onClick={() => openRefineModal("skills")}
-                  className="text-xs h-7 text-emerald-600 border-emerald-200 hover:bg-emerald-50"
+                  className="text-xs h-7 text-emerald-600 border-emerald-200 hover:bg-emerald-50 dark:border-emerald-800 dark:text-emerald-400 dark:hover:bg-slate-800"
                 >
                   <Sparkles className="h-3 w-3 mr-1" />
                   Dopasuj pod ofertę
@@ -456,12 +456,12 @@ export const CVEditor: React.FC<CVEditorProps> = ({
                 {skillsBlock.items.map((cat, idx) => (
                   <div
                     key={idx}
-                    className="p-3 bg-slate-50/80 rounded-lg border border-slate-200/80 text-xs"
+                    className="p-3 bg-slate-50/80 rounded-lg border border-slate-200/80 text-xs dark:bg-slate-800/60 dark:border-slate-800"
                   >
-                    <span className="font-semibold text-slate-800">
+                    <span className="font-semibold text-slate-800 dark:text-slate-200">
                       {cat.category}:
                     </span>{" "}
-                    <span className="text-slate-600">
+                    <span className="text-slate-600 dark:text-slate-300">
                       {cat.skills.join(", ")}
                     </span>
                   </div>
@@ -472,11 +472,11 @@ export const CVEditor: React.FC<CVEditorProps> = ({
 
           {/* Experience Block */}
           {expBlock && (
-            <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-xs space-y-4">
-              <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
+            <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-xs space-y-4">
+              <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2.5">
                 <div className="flex items-center gap-2">
-                  <Briefcase className="h-4 w-4 text-blue-600" />
-                  <h4 className="font-semibold text-sm text-slate-900">
+                  <Briefcase className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                  <h4 className="font-semibold text-sm text-slate-900 dark:text-slate-100">
                     {expBlock.title}
                   </h4>
                 </div>
@@ -485,7 +485,7 @@ export const CVEditor: React.FC<CVEditorProps> = ({
                   size="sm"
                   variant="outline"
                   onClick={() => openRefineModal("experience")}
-                  className="text-xs h-7 text-blue-600 border-blue-200 hover:bg-blue-50"
+                  className="text-xs h-7 text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-900/50 hover:bg-blue-50 dark:hover:bg-blue-950/30"
                 >
                   <Sparkles className="h-3 w-3 mr-1" />
                   Udoskonal doświadczenie
@@ -496,13 +496,13 @@ export const CVEditor: React.FC<CVEditorProps> = ({
                 {expBlock.items.map((item, idx) => (
                   <div
                     key={idx}
-                    className="p-3 bg-slate-50 rounded-lg border border-slate-200 text-xs space-y-2"
+                    className="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-lg border border-slate-200 dark:border-slate-700/60 text-xs space-y-2"
                   >
-                    <div className="flex items-center justify-between font-semibold text-slate-900">
+                    <div className="flex items-center justify-between font-semibold text-slate-900 dark:text-slate-100">
                       <span>
                         {item.position} — {item.company}
                       </span>
-                      <span className="text-slate-500 font-mono text-[11px]">
+                      <span className="text-slate-500 dark:text-slate-400 font-mono text-[11px]">
                         {item.start_date} - {item.end_date}
                       </span>
                     </div>
@@ -530,11 +530,11 @@ export const CVEditor: React.FC<CVEditorProps> = ({
 
           {/* Projects Block */}
           {projectsBlock && (
-            <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-xs space-y-4">
-              <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
+            <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-xs space-y-4">
+              <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2.5">
                 <div className="flex items-center gap-2">
-                  <Code className="h-4 w-4 text-purple-600" />
-                  <h4 className="font-semibold text-sm text-slate-900">
+                  <Code className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+                  <h4 className="font-semibold text-sm text-slate-900 dark:text-slate-100">
                     {projectsBlock.title}
                   </h4>
                 </div>
@@ -543,7 +543,7 @@ export const CVEditor: React.FC<CVEditorProps> = ({
                   size="sm"
                   variant="outline"
                   onClick={() => openRefineModal("projects")}
-                  className="text-xs h-7 text-purple-600 border-purple-200 hover:bg-purple-50"
+                  className="text-xs h-7 text-purple-600 dark:text-purple-400 border-purple-200 dark:border-purple-900/50 hover:bg-purple-50 dark:hover:bg-purple-950/30"
                 >
                   <Sparkles className="h-3 w-3 mr-1" />
                   Dopasuj projekty
@@ -554,11 +554,11 @@ export const CVEditor: React.FC<CVEditorProps> = ({
                 {projectsBlock.items.map((proj, idx) => (
                   <div
                     key={idx}
-                    className="p-3 bg-slate-50 rounded-lg border border-slate-200 text-xs space-y-2"
+                    className="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-lg border border-slate-200 dark:border-slate-700/60 text-xs space-y-2"
                   >
-                    <div className="flex items-center justify-between font-semibold text-slate-900">
+                    <div className="flex items-center justify-between font-semibold text-slate-900 dark:text-slate-100">
                       <span>{proj.name}</span>
-                      <span className="text-slate-500">{proj.role}</span>
+                      <span className="text-slate-500 dark:text-slate-400">{proj.role}</span>
                     </div>
                     <Textarea
                       label="Opis projektu"
@@ -577,10 +577,10 @@ export const CVEditor: React.FC<CVEditorProps> = ({
 
           {/* Clause Block */}
           {clauseBlock && (
-            <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-xs space-y-3">
-              <div className="flex items-center gap-2 border-b border-slate-100 pb-2.5">
-                <ShieldCheck className="h-4 w-4 text-blue-600" />
-                <h4 className="font-semibold text-sm text-slate-900">
+            <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-xs space-y-3">
+              <div className="flex items-center gap-2 border-b border-slate-100 dark:border-slate-800 pb-2.5">
+                <ShieldCheck className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                <h4 className="font-semibold text-sm text-slate-900 dark:text-slate-100">
                   {clauseBlock.title}
                 </h4>
               </div>
@@ -588,7 +588,7 @@ export const CVEditor: React.FC<CVEditorProps> = ({
                 value={clauseBlock.content}
                 onChange={(e) => updateClauseText(e.target.value)}
                 rows={3}
-                className="text-[11px] text-slate-600"
+                className="text-[11px] text-slate-600 dark:text-slate-300"
               />
             </div>
           )}
@@ -624,7 +624,7 @@ export const CVEditor: React.FC<CVEditorProps> = ({
         >
           <div className="space-y-4">
             {refinementError && (
-              <div className="rounded-lg bg-rose-50 p-3 text-xs text-rose-700 flex items-center gap-2">
+              <div className="rounded-lg bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/50 p-3 text-xs text-rose-700 dark:text-rose-400 flex items-center gap-2">
                 <AlertCircle className="h-4 w-4 shrink-0" />
                 <span>{refinementError}</span>
               </div>
@@ -632,7 +632,7 @@ export const CVEditor: React.FC<CVEditorProps> = ({
 
             {/* Quick Action Pills */}
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-slate-600 uppercase">
+              <label className="text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase">
                 Szybkie modyfikacje:
               </label>
               <div className="flex flex-wrap gap-2">
@@ -646,7 +646,7 @@ export const CVEditor: React.FC<CVEditorProps> = ({
                     key={idx}
                     type="button"
                     onClick={() => setRefinementInstruction(action)}
-                    className="text-xs px-2.5 py-1 rounded-md border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100 text-left transition-colors"
+                    className="text-xs px-2.5 py-1 rounded-md border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700/70 text-left transition-colors"
                   >
                     {action}
                   </button>
@@ -662,7 +662,7 @@ export const CVEditor: React.FC<CVEditorProps> = ({
               rows={3}
             />
 
-            <div className="flex justify-end gap-3 pt-3 border-t border-slate-100">
+            <div className="flex justify-end gap-3 pt-3 border-t border-slate-100 dark:border-slate-800">
               <Button
                 variant="outline"
                 onClick={() => setRefiningBlockId(null)}

@@ -59,12 +59,12 @@ export const KanbanCard: React.FC<KanbanCardProps> = ({
   return (
     <div
       onClick={handleCardClick}
-      className={`group relative rounded-xl border bg-white p-4 shadow-sm transition-all hover:shadow-md cursor-pointer ${
+      className={`group relative rounded-xl border bg-white p-4 shadow-sm transition-all hover:shadow-md cursor-pointer dark:bg-slate-900 ${
         isFailed
-          ? "border-rose-300 bg-rose-50/20"
+          ? "border-rose-300 bg-rose-50/20 dark:border-rose-800 dark:bg-rose-950/20"
           : isParsing
-          ? "border-blue-300 bg-blue-50/20 animate-pulse"
-          : "border-slate-200/90 hover:border-slate-300"
+          ? "border-blue-300 bg-blue-50/20 dark:border-blue-800 dark:bg-blue-950/20 animate-pulse"
+          : "border-slate-200/90 hover:border-slate-300 dark:border-slate-800 dark:hover:border-slate-700"
       }`}
     >
       {/* Top Header: Portal & Status */}
@@ -93,7 +93,7 @@ export const KanbanCard: React.FC<KanbanCardProps> = ({
               e.stopPropagation();
               setShowMenu(!showMenu);
             }}
-            className="p-1 rounded-md text-slate-400 hover:text-slate-700 hover:bg-slate-100"
+            className="p-1 rounded-md text-slate-400 hover:text-slate-700 hover:bg-slate-100 dark:text-slate-500 dark:hover:text-slate-300 dark:hover:bg-slate-800"
             title="Opcje oferty"
           >
             <MoreVertical className="h-4 w-4" />
@@ -101,7 +101,7 @@ export const KanbanCard: React.FC<KanbanCardProps> = ({
 
           {showMenu && (
             <div
-              className="absolute right-0 top-7 z-20 w-44 rounded-lg border border-slate-200 bg-white py-1 shadow-lg"
+              className="absolute right-0 top-7 z-20 w-44 rounded-lg border border-slate-200 bg-white py-1 shadow-lg dark:border-slate-800 dark:bg-slate-800"
               onClick={(e) => e.stopPropagation()}
             >
               <button
@@ -110,7 +110,7 @@ export const KanbanCard: React.FC<KanbanCardProps> = ({
                   setShowMenu(false);
                   onSelect(job);
                 }}
-                className="w-full px-3 py-1.5 text-left text-xs text-slate-700 hover:bg-slate-50 flex items-center gap-2"
+                className="w-full px-3 py-1.5 text-left text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 flex items-center gap-2"
               >
                 Szczegóły oferty
               </button>
@@ -120,7 +120,7 @@ export const KanbanCard: React.FC<KanbanCardProps> = ({
                   setShowMenu(false);
                   onGenerateCV(job);
                 }}
-                className="w-full px-3 py-1.5 text-left text-xs text-blue-600 hover:bg-blue-50 flex items-center gap-2"
+                className="w-full px-3 py-1.5 text-left text-xs text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-slate-700 flex items-center gap-2"
               >
                 <Sparkles className="h-3.5 w-3.5" />
                 Generuj CV
@@ -131,9 +131,9 @@ export const KanbanCard: React.FC<KanbanCardProps> = ({
                   setShowMenu(false);
                   onReparse(job, "ai");
                 }}
-                className="w-full px-3 py-1.5 text-left text-xs text-slate-700 hover:bg-slate-50 flex items-center gap-2"
+                className="w-full px-3 py-1.5 text-left text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 flex items-center gap-2"
               >
-                <Sparkles className="h-3.5 w-3.5 text-blue-600" />
+                <Sparkles className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400" />
                 Parsuj przez AI
               </button>
               <button
@@ -142,19 +142,19 @@ export const KanbanCard: React.FC<KanbanCardProps> = ({
                   setShowMenu(false);
                   onReparse(job, "traditional");
                 }}
-                className="w-full px-3 py-1.5 text-left text-xs text-slate-700 hover:bg-slate-50 flex items-center gap-2"
+                className="w-full px-3 py-1.5 text-left text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 flex items-center gap-2"
               >
-                <Cpu className="h-3.5 w-3.5 text-slate-600" />
+                <Cpu className="h-3.5 w-3.5 text-slate-600 dark:text-slate-400" />
                 Auto-parsuj tradycyjne
               </button>
-              <div className="my-1 border-t border-slate-100" />
+              <div className="my-1 border-t border-slate-100 dark:border-slate-700" />
               <button
                 type="button"
                 onClick={() => {
                   setShowMenu(false);
                   onDelete(job);
                 }}
-                className="w-full px-3 py-1.5 text-left text-xs text-rose-600 hover:bg-rose-50 flex items-center gap-2"
+                className="w-full px-3 py-1.5 text-left text-xs text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-slate-700 flex items-center gap-2"
               >
                 <Trash2 className="h-3.5 w-3.5" />
                 Usuń ofertę
@@ -166,11 +166,11 @@ export const KanbanCard: React.FC<KanbanCardProps> = ({
 
       {/* Role Title & Company */}
       <div className="mb-2.5">
-        <h4 className="font-semibold text-slate-900 text-sm leading-tight line-clamp-2 group-hover:text-blue-600 transition-colors">
+        <h4 className="font-semibold text-slate-900 dark:text-slate-100 text-sm leading-tight line-clamp-2 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
           {job.role_title || "Nieokreślone stanowisko"}
         </h4>
-        <div className="flex items-center gap-1.5 mt-1 text-xs text-slate-600 font-medium">
-          <Building className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+        <div className="flex items-center gap-1.5 mt-1 text-xs text-slate-600 dark:text-slate-400 font-medium">
+          <Building className="h-3.5 w-3.5 text-slate-400 dark:text-slate-500 shrink-0" />
           <span className="truncate">{job.company_name || "Nieznana firma"}</span>
         </div>
       </div>
@@ -178,15 +178,15 @@ export const KanbanCard: React.FC<KanbanCardProps> = ({
       {/* Salary & Locations */}
       <div className="space-y-1 text-xs mb-3">
         {salaryText ? (
-          <div className="font-semibold text-emerald-700 bg-emerald-50/80 px-2 py-0.5 rounded-md inline-block">
+          <div className="font-semibold text-emerald-700 bg-emerald-50/80 dark:text-emerald-300 dark:bg-emerald-950/60 px-2 py-0.5 rounded-md inline-block">
             {salaryText}
           </div>
         ) : (
-          <div className="text-slate-400 italic">Wynagrodzenie: brak danych</div>
+          <div className="text-slate-400 dark:text-slate-500 italic">Wynagrodzenie: brak danych</div>
         )}
 
         {job.locations && job.locations.length > 0 && (
-          <div className="flex items-center gap-1 text-slate-500 truncate">
+          <div className="flex items-center gap-1 text-slate-500 dark:text-slate-400 truncate">
             <MapPin className="h-3 w-3 shrink-0" />
             <span className="truncate">{job.locations.join(", ")}</span>
           </div>
@@ -214,16 +214,16 @@ export const KanbanCard: React.FC<KanbanCardProps> = ({
 
       {/* Status Warning / Parsing Indicator */}
       {isParsing && (
-        <div className="mb-3 flex items-center gap-2 rounded-md bg-blue-50 px-2.5 py-1.5 text-xs text-blue-700 font-medium">
+        <div className="mb-3 flex items-center gap-2 rounded-md bg-blue-50 px-2.5 py-1.5 text-xs text-blue-700 dark:bg-blue-950/50 dark:text-blue-300 font-medium">
           <RefreshCw className="h-3.5 w-3.5 animate-spin" />
           <span>Parsowanie AI w toku...</span>
         </div>
       )}
 
       {isFailed && (
-        <div className="mb-3 rounded-md bg-rose-50 p-2.5 text-xs text-rose-700 border border-rose-200">
+        <div className="mb-3 rounded-md bg-rose-50 p-2.5 text-xs text-rose-700 border border-rose-200 dark:bg-rose-950/50 dark:text-rose-300 dark:border-rose-900">
           <div className="flex items-start gap-1.5 mb-2">
-            <AlertCircle className="h-4 w-4 shrink-0 text-rose-600 mt-0.5" />
+            <AlertCircle className="h-4 w-4 shrink-0 text-rose-600 dark:text-rose-400 mt-0.5" />
             <span className="font-medium line-clamp-2">
               {job.error_message || "Błąd podczas automatycznego parsowania oferty."}
             </span>
@@ -236,9 +236,9 @@ export const KanbanCard: React.FC<KanbanCardProps> = ({
                 e.stopPropagation();
                 onReparse(job, "ai");
               }}
-              className="w-full text-xs h-7 bg-white hover:bg-blue-50 text-blue-700 border-blue-200 justify-center font-medium"
+              className="w-full text-xs h-7 bg-white hover:bg-blue-50 text-blue-700 border-blue-200 justify-center font-medium dark:bg-slate-900 dark:text-blue-400 dark:border-blue-800 dark:hover:bg-slate-800"
             >
-              <Sparkles className="h-3 w-3 mr-1 text-blue-600" />
+              <Sparkles className="h-3 w-3 mr-1 text-blue-600 dark:text-blue-400" />
               Parsuj przez AI
             </Button>
             <Button
@@ -248,9 +248,9 @@ export const KanbanCard: React.FC<KanbanCardProps> = ({
                 e.stopPropagation();
                 onReparse(job, "traditional");
               }}
-              className="w-full text-xs h-7 bg-white hover:bg-slate-100 text-slate-700 border-slate-300 justify-center font-medium"
+              className="w-full text-xs h-7 bg-white hover:bg-slate-100 text-slate-700 border-slate-300 justify-center font-medium dark:bg-slate-900 dark:text-slate-300 dark:border-slate-700 dark:hover:bg-slate-800"
             >
-              <Cpu className="h-3 w-3 mr-1 text-slate-600" />
+              <Cpu className="h-3 w-3 mr-1 text-slate-600 dark:text-slate-400" />
               Auto-parsuj tradycyjne
             </Button>
           </div>
@@ -263,13 +263,13 @@ export const KanbanCard: React.FC<KanbanCardProps> = ({
           {job.structured_data.tech_stack.slice(0, 4).map((tech, idx) => (
             <span
               key={idx}
-              className="inline-block rounded bg-slate-100 px-1.5 py-0.5 text-[10px] text-slate-600 font-mono"
+              className="inline-block rounded bg-slate-100 px-1.5 py-0.5 text-[10px] text-slate-600 font-mono dark:bg-slate-800 dark:text-slate-300"
             >
               {tech}
             </span>
           ))}
           {job.structured_data.tech_stack.length > 4 && (
-            <span className="text-[10px] text-slate-400 self-center">
+            <span className="text-[10px] text-slate-400 dark:text-slate-500 self-center">
               +{job.structured_data.tech_stack.length - 4}
             </span>
           )}
@@ -277,7 +277,7 @@ export const KanbanCard: React.FC<KanbanCardProps> = ({
       )}
 
       {/* Card Footer: Quick Status Switcher & CV Action */}
-      <div className="pt-2 border-t border-slate-100 flex items-center justify-between gap-2">
+      <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-2">
         <select
           value={job.status}
           onChange={(e) => {
@@ -285,7 +285,7 @@ export const KanbanCard: React.FC<KanbanCardProps> = ({
             onStatusChange(job, e.target.value as JobStatusType);
           }}
           onClick={(e) => e.stopPropagation()}
-          className="text-xs rounded border border-slate-200 bg-slate-50 py-1 px-1.5 text-slate-700 font-medium focus:outline-none focus:ring-1 focus:ring-blue-500 max-w-[130px] truncate"
+          className="text-xs rounded border border-slate-200 bg-slate-50 py-1 px-1.5 text-slate-700 font-medium focus:outline-none focus:ring-1 focus:ring-blue-500 max-w-[130px] truncate dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
         >
           <option value="inbox">Do przetworzenia</option>
           <option value="ready">Gotowe</option>

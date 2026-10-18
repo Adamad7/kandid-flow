@@ -17,7 +17,7 @@ export const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
         {label && (
           <label
             htmlFor={textareaId}
-            className="block text-xs font-semibold uppercase tracking-wider text-slate-700"
+            className="block text-xs font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-300"
           >
             {label}
           </label>
@@ -27,16 +27,16 @@ export const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
           ref={ref}
           rows={rows}
           className={cn(
-            "flex w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm shadow-sm transition-colors placeholder:text-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:border-blue-500 disabled:cursor-not-allowed disabled:opacity-50",
-            error && "border-rose-500 focus-visible:ring-rose-500",
+            "flex w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm transition-colors placeholder:text-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:border-blue-500 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:placeholder:text-slate-500",
+            error && "border-rose-500 focus-visible:ring-rose-500 dark:border-rose-500",
             className
           )}
           {...props}
         />
         {helperText && !error && (
-          <p className="text-xs text-slate-500">{helperText}</p>
+          <p className="text-xs text-slate-500 dark:text-slate-400">{helperText}</p>
         )}
-        {error && <p className="text-xs text-rose-600 font-medium">{error}</p>}
+        {error && <p className="text-xs text-rose-600 dark:text-rose-400 font-medium">{error}</p>}
       </div>
     );
   }

@@ -55,7 +55,7 @@ export const Modal: React.FC<ModalProps> = ({
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 overflow-y-auto">
       {/* Backdrop */}
       <div
-        className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity"
+        className="fixed inset-0 bg-slate-900/60 dark:bg-black/75 backdrop-blur-sm transition-opacity"
         onClick={onClose}
         aria-hidden="true"
       />
@@ -63,7 +63,7 @@ export const Modal: React.FC<ModalProps> = ({
       {/* Modal Dialog */}
       <div
         className={cn(
-          "relative z-10 w-full overflow-hidden rounded-xl border border-slate-200 bg-white shadow-2xl transition-all flex flex-col max-h-[90vh]",
+          "relative z-10 w-full overflow-hidden rounded-xl border border-slate-200 bg-white shadow-2xl transition-all flex flex-col max-h-[90vh] dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100",
           maxWidthStyles[maxWidth],
           className
         )}
@@ -71,21 +71,21 @@ export const Modal: React.FC<ModalProps> = ({
         aria-modal="true"
       >
         {(title || description) && (
-          <div className="flex items-start justify-between border-b border-slate-100 px-6 py-4">
+          <div className="flex items-start justify-between border-b border-slate-100 dark:border-slate-800 px-6 py-4">
             <div>
               {title && (
-                <h3 className="text-lg font-semibold text-slate-900">
+                <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
                   {title}
                 </h3>
               )}
               {description && (
-                <p className="mt-1 text-sm text-slate-500">{description}</p>
+                <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{description}</p>
               )}
             </div>
             <button
               type="button"
               onClick={onClose}
-              className="rounded-lg p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="rounded-lg p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:text-slate-500 dark:hover:bg-slate-800 dark:hover:text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
               aria-label="Zamknij"
             >
               <X className="h-5 w-5" />

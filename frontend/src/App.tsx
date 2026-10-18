@@ -20,6 +20,7 @@ import { KnowledgeBaseEditor } from "./components/profile/KnowledgeBaseEditor";
 import { PresetsManager } from "./components/presets/PresetsManager";
 import { SettingsView } from "./components/settings/SettingsView";
 import { JobListView } from "./components/jobs/JobListView";
+import { ThemeToggle } from "./components/ui/ThemeToggle";
 import { api } from "./lib/api";
 
 type ActiveTab = "kanban" | "list" | "profile" | "presets" | "settings";
@@ -92,7 +93,7 @@ export const App: React.FC = () => {
   // If currently in Split-View CV Editor:
   if (editingCVVersion && editingCVJob) {
     return (
-      <div className="min-h-screen bg-slate-100 flex flex-col p-6">
+      <div className="min-h-screen bg-slate-100 dark:bg-slate-950 flex flex-col p-6 transition-colors">
         <CVEditor
           initialVersion={editingCVVersion}
           job={editingCVJob}
@@ -107,9 +108,9 @@ export const App: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col font-sans text-slate-900">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex flex-col font-sans text-slate-900 dark:text-slate-100 transition-colors">
       {/* Top Application Header */}
-      <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/95 backdrop-blur-md px-6 py-3.5 shadow-xs">
+      <header className="sticky top-0 z-40 border-b border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md px-6 py-3.5 shadow-xs">
         <div className="flex items-center justify-between max-w-[1800px] mx-auto">
           {/* Logo & Brand */}
           <div className="flex items-center gap-3">
@@ -118,86 +119,93 @@ export const App: React.FC = () => {
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <span className="text-lg font-black tracking-tight text-slate-900">
-                  Kandid<span className="text-blue-600">Flow</span>
+                <span className="text-lg font-black tracking-tight text-slate-900 dark:text-white">
+                  Kandid<span className="text-blue-600 dark:text-blue-400">Flow</span>
                 </span>
-                <span className="rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-bold text-blue-700 border border-blue-200">
+                <span className="rounded-full bg-blue-50 dark:bg-blue-950/60 px-2 py-0.5 text-[10px] font-bold text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
                   v1.1
                 </span>
               </div>
-              <p className="text-[11px] text-slate-400 font-medium hidden sm:block">
+              <p className="text-[11px] text-slate-400 dark:text-slate-500 font-medium hidden sm:block">
                 Automatyzacja rekrutacji IT & Wektorowy generator CV
               </p>
             </div>
           </div>
 
-          {/* Navigation Tabs */}
-          <nav className="flex items-center gap-1 sm:gap-2">
-            <button
-              type="button"
-              onClick={() => setActiveTab("kanban")}
-              className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold transition-colors ${
-                activeTab === "kanban"
-                  ? "bg-slate-900 text-white shadow-xs"
-                  : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
-              }`}
-            >
-              <LayoutDashboard className="h-4 w-4" />
-              <span className="hidden sm:inline">Tablica ofert</span>
-            </button>
+          {/* Right Header: Navigation Tabs + Theme Toggle */}
+          <div className="flex items-center gap-2 sm:gap-4">
+            <nav className="flex items-center gap-1 sm:gap-2">
+              <button
+                type="button"
+                onClick={() => setActiveTab("kanban")}
+                className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold transition-colors ${
+                  activeTab === "kanban"
+                    ? "bg-slate-900 text-white shadow-xs dark:bg-slate-100 dark:text-slate-900"
+                    : "text-slate-600 hover:text-slate-900 hover:bg-slate-100 dark:text-slate-300 dark:hover:text-white dark:hover:bg-slate-800"
+                }`}
+              >
+                <LayoutDashboard className="h-4 w-4" />
+                <span className="hidden sm:inline">Tablica ofert</span>
+              </button>
 
-            <button
-              type="button"
-              onClick={() => setActiveTab("list")}
-              className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold transition-colors ${
-                activeTab === "list"
-                  ? "bg-slate-900 text-white shadow-xs"
-                  : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
-              }`}
-            >
-              <List className="h-4 w-4" />
-              <span className="hidden sm:inline">Lista ofert</span>
-            </button>
+              <button
+                type="button"
+                onClick={() => setActiveTab("list")}
+                className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold transition-colors ${
+                  activeTab === "list"
+                    ? "bg-slate-900 text-white shadow-xs dark:bg-slate-100 dark:text-slate-900"
+                    : "text-slate-600 hover:text-slate-900 hover:bg-slate-100 dark:text-slate-300 dark:hover:text-white dark:hover:bg-slate-800"
+                }`}
+              >
+                <List className="h-4 w-4" />
+                <span className="hidden sm:inline">Lista ofert</span>
+              </button>
 
-            <button
-              type="button"
-              onClick={() => setActiveTab("profile")}
-              className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold transition-colors ${
-                activeTab === "profile"
-                  ? "bg-slate-900 text-white shadow-xs"
-                  : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
-              }`}
-            >
-              <User className="h-4 w-4" />
-              <span className="hidden sm:inline">Moja baza wiedzy</span>
-            </button>
+              <button
+                type="button"
+                onClick={() => setActiveTab("profile")}
+                className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold transition-colors ${
+                  activeTab === "profile"
+                    ? "bg-slate-900 text-white shadow-xs dark:bg-slate-100 dark:text-slate-900"
+                    : "text-slate-600 hover:text-slate-900 hover:bg-slate-100 dark:text-slate-300 dark:hover:text-white dark:hover:bg-slate-800"
+                }`}
+              >
+                <User className="h-4 w-4" />
+                <span className="hidden sm:inline">Moja baza wiedzy</span>
+              </button>
 
-            <button
-              type="button"
-              onClick={() => setActiveTab("presets")}
-              className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold transition-colors ${
-                activeTab === "presets"
-                  ? "bg-slate-900 text-white shadow-xs"
-                  : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
-              }`}
-            >
-              <Layers className="h-4 w-4" />
-              <span className="hidden sm:inline">Szablony bazowe</span>
-            </button>
+              <button
+                type="button"
+                onClick={() => setActiveTab("presets")}
+                className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold transition-colors ${
+                  activeTab === "presets"
+                    ? "bg-slate-900 text-white shadow-xs dark:bg-slate-100 dark:text-slate-900"
+                    : "text-slate-600 hover:text-slate-900 hover:bg-slate-100 dark:text-slate-300 dark:hover:text-white dark:hover:bg-slate-800"
+                }`}
+              >
+                <Layers className="h-4 w-4" />
+                <span className="hidden sm:inline">Szablony bazowe</span>
+              </button>
 
-            <button
-              type="button"
-              onClick={() => setActiveTab("settings")}
-              className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold transition-colors ${
-                activeTab === "settings"
-                  ? "bg-slate-900 text-white shadow-xs"
-                  : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
-              }`}
-            >
-              <Settings className="h-4 w-4" />
-              <span className="hidden sm:inline">Ustawienia</span>
-            </button>
-          </nav>
+              <button
+                type="button"
+                onClick={() => setActiveTab("settings")}
+                className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold transition-colors ${
+                  activeTab === "settings"
+                    ? "bg-slate-900 text-white shadow-xs dark:bg-slate-100 dark:text-slate-900"
+                    : "text-slate-600 hover:text-slate-900 hover:bg-slate-100 dark:text-slate-300 dark:hover:text-white dark:hover:bg-slate-800"
+                }`}
+              >
+                <Settings className="h-4 w-4" />
+                <span className="hidden sm:inline">Ustawienia</span>
+              </button>
+            </nav>
+
+            {/* Dark Mode Toggle on the right side */}
+            <div className="pl-2 border-l border-slate-200 dark:border-slate-800 flex items-center shrink-0">
+              <ThemeToggle />
+            </div>
+          </div>
         </div>
       </header>
 

@@ -74,22 +74,22 @@ export const CVLivePreview: React.FC<CVLivePreviewProps> = ({
   }, [layoutSchema, jobOfferId, language]);
 
   return (
-    <div className="flex flex-col h-full bg-slate-100/90 rounded-xl border border-slate-200 overflow-hidden">
+    <div className="flex flex-col h-full bg-slate-100/90 dark:bg-slate-900/50 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden">
       {/* Top Preview Toolbar */}
-      <div className="flex items-center justify-between border-b border-slate-200 bg-white px-4 py-2.5">
+      <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-4 py-2.5">
         <div className="flex items-center gap-2">
-          <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-700">
-            <FileText className="h-4 w-4 text-blue-600" />
+          <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-700 dark:text-slate-200">
+            <FileText className="h-4 w-4 text-blue-600 dark:text-blue-400" />
             <span>Podgląd Typst (Na żywo)</span>
           </div>
 
           {isCompiling ? (
-            <span className="flex items-center gap-1 text-[11px] text-blue-600 font-medium animate-pulse ml-2">
+            <span className="flex items-center gap-1 text-[11px] text-blue-600 dark:text-blue-400 font-medium animate-pulse ml-2">
               <RefreshCw className="h-3 w-3 animate-spin" />
               Kompilacja...
             </span>
           ) : (
-            <span className="text-[11px] text-slate-400 ml-2">
+            <span className="text-[11px] text-slate-400 dark:text-slate-500 ml-2">
               {svgPages.length} {svgPages.length === 1 ? "strona" : "strony"}
             </span>
           )}
@@ -97,22 +97,22 @@ export const CVLivePreview: React.FC<CVLivePreviewProps> = ({
 
         <div className="flex items-center gap-2">
           {/* Zoom Controls */}
-          <div className="flex items-center bg-slate-100 rounded-lg p-0.5 border border-slate-200">
+          <div className="flex items-center bg-slate-100 dark:bg-slate-800 rounded-lg p-0.5 border border-slate-200 dark:border-slate-700">
             <button
               type="button"
               onClick={() => setZoomScale((s) => Math.max(0.5, s - 0.1))}
-              className="p-1 text-slate-600 hover:text-slate-900 rounded"
+              className="p-1 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white rounded"
               title="Oddal"
             >
               <ZoomOut className="h-3.5 w-3.5" />
             </button>
-            <span className="text-[11px] font-mono px-1.5 text-slate-600 min-w-[42px] text-center">
+            <span className="text-[11px] font-mono px-1.5 text-slate-600 dark:text-slate-300 min-w-[42px] text-center">
               {Math.round(zoomScale * 100)}%
             </span>
             <button
               type="button"
               onClick={() => setZoomScale((s) => Math.min(1.5, s + 0.1))}
-              className="p-1 text-slate-600 hover:text-slate-900 rounded"
+              className="p-1 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white rounded"
               title="Przybliż"
             >
               <ZoomIn className="h-3.5 w-3.5" />
@@ -120,7 +120,7 @@ export const CVLivePreview: React.FC<CVLivePreviewProps> = ({
             <button
               type="button"
               onClick={() => setZoomScale(0.9)}
-              className="p-1 text-slate-400 hover:text-slate-700 rounded border-l border-slate-200 ml-0.5"
+              className="p-1 text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 rounded border-l border-slate-200 dark:border-slate-700 ml-0.5"
               title="Resetuj zoom"
             >
               <RotateCcw className="h-3 w-3" />
@@ -144,18 +144,18 @@ export const CVLivePreview: React.FC<CVLivePreviewProps> = ({
       {/* Pages Canvas */}
       <div className="flex-1 overflow-auto p-6 flex flex-col items-center gap-8">
         {compileError && (
-          <div className="w-full max-w-xl rounded-lg bg-rose-50 border border-rose-200 p-3 text-xs text-rose-700 flex items-center gap-2">
-            <AlertCircle className="h-4 w-4 shrink-0 text-rose-600" />
+          <div className="w-full max-w-xl rounded-lg bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/50 p-3 text-xs text-rose-700 dark:text-rose-400 flex items-center gap-2">
+            <AlertCircle className="h-4 w-4 shrink-0 text-rose-600 dark:text-rose-400" />
             <span>{compileError}</span>
           </div>
         )}
 
         {svgPages.length === 0 && isCompiling ? (
-          <div className="py-24 text-center text-sm text-slate-400 animate-pulse">
+          <div className="py-24 text-center text-sm text-slate-400 dark:text-slate-500 animate-pulse">
             Inicjalizacja i kompilacja wektorowa Typst...
           </div>
         ) : svgPages.length === 0 ? (
-          <div className="py-24 text-center text-sm text-slate-400">
+          <div className="py-24 text-center text-sm text-slate-400 dark:text-slate-500">
             Brak stron do wyświetlenia. Upewnij się, że wybrano aktywne sekcje.
           </div>
         ) : (
@@ -172,7 +172,7 @@ export const CVLivePreview: React.FC<CVLivePreviewProps> = ({
                 className="typst-page-svg select-text"
                 dangerouslySetInnerHTML={{ __html: pageSvg }}
               />
-              <div className="absolute -bottom-6 right-2 text-[10px] text-slate-400 font-mono">
+              <div className="absolute -bottom-6 right-2 text-[10px] text-slate-400 dark:text-slate-500 font-mono">
                 Strona {idx + 1} z {svgPages.length}
               </div>
             </div>

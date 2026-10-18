@@ -578,21 +578,21 @@ export const PresetEditor: React.FC<PresetEditorProps> = ({
   ) as CustomSectionBlock[];
 
   return (
-    <div className="flex flex-col h-[calc(100vh-4.5rem)] -m-6 bg-slate-50 overflow-hidden">
+    <div className="flex flex-col h-[calc(100vh-4.5rem)] -m-6 bg-slate-50 dark:bg-slate-950 overflow-hidden">
       {/* Top Navbar */}
-      <header className="border-b border-slate-200 bg-white px-6 py-3 shrink-0 flex items-center justify-between gap-4 shadow-xs">
+      <header className="border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-6 py-3 shrink-0 flex items-center justify-between gap-4 shadow-xs">
         <div className="flex items-center gap-3 truncate">
           <Button
             size="sm"
             variant="ghost"
             onClick={onBack}
-            className="text-xs h-8 text-slate-600"
+            className="text-xs h-8 text-slate-600 dark:text-slate-300"
           >
             <ArrowLeft className="h-4 w-4 mr-1.5" />
             Wróć do listy szablonów
           </Button>
 
-          <div className="h-4 w-px bg-slate-200" />
+          <div className="h-4 w-px bg-slate-200 dark:bg-slate-700" />
 
           <div className="flex items-center gap-2 truncate">
             <input
@@ -600,23 +600,23 @@ export const PresetEditor: React.FC<PresetEditorProps> = ({
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="Nazwa szablonu / Stanowisko"
-              className="font-bold text-slate-900 text-sm bg-transparent border-b border-dashed border-slate-300 hover:border-blue-500 focus:border-blue-500 focus:outline-none px-1 py-0.5 min-w-[200px]"
+              className="font-bold text-slate-900 dark:text-slate-100 text-sm bg-transparent border-b border-dashed border-slate-300 dark:border-slate-700 hover:border-blue-500 focus:border-blue-500 focus:outline-none px-1 py-0.5 min-w-[200px]"
             />
-            <span className="text-xs text-slate-400 font-mono">(Szablon bazowy)</span>
+            <span className="text-xs text-slate-400 dark:text-slate-500 font-mono">(Szablon bazowy)</span>
           </div>
         </div>
 
         {/* Center / Right controls */}
         <div className="flex items-center gap-3">
           {/* Mobile Tab Switcher */}
-          <div className="flex lg:hidden bg-slate-100 p-0.5 rounded-lg border border-slate-200">
+          <div className="flex lg:hidden bg-slate-100 dark:bg-slate-800 p-0.5 rounded-lg border border-slate-200 dark:border-slate-700">
             <button
               type="button"
               onClick={() => setMobileTab("edit")}
               className={`px-3 py-1 rounded-md text-xs font-semibold ${
                 mobileTab === "edit"
-                  ? "bg-white text-slate-900 shadow-xs"
-                  : "text-slate-600 hover:text-slate-900"
+                  ? "bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-xs"
+                  : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
               }`}
             >
               Edycja
@@ -626,8 +626,8 @@ export const PresetEditor: React.FC<PresetEditorProps> = ({
               onClick={() => setMobileTab("preview")}
               className={`px-3 py-1 rounded-md text-xs font-semibold ${
                 mobileTab === "preview"
-                  ? "bg-white text-slate-900 shadow-xs"
-                  : "text-slate-600 hover:text-slate-900"
+                  ? "bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-xs"
+                  : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
               }`}
             >
               Podgląd
@@ -646,14 +646,14 @@ export const PresetEditor: React.FC<PresetEditorProps> = ({
           </div>
 
           {saveSuccess && (
-            <span className="flex items-center gap-1 text-xs font-semibold text-emerald-600 bg-emerald-50 px-2.5 py-1.5 rounded-lg border border-emerald-200">
+            <span className="flex items-center gap-1 text-xs font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-2.5 py-1.5 rounded-lg border border-emerald-200 dark:border-emerald-900/50">
               <Check className="h-4 w-4" />
               Zapisano pomyślnie!
             </span>
           )}
 
           {errorMessage && (
-            <span className="flex items-center gap-1 text-xs font-semibold text-rose-600 bg-rose-50 px-2.5 py-1.5 rounded-lg border border-rose-200">
+            <span className="flex items-center gap-1 text-xs font-semibold text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/40 px-2.5 py-1.5 rounded-lg border border-rose-200 dark:border-rose-900/50">
               <AlertCircle className="h-4 w-4" />
               {errorMessage}
             </span>
@@ -681,10 +681,10 @@ export const PresetEditor: React.FC<PresetEditorProps> = ({
           }`}
         >
           {/* Header & Basic Candidate Identity for Preview */}
-          <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-xs space-y-4">
-            <div className="flex items-center gap-2 border-b border-slate-100 pb-2.5">
-              <User className="h-4 w-4 text-blue-600" />
-              <h3 className="font-semibold text-sm text-slate-900">
+          <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-xs space-y-4">
+            <div className="flex items-center gap-2 border-b border-slate-100 dark:border-slate-800 pb-2.5">
+              <User className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+              <h3 className="font-semibold text-sm text-slate-900 dark:text-slate-100">
                 Nagłówek i dane kandydata (do podglądu szablonu)
               </h3>
             </div>
@@ -714,22 +714,22 @@ export const PresetEditor: React.FC<PresetEditorProps> = ({
 
           {/* O mnie (Summary) Block */}
           {summaryBlock && (
-            <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-xs space-y-3">
-              <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
+            <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-xs space-y-3">
+              <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2.5">
                 <div className="flex items-center gap-2 flex-1 mr-3">
-                  <FileText className="h-4 w-4 text-indigo-600 shrink-0" />
+                  <FileText className="h-4 w-4 text-indigo-600 dark:text-indigo-400 shrink-0" />
                   <input
                     type="text"
                     value={summaryBlock.title}
                     onChange={(e) => updateSectionTitle("summary", e.target.value)}
-                    className="font-semibold text-sm text-slate-900 bg-transparent border-b border-transparent hover:border-slate-300 focus:border-blue-500 focus:outline-none px-1 py-0.5"
+                    className="font-semibold text-sm text-slate-900 dark:text-slate-100 bg-transparent border-b border-transparent hover:border-slate-300 dark:hover:border-slate-700 focus:border-blue-500 focus:outline-none px-1 py-0.5"
                   />
-                  <span className="text-xs text-slate-400 font-mono">(Summary)</span>
+                  <span className="text-xs text-slate-400 dark:text-slate-500 font-mono">(Summary)</span>
                 </div>
                 <button
                   type="button"
                   onClick={() => removeSection("summary")}
-                  className="text-slate-400 hover:text-rose-600 p-1"
+                  className="text-slate-400 dark:text-slate-500 hover:text-rose-600 dark:hover:text-rose-400 p-1"
                   title="Usuń sekcję"
                 >
                   <Trash2 className="h-4 w-4" />
@@ -748,22 +748,22 @@ export const PresetEditor: React.FC<PresetEditorProps> = ({
 
           {/* Skills Block */}
           {skillsBlock && (
-            <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-xs space-y-4">
-              <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
+            <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-xs space-y-4">
+              <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2.5">
                 <div className="flex items-center gap-2 flex-1 mr-3">
-                  <Code className="h-4 w-4 text-emerald-600 shrink-0" />
+                  <Code className="h-4 w-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
                   <input
                     type="text"
                     value={skillsBlock.title}
                     onChange={(e) => updateSectionTitle(skillsBlock.id, e.target.value)}
-                    className="font-semibold text-sm text-slate-900 bg-transparent border-b border-transparent hover:border-slate-300 focus:border-blue-500 focus:outline-none px-1 py-0.5"
+                    className="font-semibold text-sm text-slate-900 dark:text-slate-100 bg-transparent border-b border-transparent hover:border-slate-300 dark:hover:border-slate-700 focus:border-blue-500 focus:outline-none px-1 py-0.5"
                   />
-                  <span className="text-xs text-slate-400 font-mono">(Skills)</span>
+                  <span className="text-xs text-slate-400 dark:text-slate-500 font-mono">(Skills)</span>
                 </div>
                 <button
                   type="button"
                   onClick={() => removeSection(skillsBlock.id)}
-                  className="text-slate-400 hover:text-rose-600 p-1"
+                  className="text-slate-400 dark:text-slate-500 hover:text-rose-600 dark:hover:text-rose-400 p-1"
                   title="Usuń sekcję"
                 >
                   <Trash2 className="h-4 w-4" />
@@ -774,23 +774,23 @@ export const PresetEditor: React.FC<PresetEditorProps> = ({
                 {skillsBlock.items.map((cat, idx) => (
                   <div
                     key={idx}
-                    className="rounded-lg border border-slate-200 bg-slate-50/60 p-3 space-y-2 text-xs"
+                    className="rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-800/50 p-3 space-y-2 text-xs"
                   >
                     <div className="flex items-center justify-between gap-3">
                       <div className="flex items-center gap-2 flex-1">
-                        <Edit2 className="h-3 w-3 text-slate-400" />
+                        <Edit2 className="h-3 w-3 text-slate-400 dark:text-slate-500" />
                         <input
                           type="text"
                           value={cat.category}
                           onChange={(e) => updateSkillCategoryTitle(idx, e.target.value)}
                           placeholder="Kategoria umiejętności"
-                          className="font-semibold text-xs text-slate-800 bg-transparent border-b border-dashed border-slate-300 hover:border-blue-500 focus:border-blue-500 focus:outline-none px-1 py-0.5 w-full max-w-xs"
+                          className="font-semibold text-xs text-slate-800 dark:text-slate-200 bg-transparent border-b border-dashed border-slate-300 dark:border-slate-700 hover:border-blue-500 focus:border-blue-500 focus:outline-none px-1 py-0.5 w-full max-w-xs"
                         />
                       </div>
                       <button
                         type="button"
                         onClick={() => removeSkillCategory(idx)}
-                        className="text-slate-400 hover:text-rose-600 p-1"
+                        className="text-slate-400 dark:text-slate-500 hover:text-rose-600 dark:hover:text-rose-400 p-1"
                       >
                         <Trash2 className="h-3.5 w-3.5" />
                       </button>
@@ -807,7 +807,7 @@ export const PresetEditor: React.FC<PresetEditorProps> = ({
                       {cat.skills.map((skill, sIdx) => (
                         <span
                           key={sIdx}
-                          className="rounded bg-white border border-slate-200 px-2 py-0.5 text-[11px] font-mono text-slate-700 shadow-xs"
+                          className="rounded bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-2 py-0.5 text-[11px] font-mono text-slate-700 dark:text-slate-300 shadow-xs"
                         >
                           {skill}
                         </span>
@@ -817,7 +817,7 @@ export const PresetEditor: React.FC<PresetEditorProps> = ({
                 ))}
               </div>
 
-              <div className="pt-2 border-t border-slate-100">
+              <div className="pt-2 border-t border-slate-100 dark:border-slate-800">
                 <Button size="sm" variant="outline" onClick={addSkillCategory} className="text-xs h-7">
                   <Plus className="h-3 w-3 mr-1" />
                   Dodaj kategorię umiejętności
@@ -828,22 +828,22 @@ export const PresetEditor: React.FC<PresetEditorProps> = ({
 
           {/* Experience Block */}
           {expBlock && (
-            <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-xs space-y-4">
-              <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
+            <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-xs space-y-4">
+              <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2.5">
                 <div className="flex items-center gap-2 flex-1 mr-3">
-                  <Briefcase className="h-4 w-4 text-blue-600 shrink-0" />
+                  <Briefcase className="h-4 w-4 text-blue-600 dark:text-blue-400 shrink-0" />
                   <input
                     type="text"
                     value={expBlock.title}
                     onChange={(e) => updateSectionTitle(expBlock.id, e.target.value)}
-                    className="font-semibold text-sm text-slate-900 bg-transparent border-b border-transparent hover:border-slate-300 focus:border-blue-500 focus:outline-none px-1 py-0.5"
+                    className="font-semibold text-sm text-slate-900 dark:text-slate-100 bg-transparent border-b border-transparent hover:border-slate-300 dark:hover:border-slate-700 focus:border-blue-500 focus:outline-none px-1 py-0.5"
                   />
-                  <span className="text-xs text-slate-400 font-mono">(Experience)</span>
+                  <span className="text-xs text-slate-400 dark:text-slate-500 font-mono">(Experience)</span>
                 </div>
                 <button
                   type="button"
                   onClick={() => removeSection(expBlock.id)}
-                  className="text-slate-400 hover:text-rose-600 p-1"
+                  className="text-slate-400 dark:text-slate-500 hover:text-rose-600 dark:hover:text-rose-400 p-1"
                   title="Usuń sekcję"
                 >
                   <Trash2 className="h-4 w-4" />
@@ -854,16 +854,16 @@ export const PresetEditor: React.FC<PresetEditorProps> = ({
                 {expBlock.items.map((item, idx) => (
                   <div
                     key={idx}
-                    className="p-3 bg-slate-50 rounded-lg border border-slate-200 text-xs space-y-3"
+                    className="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-lg border border-slate-200 dark:border-slate-700/60 text-xs space-y-3"
                   >
                     <div className="flex items-center justify-between">
-                      <span className="font-semibold text-slate-800">
+                      <span className="font-semibold text-slate-800 dark:text-slate-200">
                         Pozycja #{idx + 1}
                       </span>
                       <button
                         type="button"
                         onClick={() => removeExperienceItem(idx)}
-                        className="text-slate-400 hover:text-rose-600 p-1"
+                        className="text-slate-400 dark:text-slate-500 hover:text-rose-600 dark:hover:text-rose-400 p-1"
                       >
                         <Trash2 className="h-3.5 w-3.5" />
                       </button>
@@ -917,7 +917,7 @@ export const PresetEditor: React.FC<PresetEditorProps> = ({
                 ))}
               </div>
 
-              <div className="pt-2 border-t border-slate-100">
+              <div className="pt-2 border-t border-slate-100 dark:border-slate-800">
                 <Button size="sm" variant="outline" onClick={addExperienceItem} className="text-xs h-7">
                   <Plus className="h-3 w-3 mr-1" />
                   Dodaj stanowisko
@@ -928,22 +928,22 @@ export const PresetEditor: React.FC<PresetEditorProps> = ({
 
           {/* Projects Block */}
           {projectsBlock && (
-            <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-xs space-y-4">
-              <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
+            <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-xs space-y-4">
+              <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2.5">
                 <div className="flex items-center gap-2 flex-1 mr-3">
-                  <Code className="h-4 w-4 text-purple-600 shrink-0" />
+                  <Code className="h-4 w-4 text-purple-600 dark:text-purple-400 shrink-0" />
                   <input
                     type="text"
                     value={projectsBlock.title}
                     onChange={(e) => updateSectionTitle(projectsBlock.id, e.target.value)}
-                    className="font-semibold text-sm text-slate-900 bg-transparent border-b border-transparent hover:border-slate-300 focus:border-blue-500 focus:outline-none px-1 py-0.5"
+                    className="font-semibold text-sm text-slate-900 dark:text-slate-100 bg-transparent border-b border-transparent hover:border-slate-300 dark:hover:border-slate-700 focus:border-blue-500 focus:outline-none px-1 py-0.5"
                   />
-                  <span className="text-xs text-slate-400 font-mono">(Projects)</span>
+                  <span className="text-xs text-slate-400 dark:text-slate-500 font-mono">(Projects)</span>
                 </div>
                 <button
                   type="button"
                   onClick={() => removeSection(projectsBlock.id)}
-                  className="text-slate-400 hover:text-rose-600 p-1"
+                  className="text-slate-400 dark:text-slate-500 hover:text-rose-600 dark:hover:text-rose-400 p-1"
                   title="Usuń sekcję"
                 >
                   <Trash2 className="h-4 w-4" />
@@ -954,16 +954,16 @@ export const PresetEditor: React.FC<PresetEditorProps> = ({
                 {projectsBlock.items.map((proj, idx) => (
                   <div
                     key={idx}
-                    className="p-3 bg-slate-50 rounded-lg border border-slate-200 text-xs space-y-3"
+                    className="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-lg border border-slate-200 dark:border-slate-700/60 text-xs space-y-3"
                   >
                     <div className="flex items-center justify-between">
-                      <span className="font-semibold text-slate-800">
+                      <span className="font-semibold text-slate-800 dark:text-slate-200">
                         Projekt #{idx + 1}
                       </span>
                       <button
                         type="button"
                         onClick={() => removeProjectItem(idx)}
-                        className="text-slate-400 hover:text-rose-600 p-1"
+                        className="text-slate-400 dark:text-slate-500 hover:text-rose-600 dark:hover:text-rose-400 p-1"
                       >
                         <Trash2 className="h-3.5 w-3.5" />
                       </button>
@@ -1018,7 +1018,7 @@ export const PresetEditor: React.FC<PresetEditorProps> = ({
                 ))}
               </div>
 
-              <div className="pt-2 border-t border-slate-100">
+              <div className="pt-2 border-t border-slate-100 dark:border-slate-800">
                 <Button size="sm" variant="outline" onClick={addProjectItem} className="text-xs h-7">
                   <Plus className="h-3 w-3 mr-1" />
                   Dodaj projekt
@@ -1029,22 +1029,22 @@ export const PresetEditor: React.FC<PresetEditorProps> = ({
 
           {/* Education Block */}
           {eduBlock && (
-            <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-xs space-y-4">
-              <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
+            <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-xs space-y-4">
+              <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2.5">
                 <div className="flex items-center gap-2 flex-1 mr-3">
-                  <GraduationCap className="h-4 w-4 text-indigo-600 shrink-0" />
+                  <GraduationCap className="h-4 w-4 text-indigo-600 dark:text-indigo-400 shrink-0" />
                   <input
                     type="text"
                     value={eduBlock.title}
                     onChange={(e) => updateSectionTitle(eduBlock.id, e.target.value)}
-                    className="font-semibold text-sm text-slate-900 bg-transparent border-b border-transparent hover:border-slate-300 focus:border-blue-500 focus:outline-none px-1 py-0.5"
+                    className="font-semibold text-sm text-slate-900 dark:text-slate-100 bg-transparent border-b border-transparent hover:border-slate-300 dark:hover:border-slate-700 focus:border-blue-500 focus:outline-none px-1 py-0.5"
                   />
-                  <span className="text-xs text-slate-400 font-mono">(Education)</span>
+                  <span className="text-xs text-slate-400 dark:text-slate-500 font-mono">(Education)</span>
                 </div>
                 <button
                   type="button"
                   onClick={() => removeSection(eduBlock.id)}
-                  className="text-slate-400 hover:text-rose-600 p-1"
+                  className="text-slate-400 dark:text-slate-500 hover:text-rose-600 dark:hover:text-rose-400 p-1"
                   title="Usuń sekcję"
                 >
                   <Trash2 className="h-4 w-4" />
@@ -1055,16 +1055,16 @@ export const PresetEditor: React.FC<PresetEditorProps> = ({
                 {eduBlock.items.map((edu, idx) => (
                   <div
                     key={idx}
-                    className="p-3 bg-slate-50 rounded-lg border border-slate-200 text-xs space-y-3"
+                    className="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-lg border border-slate-200 dark:border-slate-700/60 text-xs space-y-3"
                   >
                     <div className="flex items-center justify-between">
-                      <span className="font-semibold text-slate-800">
+                      <span className="font-semibold text-slate-800 dark:text-slate-200">
                         Edukacja #{idx + 1}
                       </span>
                       <button
                         type="button"
                         onClick={() => removeEducationItem(idx)}
-                        className="text-slate-400 hover:text-rose-600 p-1"
+                        className="text-slate-400 dark:text-slate-500 hover:text-rose-600 dark:hover:text-rose-400 p-1"
                       >
                         <Trash2 className="h-3.5 w-3.5" />
                       </button>
@@ -1104,7 +1104,7 @@ export const PresetEditor: React.FC<PresetEditorProps> = ({
                 ))}
               </div>
 
-              <div className="pt-2 border-t border-slate-100">
+              <div className="pt-2 border-t border-slate-100 dark:border-slate-800">
                 <Button size="sm" variant="outline" onClick={addEducationItem} className="text-xs h-7">
                   <Plus className="h-3 w-3 mr-1" />
                   Dodaj edukację
@@ -1115,22 +1115,22 @@ export const PresetEditor: React.FC<PresetEditorProps> = ({
 
           {/* Certificates Block */}
           {certsBlock && (
-            <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-xs space-y-4">
-              <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
+            <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-xs space-y-4">
+              <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2.5">
                 <div className="flex items-center gap-2 flex-1 mr-3">
-                  <Award className="h-4 w-4 text-rose-600 shrink-0" />
+                  <Award className="h-4 w-4 text-rose-600 dark:text-rose-400 shrink-0" />
                   <input
                     type="text"
                     value={certsBlock.title}
                     onChange={(e) => updateSectionTitle(certsBlock.id, e.target.value)}
-                    className="font-semibold text-sm text-slate-900 bg-transparent border-b border-transparent hover:border-slate-300 focus:border-blue-500 focus:outline-none px-1 py-0.5"
+                    className="font-semibold text-sm text-slate-900 dark:text-slate-100 bg-transparent border-b border-transparent hover:border-slate-300 dark:hover:border-slate-700 focus:border-blue-500 focus:outline-none px-1 py-0.5"
                   />
-                  <span className="text-xs text-slate-400 font-mono">(Certificates)</span>
+                  <span className="text-xs text-slate-400 dark:text-slate-500 font-mono">(Certificates)</span>
                 </div>
                 <button
                   type="button"
                   onClick={() => removeSection(certsBlock.id)}
-                  className="text-slate-400 hover:text-rose-600 p-1"
+                  className="text-slate-400 dark:text-slate-500 hover:text-rose-600 dark:hover:text-rose-400 p-1"
                   title="Usuń sekcję"
                 >
                   <Trash2 className="h-4 w-4" />
@@ -1141,16 +1141,16 @@ export const PresetEditor: React.FC<PresetEditorProps> = ({
                 {certsBlock.items.map((cert: CertificateItem, idx: number) => (
                   <div
                     key={idx}
-                    className="p-3 bg-slate-50 rounded-lg border border-slate-200 text-xs space-y-3"
+                    className="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-lg border border-slate-200 dark:border-slate-700/60 text-xs space-y-3"
                   >
                     <div className="flex items-center justify-between">
-                      <span className="font-semibold text-slate-800">
+                      <span className="font-semibold text-slate-800 dark:text-slate-200">
                         Certyfikat #{idx + 1}
                       </span>
                       <button
                         type="button"
                         onClick={() => removeCertificateItem(idx)}
-                        className="text-slate-400 hover:text-rose-600 p-1"
+                        className="text-slate-400 dark:text-slate-500 hover:text-rose-600 dark:hover:text-rose-400 p-1"
                       >
                         <Trash2 className="h-3.5 w-3.5" />
                       </button>
@@ -1178,7 +1178,7 @@ export const PresetEditor: React.FC<PresetEditorProps> = ({
                 ))}
               </div>
 
-              <div className="pt-2 border-t border-slate-100">
+              <div className="pt-2 border-t border-slate-100 dark:border-slate-800">
                 <Button size="sm" variant="outline" onClick={addCertificateItem} className="text-xs h-7">
                   <Plus className="h-3 w-3 mr-1" />
                   Dodaj certyfikat
@@ -1189,22 +1189,22 @@ export const PresetEditor: React.FC<PresetEditorProps> = ({
 
           {/* Custom Blocks */}
           {customBlocks.map((cs) => (
-            <div key={cs.id} className="rounded-xl border border-slate-200 bg-white p-5 shadow-xs space-y-3">
-              <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
+            <div key={cs.id} className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-xs space-y-3">
+              <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2.5">
                 <div className="flex items-center gap-2 flex-1 mr-3">
-                  <FolderPlus className="h-4 w-4 text-teal-600 shrink-0" />
+                  <FolderPlus className="h-4 w-4 text-teal-600 dark:text-teal-400 shrink-0" />
                   <input
                     type="text"
                     value={cs.title}
                     onChange={(e) => updateSectionTitle(cs.id, e.target.value)}
                     placeholder="Tytuł sekcji własnej"
-                    className="font-semibold text-sm text-slate-900 bg-transparent border-b border-dashed border-slate-300 hover:border-blue-500 focus:border-blue-500 focus:outline-none px-1 py-0.5 w-full max-w-sm"
+                    className="font-semibold text-sm text-slate-900 dark:text-slate-100 bg-transparent border-b border-dashed border-slate-300 dark:border-slate-700 hover:border-blue-500 focus:border-blue-500 focus:outline-none px-1 py-0.5 w-full max-w-sm"
                   />
                 </div>
                 <button
                   type="button"
                   onClick={() => removeSection(cs.id)}
-                  className="text-slate-400 hover:text-rose-600 p-1"
+                  className="text-slate-400 dark:text-slate-500 hover:text-rose-600 dark:hover:text-rose-400 p-1"
                   title="Usuń sekcję"
                 >
                   <Trash2 className="h-4 w-4" />
@@ -1233,7 +1233,7 @@ export const PresetEditor: React.FC<PresetEditorProps> = ({
               type="button"
               variant="outline"
               onClick={addCustomSection}
-              className="border-dashed border-slate-300 hover:border-blue-500 hover:text-blue-600 hover:bg-blue-50/50 py-3 text-xs w-full max-w-md"
+              className="border-dashed border-slate-300 dark:border-slate-700 hover:border-blue-500 dark:hover:border-blue-500 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50/50 dark:hover:bg-blue-950/20 py-3 text-xs w-full max-w-md"
             >
               <Plus className="h-3.5 w-3.5 mr-1.5" />
               Dodaj własną sekcję do tego szablonu
@@ -1242,18 +1242,18 @@ export const PresetEditor: React.FC<PresetEditorProps> = ({
 
           {/* Clause Block */}
           {clauseBlock && (
-            <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-xs space-y-3">
-              <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
+            <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-xs space-y-3">
+              <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2.5">
                 <div className="flex items-center gap-2">
-                  <ShieldCheck className="h-4 w-4 text-blue-600" />
-                  <h4 className="font-semibold text-sm text-slate-900">
+                  <ShieldCheck className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                  <h4 className="font-semibold text-sm text-slate-900 dark:text-slate-100">
                     {clauseBlock.title}
                   </h4>
                 </div>
                 <button
                   type="button"
                   onClick={() => removeSection("clause")}
-                  className="text-slate-400 hover:text-rose-600 p-1"
+                  className="text-slate-400 dark:text-slate-500 hover:text-rose-600 dark:hover:text-rose-400 p-1"
                   title="Usuń sekcję"
                 >
                   <Trash2 className="h-4 w-4" />
@@ -1263,7 +1263,7 @@ export const PresetEditor: React.FC<PresetEditorProps> = ({
                 value={clauseBlock.content}
                 onChange={(e) => updateClauseContent(e.target.value)}
                 rows={3}
-                className="text-[11px] text-slate-600"
+                className="text-[11px] text-slate-600 dark:text-slate-300"
               />
             </div>
           )}

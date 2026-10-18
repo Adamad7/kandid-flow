@@ -714,7 +714,7 @@ export const KnowledgeBaseEditor: React.FC = () => {
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="flex flex-col items-center gap-3">
           <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
-          <p className="text-sm font-medium text-slate-500">
+          <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
             Wczytywanie bazy wiedzy o kandydacie...
           </p>
         </div>
@@ -745,13 +745,13 @@ export const KnowledgeBaseEditor: React.FC = () => {
     return (
       <div className="flex items-center gap-2">
         {isSuccessThis && (
-          <span className="flex items-center gap-1 text-xs font-semibold text-emerald-600 bg-emerald-50 px-2 py-1 rounded border border-emerald-200">
+          <span className="flex items-center gap-1 text-xs font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-2 py-1 rounded border border-emerald-200 dark:border-emerald-900/50">
             <Check className="h-3.5 w-3.5" />
             Zapisano
           </span>
         )}
         {errorThis && (
-          <span className="flex items-center gap-1 text-xs font-semibold text-rose-600 bg-rose-50 px-2 py-1 rounded border border-rose-200">
+          <span className="flex items-center gap-1 text-xs font-semibold text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/40 px-2 py-1 rounded border border-rose-200 dark:border-rose-900/50">
             <AlertCircle className="h-3.5 w-3.5" />
             {errorThis}
           </span>
@@ -774,19 +774,19 @@ export const KnowledgeBaseEditor: React.FC = () => {
   return (
     <div className="max-w-4xl mx-auto space-y-8 pb-16">
       {/* Top Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-2 border-b border-slate-200">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-2 border-b border-slate-200 dark:border-slate-800">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900">
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
             Baza wiedzy o kandydacie
           </h1>
-          <p className="text-sm text-slate-500 mt-1">
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
             Główny zasób Twoich doświadczeń, umiejętności i projektów, z którego AI generuje i dopasowuje CV
           </p>
         </div>
 
         <div className="flex items-center gap-3">
           {successSections["all"] && (
-            <span className="flex items-center gap-1 text-xs font-semibold text-emerald-600 bg-emerald-50 px-2.5 py-1.5 rounded-lg border border-emerald-200">
+            <span className="flex items-center gap-1 text-xs font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-2.5 py-1.5 rounded-lg border border-emerald-200 dark:border-emerald-900/50">
               <Check className="h-4 w-4" />
               Wszystko zapisane!
             </span>
@@ -805,11 +805,11 @@ export const KnowledgeBaseEditor: React.FC = () => {
       </div>
 
       {/* Basic Contact Info Block */}
-      <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-xs space-y-5">
-        <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+      <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-6 shadow-xs space-y-5">
+        <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
           <div className="flex items-center gap-2">
-            <User className="h-5 w-5 text-blue-600" />
-            <h3 className="font-semibold text-slate-900">
+            <User className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+            <h3 className="font-semibold text-slate-900 dark:text-slate-100">
               Dane kontaktowe i identyfikacja
             </h3>
           </div>
@@ -877,8 +877,8 @@ export const KnowledgeBaseEditor: React.FC = () => {
         </div>
 
         {/* Default sections selector */}
-        <div className="pt-4 border-t border-slate-100 flex flex-col gap-3">
-          <label className="block text-xs font-semibold uppercase tracking-wider text-slate-700">
+        <div className="pt-4 border-t border-slate-100 dark:border-slate-800 flex flex-col gap-3">
+          <label className="block text-xs font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-300">
             Domyślnie zaznaczane sekcje przy generowaniu CV:
           </label>
           <div className="flex flex-wrap gap-2.5">
@@ -896,15 +896,15 @@ export const KnowledgeBaseEditor: React.FC = () => {
                 key={sec.id}
                 className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border text-xs font-medium cursor-pointer transition-colors ${
                   defaultSections.includes(sec.id)
-                    ? "bg-blue-50 border-blue-300 text-blue-700"
-                    : "bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100"
+                    ? "bg-blue-50 dark:bg-blue-950/40 border-blue-300 dark:border-blue-800 text-blue-700 dark:text-blue-300"
+                    : "bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700/60"
                 }`}
               >
                 <input
                   type="checkbox"
                   checked={defaultSections.includes(sec.id)}
                   onChange={() => toggleDefaultSection(sec.id)}
-                  className="rounded border-slate-300 text-blue-600 focus:ring-blue-500 h-3.5 w-3.5"
+                  className="rounded border-slate-300 dark:border-slate-700 text-blue-600 focus:ring-blue-500 h-3.5 w-3.5"
                 />
                 {sec.label}
               </label>
@@ -913,25 +913,25 @@ export const KnowledgeBaseEditor: React.FC = () => {
         </div>
 
         {/* Bottom Save Action for Contact & Preferences */}
-        <div className="pt-3 border-t border-slate-100 flex justify-end">
+        <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex justify-end">
           {renderSectionSaveButton("contact", isContactDirty || isDefaultsDirty)}
         </div>
       </div>
 
       {/* O mnie (Summary) Section */}
       {summarySection && (
-        <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-xs space-y-4">
-          <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+        <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-6 shadow-xs space-y-4">
+          <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
             <div className="flex items-center gap-2 flex-1 mr-4">
-              <User className="h-5 w-5 text-indigo-600 shrink-0" />
+              <User className="h-5 w-5 text-indigo-600 dark:text-indigo-400 shrink-0" />
               <input
                 type="text"
                 value={summarySection.title}
                 onChange={(e) => updateSectionTitle("summary", e.target.value)}
-                className="font-semibold text-slate-900 text-base bg-transparent border-b border-transparent hover:border-slate-300 focus:border-blue-500 focus:outline-none px-1 py-0.5"
+                className="font-semibold text-slate-900 dark:text-slate-100 text-base bg-transparent border-b border-transparent hover:border-slate-300 dark:hover:border-slate-700 focus:border-blue-500 focus:outline-none px-1 py-0.5"
                 placeholder="Tytuł sekcji"
               />
-              <span className="text-xs text-slate-400 font-mono">(Summary)</span>
+              <span className="text-xs text-slate-400 dark:text-slate-500 font-mono">(Summary)</span>
             </div>
           </div>
           <Textarea
@@ -942,7 +942,7 @@ export const KnowledgeBaseEditor: React.FC = () => {
           />
 
           {/* Bottom Save Action */}
-          <div className="pt-3 border-t border-slate-100 flex justify-end">
+          <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex justify-end">
             {renderSectionSaveButton("summary", isSectionDirty("summary"))}
           </div>
         </div>
@@ -950,18 +950,18 @@ export const KnowledgeBaseEditor: React.FC = () => {
 
       {/* Skills Section (Umiejętności twarde i miękkie) */}
       {skillsSection && (
-        <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-xs space-y-4">
-          <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+        <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-6 shadow-xs space-y-4">
+          <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
             <div className="flex items-center gap-2 flex-1 mr-4">
-              <Code className="h-5 w-5 text-emerald-600 shrink-0" />
+              <Code className="h-5 w-5 text-emerald-600 dark:text-emerald-400 shrink-0" />
               <input
                 type="text"
                 value={skillsSection.title}
                 onChange={(e) => updateSectionTitle(skillsSection.id, e.target.value)}
-                className="font-semibold text-slate-900 text-base bg-transparent border-b border-transparent hover:border-slate-300 focus:border-blue-500 focus:outline-none px-1 py-0.5"
+                className="font-semibold text-slate-900 dark:text-slate-100 text-base bg-transparent border-b border-transparent hover:border-slate-300 dark:hover:border-slate-700 focus:border-blue-500 focus:outline-none px-1 py-0.5"
                 placeholder="Tytuł sekcji"
               />
-              <span className="text-xs text-slate-400 font-mono">(Skills)</span>
+              <span className="text-xs text-slate-400 dark:text-slate-500 font-mono">(Skills)</span>
             </div>
           </div>
 
@@ -969,23 +969,23 @@ export const KnowledgeBaseEditor: React.FC = () => {
             {skillsSection.items.map((cat, idx) => (
               <div
                 key={idx}
-                className="rounded-lg border border-slate-200 bg-slate-50/60 p-4 space-y-3"
+                className="rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-800/50 p-4 space-y-3"
               >
                 <div className="flex items-center justify-between gap-3">
                   <div className="flex items-center gap-2 flex-1">
-                    <Edit2 className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+                    <Edit2 className="h-3.5 w-3.5 text-slate-400 dark:text-slate-500 shrink-0" />
                     <input
                       type="text"
                       value={cat.category}
                       onChange={(e) => updateSkillCategoryTitle(idx, e.target.value)}
                       placeholder="Nazwa kategorii (np. Umiejętności twarde, Miękkie, Chmura...)"
-                      className="font-semibold text-sm text-slate-800 bg-transparent border-b border-dashed border-slate-300 hover:border-blue-500 focus:border-blue-500 focus:outline-none px-1 py-0.5 w-full max-w-sm"
+                      className="font-semibold text-sm text-slate-800 dark:text-slate-200 bg-transparent border-b border-dashed border-slate-300 dark:border-slate-700 hover:border-blue-500 focus:border-blue-500 focus:outline-none px-1 py-0.5 w-full max-w-sm"
                     />
                   </div>
                   <button
                     type="button"
                     onClick={() => removeSkillCategory(idx)}
-                    className="text-slate-400 hover:text-rose-600 p-1 rounded"
+                    className="text-slate-400 dark:text-slate-500 hover:text-rose-600 dark:hover:text-rose-400 p-1 rounded"
                     title="Usuń kategorię"
                   >
                     <Trash2 className="h-4 w-4" />
@@ -1003,7 +1003,7 @@ export const KnowledgeBaseEditor: React.FC = () => {
                   {cat.skills.map((skill, sIdx) => (
                     <span
                       key={sIdx}
-                      className="rounded bg-white border border-slate-200 px-2 py-0.5 text-xs font-mono text-slate-700 shadow-xs"
+                      className="rounded bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-2 py-0.5 text-xs font-mono text-slate-700 dark:text-slate-300 shadow-xs"
                     >
                       {skill}
                     </span>
@@ -1014,7 +1014,7 @@ export const KnowledgeBaseEditor: React.FC = () => {
           </div>
 
           {/* Bottom Actions for Skills: Add Category & Save Section */}
-          <div className="pt-3 border-t border-slate-100 flex items-center justify-between">
+          <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
             <Button size="sm" variant="outline" onClick={addSkillCategory} className="text-xs h-8">
               <Plus className="h-3.5 w-3.5 mr-1" />
               Dodaj kategorię
@@ -1026,18 +1026,18 @@ export const KnowledgeBaseEditor: React.FC = () => {
 
       {/* Experience Section */}
       {expSection && (
-        <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-xs space-y-4">
-          <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+        <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-6 shadow-xs space-y-4">
+          <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
             <div className="flex items-center gap-2 flex-1 mr-4">
-              <Briefcase className="h-5 w-5 text-blue-600 shrink-0" />
+              <Briefcase className="h-5 w-5 text-blue-600 dark:text-blue-400 shrink-0" />
               <input
                 type="text"
                 value={expSection.title}
                 onChange={(e) => updateSectionTitle(expSection.id, e.target.value)}
-                className="font-semibold text-slate-900 text-base bg-transparent border-b border-transparent hover:border-slate-300 focus:border-blue-500 focus:outline-none px-1 py-0.5"
+                className="font-semibold text-slate-900 dark:text-slate-100 text-base bg-transparent border-b border-transparent hover:border-slate-300 dark:hover:border-slate-700 focus:border-blue-500 focus:outline-none px-1 py-0.5"
                 placeholder="Tytuł sekcji"
               />
-              <span className="text-xs text-slate-400 font-mono">(Experience)</span>
+              <span className="text-xs text-slate-400 dark:text-slate-500 font-mono">(Experience)</span>
             </div>
           </div>
 
@@ -1045,16 +1045,16 @@ export const KnowledgeBaseEditor: React.FC = () => {
             {expSection.items.map((exp, idx) => (
               <div
                 key={idx}
-                className="rounded-lg border border-slate-200 bg-slate-50/60 p-4 space-y-4"
+                className="rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-800/50 p-4 space-y-4"
               >
                 <div className="flex items-center justify-between">
-                  <span className="font-semibold text-sm text-slate-800">
+                  <span className="font-semibold text-sm text-slate-800 dark:text-slate-200">
                     Pozycja #{idx + 1}
                   </span>
                   <button
                     type="button"
                     onClick={() => removeExperienceItem(idx)}
-                    className="text-slate-400 hover:text-rose-600 p-1"
+                    className="text-slate-400 dark:text-slate-500 hover:text-rose-600 dark:hover:text-rose-400 p-1"
                     title="Usuń stanowisko"
                   >
                     <Trash2 className="h-4 w-4" />
@@ -1124,7 +1124,7 @@ export const KnowledgeBaseEditor: React.FC = () => {
           </div>
 
           {/* Bottom Actions for Experience: Add Position & Save Section */}
-          <div className="pt-3 border-t border-slate-100 flex items-center justify-between">
+          <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
             <Button size="sm" variant="outline" onClick={addExperienceItem} className="text-xs h-8">
               <Plus className="h-3.5 w-3.5 mr-1" />
               Dodaj stanowisko
@@ -1136,18 +1136,18 @@ export const KnowledgeBaseEditor: React.FC = () => {
 
       {/* Projects Section */}
       {projectsSection && (
-        <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-xs space-y-4">
-          <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+        <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-6 shadow-xs space-y-4">
+          <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
             <div className="flex items-center gap-2 flex-1 mr-4">
-              <Code className="h-5 w-5 text-purple-600 shrink-0" />
+              <Code className="h-5 w-5 text-purple-600 dark:text-purple-400 shrink-0" />
               <input
                 type="text"
                 value={projectsSection.title}
                 onChange={(e) => updateSectionTitle(projectsSection.id, e.target.value)}
-                className="font-semibold text-slate-900 text-base bg-transparent border-b border-transparent hover:border-slate-300 focus:border-blue-500 focus:outline-none px-1 py-0.5"
+                className="font-semibold text-slate-900 dark:text-slate-100 text-base bg-transparent border-b border-transparent hover:border-slate-300 dark:hover:border-slate-700 focus:border-blue-500 focus:outline-none px-1 py-0.5"
                 placeholder="Tytuł sekcji"
               />
-              <span className="text-xs text-slate-400 font-mono">(Projects)</span>
+              <span className="text-xs text-slate-400 dark:text-slate-500 font-mono">(Projects)</span>
             </div>
           </div>
 
@@ -1155,16 +1155,16 @@ export const KnowledgeBaseEditor: React.FC = () => {
             {projectsSection.items.map((proj, idx) => (
               <div
                 key={idx}
-                className="rounded-lg border border-slate-200 bg-slate-50/60 p-4 space-y-4"
+                className="rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-800/50 p-4 space-y-4"
               >
                 <div className="flex items-center justify-between">
-                  <span className="font-semibold text-sm text-slate-800">
+                  <span className="font-semibold text-sm text-slate-800 dark:text-slate-200">
                     Projekt #{idx + 1}
                   </span>
                   <button
                     type="button"
                     onClick={() => removeProjectItem(idx)}
-                    className="text-slate-400 hover:text-rose-600 p-1"
+                    className="text-slate-400 dark:text-slate-500 hover:text-rose-600 dark:hover:text-rose-400 p-1"
                     title="Usuń projekt"
                   >
                     <Trash2 className="h-4 w-4" />
@@ -1234,7 +1234,7 @@ export const KnowledgeBaseEditor: React.FC = () => {
           </div>
 
           {/* Bottom Actions for Projects: Add Project & Save Section */}
-          <div className="pt-3 border-t border-slate-100 flex items-center justify-between">
+          <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
             <Button size="sm" variant="outline" onClick={addProjectItem} className="text-xs h-8">
               <Plus className="h-3.5 w-3.5 mr-1" />
               Dodaj projekt
@@ -1246,18 +1246,18 @@ export const KnowledgeBaseEditor: React.FC = () => {
 
       {/* Education Section */}
       {eduSection && (
-        <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-xs space-y-4">
-          <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+        <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-6 shadow-xs space-y-4">
+          <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
             <div className="flex items-center gap-2 flex-1 mr-4">
-              <GraduationCap className="h-5 w-5 text-indigo-600 shrink-0" />
+              <GraduationCap className="h-5 w-5 text-indigo-600 dark:text-indigo-400 shrink-0" />
               <input
                 type="text"
                 value={eduSection.title}
                 onChange={(e) => updateSectionTitle(eduSection.id, e.target.value)}
-                className="font-semibold text-slate-900 text-base bg-transparent border-b border-transparent hover:border-slate-300 focus:border-blue-500 focus:outline-none px-1 py-0.5"
+                className="font-semibold text-slate-900 dark:text-slate-100 text-base bg-transparent border-b border-transparent hover:border-slate-300 dark:hover:border-slate-700 focus:border-blue-500 focus:outline-none px-1 py-0.5"
                 placeholder="Tytuł sekcji"
               />
-              <span className="text-xs text-slate-400 font-mono">(Education)</span>
+              <span className="text-xs text-slate-400 dark:text-slate-500 font-mono">(Education)</span>
             </div>
           </div>
 
@@ -1265,16 +1265,16 @@ export const KnowledgeBaseEditor: React.FC = () => {
             {eduSection.items.map((edu, idx) => (
               <div
                 key={idx}
-                className="rounded-lg border border-slate-200 bg-slate-50/60 p-4 space-y-4"
+                className="rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-800/50 p-4 space-y-4"
               >
                 <div className="flex items-center justify-between">
-                  <span className="font-semibold text-sm text-slate-800">
+                  <span className="font-semibold text-sm text-slate-800 dark:text-slate-200">
                     Wpis #{idx + 1}
                   </span>
                   <button
                     type="button"
                     onClick={() => removeEducationItem(idx)}
-                    className="text-slate-400 hover:text-rose-600 p-1"
+                    className="text-slate-400 dark:text-slate-500 hover:text-rose-600 dark:hover:text-rose-400 p-1"
                     title="Usuń wpis edukacji"
                   >
                     <Trash2 className="h-4 w-4" />
@@ -1330,7 +1330,7 @@ export const KnowledgeBaseEditor: React.FC = () => {
           </div>
 
           {/* Bottom Actions for Education: Add Entry & Save Section */}
-          <div className="pt-3 border-t border-slate-100 flex items-center justify-between">
+          <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
             <Button size="sm" variant="outline" onClick={addEducationItem} className="text-xs h-8">
               <Plus className="h-3.5 w-3.5 mr-1" />
               Dodaj edukację
@@ -1342,18 +1342,18 @@ export const KnowledgeBaseEditor: React.FC = () => {
 
       {/* Certificates Section */}
       {certsSection && (
-        <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-xs space-y-4">
-          <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+        <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-6 shadow-xs space-y-4">
+          <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
             <div className="flex items-center gap-2 flex-1 mr-4">
-              <Award className="h-5 w-5 text-rose-600 shrink-0" />
+              <Award className="h-5 w-5 text-rose-600 dark:text-rose-400 shrink-0" />
               <input
                 type="text"
                 value={certsSection.title}
                 onChange={(e) => updateSectionTitle(certsSection.id, e.target.value)}
-                className="font-semibold text-slate-900 text-base bg-transparent border-b border-transparent hover:border-slate-300 focus:border-blue-500 focus:outline-none px-1 py-0.5"
+                className="font-semibold text-slate-900 dark:text-slate-100 text-base bg-transparent border-b border-transparent hover:border-slate-300 dark:hover:border-slate-700 focus:border-blue-500 focus:outline-none px-1 py-0.5"
                 placeholder="Tytuł sekcji"
               />
-              <span className="text-xs text-slate-400 font-mono">(Certificates)</span>
+              <span className="text-xs text-slate-400 dark:text-slate-500 font-mono">(Certificates)</span>
             </div>
           </div>
 
@@ -1361,16 +1361,16 @@ export const KnowledgeBaseEditor: React.FC = () => {
             {certsSection.items.map((cert, idx) => (
               <div
                 key={idx}
-                className="rounded-lg border border-slate-200 bg-slate-50/60 p-4 space-y-4"
+                className="rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-800/50 p-4 space-y-4"
               >
                 <div className="flex items-center justify-between">
-                  <span className="font-semibold text-sm text-slate-800">
+                  <span className="font-semibold text-sm text-slate-800 dark:text-slate-200">
                     Certyfikat #{idx + 1}
                   </span>
                   <button
                     type="button"
                     onClick={() => removeCertificateItem(idx)}
-                    className="text-slate-400 hover:text-rose-600 p-1"
+                    className="text-slate-400 dark:text-slate-500 hover:text-rose-600 dark:hover:text-rose-400 p-1"
                     title="Usuń certyfikat"
                   >
                     <Trash2 className="h-4 w-4" />
@@ -1408,7 +1408,7 @@ export const KnowledgeBaseEditor: React.FC = () => {
           </div>
 
           {/* Bottom Actions for Certificates: Add Cert & Save Section */}
-          <div className="pt-3 border-t border-slate-100 flex items-center justify-between">
+          <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
             <Button size="sm" variant="outline" onClick={addCertificateItem} className="text-xs h-8">
               <Plus className="h-3.5 w-3.5 mr-1" />
               Dodaj certyfikat
@@ -1422,22 +1422,22 @@ export const KnowledgeBaseEditor: React.FC = () => {
       {customSections.map((cs) => {
         const isDirty = isSectionDirty(cs.id);
         return (
-          <div key={cs.id} className="bg-white rounded-xl border border-slate-200 p-6 shadow-xs space-y-4">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+          <div key={cs.id} className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-6 shadow-xs space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
               <div className="flex items-center gap-2 flex-1 mr-4">
-                <FolderPlus className="h-5 w-5 text-teal-600 shrink-0" />
+                <FolderPlus className="h-5 w-5 text-teal-600 dark:text-teal-400 shrink-0" />
                 <input
                   type="text"
                   value={cs.title}
                   onChange={(e) => updateSectionTitle(cs.id, e.target.value)}
                   placeholder="Wpisz nazwę sekcji (np. Języki obce, Zainteresowania, Publikacje)..."
-                  className="font-semibold text-slate-900 text-base bg-transparent border-b border-dashed border-slate-300 hover:border-blue-500 focus:border-blue-500 focus:outline-none px-1 py-0.5 w-full max-w-md"
+                  className="font-semibold text-slate-900 dark:text-slate-100 text-base bg-transparent border-b border-dashed border-slate-300 dark:border-slate-700 hover:border-blue-500 focus:border-blue-500 focus:outline-none px-1 py-0.5 w-full max-w-md"
                 />
               </div>
               <button
                 type="button"
                 onClick={() => removeSection(cs.id)}
-                className="text-slate-400 hover:text-rose-600 p-1.5 rounded transition-colors"
+                className="text-slate-400 dark:text-slate-500 hover:text-rose-600 dark:hover:text-rose-400 p-1.5 rounded transition-colors"
                 title="Usuń sekcję"
               >
                 <Trash2 className="h-4 w-4" />
@@ -1461,7 +1461,7 @@ export const KnowledgeBaseEditor: React.FC = () => {
             />
 
             {/* Bottom Save Action for Custom Section */}
-            <div className="pt-3 border-t border-slate-100 flex justify-end">
+            <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex justify-end">
               {renderSectionSaveButton(cs.id, isDirty)}
             </div>
           </div>
@@ -1474,7 +1474,7 @@ export const KnowledgeBaseEditor: React.FC = () => {
           type="button"
           variant="outline"
           onClick={addCustomSection}
-          className="border-dashed border-slate-300 hover:border-blue-500 hover:text-blue-600 hover:bg-blue-50/50 py-4 px-6 text-sm font-medium w-full max-w-md"
+          className="border-dashed border-slate-300 dark:border-slate-700 hover:border-blue-500 dark:hover:border-blue-500 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50/50 dark:hover:bg-blue-950/20 py-4 px-6 text-sm font-medium w-full max-w-md"
         >
           <Plus className="h-4 w-4 mr-2" />
           Dodaj własną sekcję do bazy wiedzy
@@ -1483,18 +1483,18 @@ export const KnowledgeBaseEditor: React.FC = () => {
 
       {/* GDPR Clause Section */}
       {clauseSection && (
-        <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-xs space-y-4">
-          <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+        <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-6 shadow-xs space-y-4">
+          <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
             <div className="flex items-center gap-2 flex-1 mr-4">
-              <ShieldCheck className="h-5 w-5 text-blue-600 shrink-0" />
+              <ShieldCheck className="h-5 w-5 text-blue-600 dark:text-blue-400 shrink-0" />
               <input
                 type="text"
                 value={clauseSection.title}
                 onChange={(e) => updateSectionTitle(clauseSection.id, e.target.value)}
-                className="font-semibold text-slate-900 text-base bg-transparent border-b border-transparent hover:border-slate-300 focus:border-blue-500 focus:outline-none px-1 py-0.5"
+                className="font-semibold text-slate-900 dark:text-slate-100 text-base bg-transparent border-b border-transparent hover:border-slate-300 dark:hover:border-slate-700 focus:border-blue-500 focus:outline-none px-1 py-0.5"
                 placeholder="Tytuł sekcji"
               />
-              <span className="text-xs text-slate-400 font-mono">(RODO / GDPR)</span>
+              <span className="text-xs text-slate-400 dark:text-slate-500 font-mono">(RODO / GDPR)</span>
             </div>
           </div>
           <Textarea
@@ -1505,14 +1505,14 @@ export const KnowledgeBaseEditor: React.FC = () => {
           />
 
           {/* Bottom Save Action for Clause */}
-          <div className="pt-3 border-t border-slate-100 flex justify-end">
+          <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex justify-end">
             {renderSectionSaveButton(clauseSection.id, isSectionDirty(clauseSection.id))}
           </div>
         </div>
       )}
 
       {/* Bottom Save Action */}
-      <div className="flex justify-end pt-4 border-t border-slate-200">
+      <div className="flex justify-end pt-4 border-t border-slate-200 dark:border-slate-800">
         <Button
           size="lg"
           variant={isAnyDirty ? "primary" : "secondary"}
