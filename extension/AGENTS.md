@@ -1,0 +1,21 @@
+# Extension & Scraping Specialist Rules
+
+## Scope & Boundaries
+- **Allowed Scope:** `extension/`.
+- **Forbidden Scope:** Do not modify `backend/` or `frontend/`.
+
+## Tech Stack & Architecture
+- **Stack:** Chromium Extension Manifest v3, Vanilla JavaScript, CSS (zero bundlers/npm).
+- **Contract Alignment:** Outgoing payloads must strictly match `ExtractedJobPayload` in `backend/app/schemas/inbox.py`.
+- **MV3 Security & CORS Separation:**
+  - `src/content.js` & `src/extractors/*.js`: Run in page context ONLY to inspect DOM, canonicalize URLs (strip `utm_*`, `searchId`, etc.), and respond to `chrome.runtime.onMessage`.
+  - `popup.js` / `src/background.js`: Execute all HTTP calls (`GET /api/v1/inbox/check` and `POST /api/v1/inbox`) using `server_url` and `api_token` from `chrome.storage.local`.
+- **Extractors (Strategy Pattern in `src/extractors/`):**
+  - Dedicated extractors for `justjoin.js`, `pracuj.js`, `nofluffjobs.js`, `linkedin.js`.
+  - `fallback.js`: Strip `script`, `style`, `nav`, `footer`, cookie banners, and extract `<main>` or `<article>`.
+- **Popup UI:** Polish UI labels ("Zapisz ofertę"), duplicate warning indicator, custom note input, and settings view.
+
+## Quality Gates & Skills
+- **Skill:** Leverage `@extractor-test` when debugging or adding DOM extraction strategies.
+- **Verification:** Test extractors against HTML snapshot fixtures in `extension/example_offers/` before committing. Ensure zero network requests from content scripts.
+

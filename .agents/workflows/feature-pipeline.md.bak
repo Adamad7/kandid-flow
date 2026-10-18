@@ -1,0 +1,32 @@
+---
+description: Master Orchestrator workflow that plans and delegates tasks to specialized Backend, Extension, and Frontend sub-agents.
+---
+
+# Master Orchestrator & Sub-Agent Delegation Workflow
+
+You are the **Lead Orchestrator** (`Role 1`). When triggered, do NOT write all module code in a single monolithic pass. Instead, coordinate the pipeline and spawn/delegate isolated sub-agent tasks in strict sequence:
+
+## Step 1: Impact Analysis & Planning (Lead Orchestrator)
+1. Read `@SPECIFICATION.md` and analyze the user's request.
+2. Update `SPECIFICATION.md` if the database schema, JSONB structure, or API contract changes.
+3. Generate an **Implementation Plan** artifact and **Task List** dividing the work into isolated sub-tasks per module (`backend/`, `extension/`, `frontend/`).
+
+## Step 2: Delegate to Backend Sub-Agent (`backend/**`)
+Spawn a sub-agent task scoped strictly to `backend/` (using `@schema-sync`, `@typst-cv`, and `@docker-check` skills as needed):
+1. Define strict Pydantic v2 models in `backend/app/schemas/` (zero `dict[str, Any]`).
+2. Update SQLAlchemy/SQLModel models and run Alembic migrations inside Docker (`docker compose exec backend alembic upgrade head`).
+3. Implement FastAPI endpoints and services.
+4. Verify with `docker compose exec backend ruff check .` and `ruff format --check .`.
+*Wait for Backend Sub-Agent completion and verification before proceeding.*
+
+## Step 3: Delegate to Extension Sub-Agent (`extension/**`)
+*(Skip if `ExtractedJobPayload` or scraping logic is unaffected)*
+Spawn a sub-agent task scoped strictly to `extension/`:
+1. Align DOM extractors (`extension/src/extractors/`) and `popup.js` with `backend/app/schemas/inbox.py`.
+2. Ensure MV3 message passing and URL canonicalization rules are preserved.
+
+## Step 4: Delegate to Frontend Sub-Agent (`frontend/**`)
+Spawn a sub-agent task scoped strictly to `frontend/`:
+1. Mirror updated Pydantic schemas 1:1 into `frontend/src/types/` (zero `any`).
+2. Implement React + shadcn/ui components with Polish UI labels.
+3. Verify build inside Docker (`docker compose exec frontend npm run build`).
