@@ -426,7 +426,7 @@
         if (tag === "li") {
           const bulletText = cleanText(node.textContent);
           if (bulletText) {
-            lines.push(`• ${bulletText}`);
+            lines.push(`\n• ${bulletText}\n`);
           }
           return;
         }
@@ -434,7 +434,7 @@
         if (tag === "h1" || tag === "h2" || tag === "h3" || tag === "h4") {
           const headingText = cleanText(node.textContent);
           if (headingText) {
-            lines.push(`\n### ${headingText}\n`);
+            lines.push(`\n\n### ${headingText}\n\n`);
           }
           return;
         }
@@ -443,7 +443,7 @@
           for (const child of node.childNodes) {
             walk(child, isInsideList);
           }
-          lines.push("\n");
+          lines.push("\n\n");
           return;
         }
 

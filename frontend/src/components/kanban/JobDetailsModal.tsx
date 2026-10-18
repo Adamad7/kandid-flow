@@ -30,6 +30,7 @@ import { Button } from "../ui/Button";
 import { Badge } from "../ui/Badge";
 import { Modal } from "../ui/Modal";
 import { Textarea } from "../ui/Textarea";
+import { JobOfferDescription } from "../jobs/JobOfferDescription";
 
 interface JobDetailsModalProps {
   job: JobOfferRead | null;
@@ -332,12 +333,13 @@ export const JobDetailsModal: React.FC<JobDetailsModalProps> = ({
           <button
             type="button"
             onClick={() => setActiveTab("raw")}
-            className={`py-3.5 border-b-2 transition-colors ${
+            className={`py-3.5 border-b-2 transition-colors flex items-center gap-1.5 ${
               activeTab === "raw"
                 ? "border-blue-600 text-blue-600 dark:border-blue-400 dark:text-blue-400"
                 : "border-transparent text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200"
             }`}
           >
+            <FileText className="h-4 w-4" />
             Treść ogłoszenia
           </button>
         </nav>
@@ -583,9 +585,7 @@ export const JobDetailsModal: React.FC<JobDetailsModalProps> = ({
         )}
 
         {activeTab === "raw" && (
-          <div className="space-y-4 text-xs text-slate-700 leading-relaxed font-mono whitespace-pre-wrap rounded-lg bg-slate-50 p-4 border border-slate-200 dark:bg-slate-950 dark:border-slate-800 dark:text-slate-300">
-            {job.raw_payload?.description_text || "Brak oryginalnej treści opisu oferty."}
-          </div>
+          <JobOfferDescription job={job} />
         )}
       </div>
 
