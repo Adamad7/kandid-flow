@@ -62,7 +62,7 @@ def canonicalize_url(url: str) -> str:
     # Just Join IT: normalize /oferta-pracy/ to /job-offer/
     netloc = parsed.netloc.lower()
     if "justjoin.it" in netloc and path.startswith("/oferta-pracy/"):
-        path = "/job-offer/" + path[len("/oferta-pracy/"):]
+        path = "/job-offer/" + path[len("/oferta-pracy/") :]
 
     # Reconstruct without fragment and with cleaned query
     normalized = urlunparse(
@@ -178,6 +178,17 @@ class JobParserWorker:
                 )
             else:
                 # Strict AI normalization via local Ollama or Cloud API
+                language_rule = (
+                    "CRITICAL LANGUAGE PRESERVATION RULE: Detect the primary language "
+                    "of the original job posting. If the job posting is in Polish, "
+                    "write 'role_summary', 'must_have', 'nice_to_have', 'benefits', "
+                    "'work_model_details', and all descriptive fields STRICTLY IN POLISH. "
+                    "If the posting is in English, write them in English. "
+                    "NEVER translate Polish job postings into English or vice versa. "
+                    "Keep standard technical keywords and tool names "
+                    "(e.g. Python, Docker, Kubernetes) in their standard professional notation."
+                )
+
                 system_prompt = (
                     "You are an ATS Recruitment Assistant. Extract structured information from "
                     "the job posting description and return a JSON object with: "
@@ -189,15 +200,18 @@ class JobParserWorker:
                     "experience_level (Junior/Mid/Senior/Lead), "
                     "work_model (remote/hybrid/onsite), "
                     "work_model_details (specifics e.g. 2 days office/mo), "
-                    "application_deadline (date in YYYY-MM-DD format if explicitly stated, or null), "
+                    "application_deadline (date in YYYY-MM-DD format if explicitly stated, "
+                    "or null), "
                     "company_name (if not evident, infer or leave as is), "
-                    "role_title (cleaned title)."
+                    "role_title (cleaned title).\n\n"
+                    f"{language_rule}"
                 )
 
                 user_prompt = (
                     f"Title: {title}\nCompany: {company}\nRequirements:\n"
                     + "\n".join(f"- {r}" for r in requirements[:15])
-                    + f"\n\nDescription:\n{raw_text[:2500]}"
+                    + f"\n\nDescription:\n{raw_text[:2500]}\n\n"
+                    + f"{language_rule}"
                 )
 
                 # Passing fallback_data=None forces error if no AI is available
@@ -205,6 +219,7 @@ class JobParserWorker:
                     system_prompt=system_prompt,
                     user_prompt=user_prompt,
                     fallback_data=None,
+                    enable_thinking=False,
                 )
 
                 if not isinstance(parsed_data, dict):
@@ -234,6 +249,7 @@ class JobParserWorker:
                 if not job.application_deadline and parsed_data.get("application_deadline"):
                     try:
                         from datetime import datetime
+
                         d_str = str(parsed_data["application_deadline"]).strip()
                         job.application_deadline = datetime.strptime(d_str[:10], "%Y-%m-%d").date()
                     except (ValueError, TypeError):
@@ -244,6 +260,7 @@ class JobParserWorker:
                 if raw_payload.get("application_deadline"):
                     try:
                         from datetime import datetime
+
                         d_str = str(raw_payload["application_deadline"]).strip()
                         job.application_deadline = datetime.strptime(d_str[:10], "%Y-%m-%d").date()
                     except (ValueError, TypeError):
@@ -255,7 +272,11 @@ class JobParserWorker:
 
             await session.commit()
             await session.refresh(job)
-            logger.info("Successfully normalized job offer %s to status 'ready' via %s mode", job.id, mode)
+            logger.info(
+                "Successfully normalized job offer %s to status 'ready' via %s mode",
+                job.id,
+                mode,
+            )
 
         except Exception as err:
             logger.warning("Parsing job offer %s failed: %s", job.id, err)

@@ -33,7 +33,13 @@
        - `extension-specialist` (Skills: `@extractor-test`)
        - `frontend-specialist` (Skills: `@docker-check`, TypeScript 1:1 mirroring, Polish UI, Light & Dark mode support)
     2. Quality Gates are verified inside Docker after each subagent run.
-  - **Phase 3: Review & Git Release Gate**
+  - **Phase 3: Review & Git Release Gate (Interactive Modal)**
     1. The Lead Orchestrator presents a unified summary of changes and verification results to the user.
-    2. The Lead Orchestrator explicitly asks the user whether to commit and push changes.
-    3. Upon the user's explicit confirmation and approval, the Lead Orchestrator invokes `@git-commit` to create a structured commit and push to `main` (or user-specified branch).
+    2. The Lead Orchestrator prompts the user via the `ask_question` tool with interactive options:
+       - `(Recommended) Tak, wykonaj commit i push na gałąź main`
+       - `Wypchnij na inną gałąź (podam nazwę w odpowiedzi)`
+       - `Pomiń commit (pozostaw zmiany robocze lokalnie)`
+    3. Based on the user's selection:
+       - If option 1 is selected, invoke `@git-commit` to create a structured commit and push to `main`.
+       - If option 2 is selected, commit and push to the user-specified branch.
+       - If option 3 is selected, conclude the task without committing.

@@ -89,6 +89,12 @@ class CVGenerateRequest(BaseModel):
     custom_instructions: str | None = Field(
         default=None, description="Additional tailoring directives (e.g. 'Focus on Kubernetes')"
     )
+    llm_provider: Literal["default", "ollama", "gemini", "openai"] = Field(
+        default="default", description="Wybrany dostawca LLM do syntezy CV"
+    )
+    llm_model: str | None = Field(
+        default=None, description="Opcjonalny identyfikator konkretnego modelu LLM"
+    )
 
 
 class CVVersionBase(BaseModel):

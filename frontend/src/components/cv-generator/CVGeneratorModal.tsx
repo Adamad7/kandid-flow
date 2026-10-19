@@ -5,6 +5,11 @@ import {
   User,
   CheckCircle2,
   AlertCircle,
+  Brain,
+  Cpu,
+  Server,
+  Cloud,
+  Bot,
 } from "lucide-react";
 import { api } from "../../lib/api";
 import type {
@@ -12,9 +17,11 @@ import type {
   CVGenerateRequest,
   CVVersionRead,
   JobOfferRead,
+  LLMProviderType,
   TailoringModeType,
 } from "../../types";
 import { Button } from "../ui/Button";
+import { Input } from "../ui/Input";
 import { Select } from "../ui/Select";
 import { Textarea } from "../ui/Textarea";
 import { Modal } from "../ui/Modal";
@@ -40,6 +47,8 @@ export const CVGeneratorModal: React.FC<CVGeneratorModalProps> = ({
   const [selectedPresetId, setSelectedPresetId] = useState<string>("");
   const [tailoringMode, setTailoringMode] =
     useState<TailoringModeType>("full");
+  const [llmProvider, setLlmProvider] = useState<LLMProviderType>("default");
+  const [customModel, setCustomModel] = useState<string>("");
   const [language, setLanguage] = useState<"pl" | "en">("pl");
   const [customInstructions, setCustomInstructions] = useState("");
   const [selectedSections, setSelectedSections] = useState<string[]>([
@@ -115,6 +124,8 @@ export const CVGeneratorModal: React.FC<CVGeneratorModalProps> = ({
         tailoring_mode: tailoringMode,
         language: language,
         custom_instructions: customInstructions.trim() || null,
+        llm_provider: llmProvider,
+        llm_model: customModel.trim() || null,
       };
 
       const newVersion = await api.cv.generate(requestPayload);
@@ -323,7 +334,95 @@ export const CVGeneratorModal: React.FC<CVGeneratorModalProps> = ({
             </div>
           </div>
 
-          {/* 3. Language & Sections Selection */}
+          {/* 3. AI Provider Selection */}
+          <div className="space-y-3">
+            <label className="block text-xs font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+              3. Silnik sztucznej inteligencji (Dostawca LLM):
+            </label>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {[
+                {
+                  id: "default" as const,
+                  label: "Domyślny (zgodnie z Ustawieniami)",
+                  description: "Wykorzystuje model i parametry skonfigurowane w Ustawieniach aplikacji.",
+                  icon: Cpu,
+                },
+                {
+                  id: "ollama" as const,
+                  label: "Lokalna Ollama (na Twoim sprzęcie)",
+                  description: "Prywatne wnioskowanie bezpośrednio na Twoim sprzęcie bez kosztów API.",
+                  icon: Server,
+                },
+                {
+                  id: "gemini" as const,
+                  label: "Google Gemini API (Chmura)",
+                  description: "Wysoka szybkość generowania i precyzja analizy wymagań rekrutacyjnych.",
+                  icon: Cloud,
+                },
+                {
+                  id: "openai" as const,
+                  label: "OpenAI API (Chmura)",
+                  description: "Zaawansowane modele językowe GPT gwarantujące najwyższą jakość syntezy.",
+                  icon: Bot,
+                },
+              ].map((provider) => {
+                const IconComponent = provider.icon;
+                const isSelected = llmProvider === provider.id;
+                return (
+                  <div
+                    key={provider.id}
+                    onClick={() => setLlmProvider(provider.id)}
+                    className={`rounded-xl border p-3.5 cursor-pointer transition-all ${
+                      isSelected
+                        ? "border-blue-600 bg-blue-50/50 shadow-xs ring-1 ring-blue-600 dark:bg-blue-950/40 dark:border-blue-500"
+                        : "border-slate-200 hover:border-slate-300 bg-white dark:border-slate-800 dark:bg-slate-900 dark:hover:border-slate-700"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between mb-1.5">
+                      <div className="flex items-center gap-2">
+                        <IconComponent
+                          className={`h-4 w-4 ${
+                            isSelected
+                              ? "text-blue-600 dark:text-blue-400"
+                              : "text-slate-500 dark:text-slate-400"
+                          }`}
+                        />
+                        <span className="font-semibold text-xs sm:text-sm text-slate-900 dark:text-slate-100">
+                          {provider.label}
+                        </span>
+                      </div>
+                      {isSelected && (
+                        <CheckCircle2 className="h-4 w-4 text-blue-600 dark:text-blue-400 shrink-0" />
+                      )}
+                    </div>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                      {provider.description}
+                    </p>
+                  </div>
+                );
+              })}
+            </div>
+
+            <div className="pt-1">
+              <Input
+                label="Niestandardowa nazwa modelu (Opcjonalnie)"
+                placeholder="Domyślny model lub wpisz np. deepseek-r1:14b, gemini-2.5-flash"
+                value={customModel}
+                onChange={(e) => setCustomModel(e.target.value)}
+                helperText="Pozostaw puste, aby zastosować zalecany model domyślny dla wybranego dostawcy."
+              />
+            </div>
+
+            <div className="rounded-xl border border-blue-200 bg-blue-50/70 p-3 text-xs text-blue-900 flex items-start gap-2.5 dark:border-blue-900/60 dark:bg-blue-950/40 dark:text-blue-200">
+              <Brain className="h-4 w-4 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" />
+              <span className="leading-relaxed">
+                🧠 <strong>Aktywny tryb namysłu (Reasoning):</strong> model poświęci dodatkowy czas na analizę wymagań oferty i precyzyjną syntezę osiągnięć.
+              </span>
+            </div>
+          </div>
+
+          {/* 4. Language & Sections Selection */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <Select
               label="Język wyjściowy CV"
@@ -364,7 +463,7 @@ export const CVGeneratorModal: React.FC<CVGeneratorModalProps> = ({
             </div>
           </div>
 
-          {/* 4. Custom Instructions */}
+          {/* 5. Custom Instructions */}
           <Textarea
             label="Dodatkowe wytyczne dla AI (Opcjonalne)"
             value={customInstructions}

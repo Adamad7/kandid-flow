@@ -48,6 +48,8 @@ export type AutoParseModeType =
 
 export type ApiProviderType = "gemini" | "openai";
 
+export type LLMProviderType = "default" | "ollama" | "gemini" | "openai";
+
 // ============================================================================
 // Inbox Schemas (Extension <-> Backend)
 // ============================================================================
@@ -369,6 +371,8 @@ export interface CVGenerateRequest {
   tailoring_mode?: TailoringModeType;
   language?: string;
   custom_instructions?: string | null;
+  llm_provider?: LLMProviderType;
+  llm_model?: string | null;
 }
 
 export interface CVVersionBase {

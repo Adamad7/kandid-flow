@@ -152,3 +152,28 @@ async def test_cv_refine_block_endpoint(async_client: httpx.AsyncClient):
     assert refine_body["block_id"] == "summary"
     assert "refined_block" in refine_body
     assert "content" in refine_body["refined_block"]
+
+
+@pytest.mark.asyncio
+async def test_cv_generate_with_provider_and_model(async_client: httpx.AsyncClient):
+    """Verify that CV generation accepts explicit llm_provider and llm_model parameters."""
+    presets_res = await async_client.get("/api/v1/presets")
+    preset = presets_res.json()[0]
+    jobs_res = await async_client.get("/api/v1/jobs")
+    job = jobs_res.json()[0]
+
+    gen_res = await async_client.post(
+        "/api/v1/cv/generate",
+        json={
+            "job_offer_id": job["id"],
+            "preset_id": preset["id"],
+            "tailoring_mode": "targeted_summary_keywords",
+            "language": "pl",
+            "llm_provider": "ollama",
+            "llm_model": "deepseek-r1:14b",
+        },
+    )
+    assert gen_res.status_code == 201
+    cv_version = gen_res.json()
+    assert cv_version["id"] is not None
+    assert cv_version["version_number"] >= 1

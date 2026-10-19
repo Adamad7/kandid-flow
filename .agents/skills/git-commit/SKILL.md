@@ -5,7 +5,7 @@ description: Create a structured, multi-line git commit and push to remote repos
 
 # Git Commit & Push Workflow Skill
 
-Use this skill when the user explicitly approves changes (e.g. *"Zatwierdzam zmiany"*, *"Działa, możesz commitować"*, *"Wypchnij na repo"*), or when triggered via `/git-commit`.
+Use this skill when the user explicitly approves changes (e.g. via the `ask_question` modal, typing *"Zatwierdzam zmiany"*, *"Działa, możesz commitować"*, *"Wypchnij na repo"*), or when triggered via `/git-commit`.
 
 > [!IMPORTANT]
 > **Authorization Requirement:** Never commit or push autonomously during development. Only execute this workflow after explicit user approval.

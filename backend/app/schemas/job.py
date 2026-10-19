@@ -29,6 +29,7 @@ def _validate_deadline(v: object) -> date | None:
             return None
     return None
 
+
 JobStatusType = Literal[
     "inbox", "parsing", "failed_parsing", "ready", "applied", "interview", "rejected", "offer"
 ]

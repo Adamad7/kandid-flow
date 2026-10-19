@@ -131,7 +131,9 @@ async def update_job_by_id(
 )
 async def reparse_job(
     job_id: UUID,
-    mode: str = Query("ai", description="Parsing strategy: 'ai' for LLM, 'traditional' for heuristic"),
+    mode: str = Query(
+        "ai", description="Parsing strategy: 'ai' for LLM, 'traditional' for heuristic"
+    ),
     db: AsyncSession = Depends(get_db_session),
 ) -> JobOfferRead:
     """Manually invoke LLM or traditional heuristic parsing on an offer."""

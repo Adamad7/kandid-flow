@@ -55,15 +55,22 @@ Spawn a subagent task scoped strictly to `frontend/` using the `frontend-special
 
 ---
 
-## Phase 3: Review & Git Release Gate (`@git-commit`)
+## Phase 3: Review & Git Release Gate (Interactive Modal & `@git-commit`)
 
 1. **System Consistency Check:** Verify that all changes across modules integrate seamlessly and all Docker quality gates passed.
 2. **Present Summary:** Summarize completed changes, modified files, and verification statuses for the user in Polish.
-3. **Ask for Git Approval:** Explicitly ask the user:
-   > *"Czy zatwierdzasz te zmiany i mam wykonać commit oraz push na gałąź main?"*
-4. **STOP CALLING TOOLS:** Await the user's explicit response.
-5. **Execute Git Release:** Upon explicit user approval (or user-specified alternative branch), trigger `@git-commit`:
-   - Inspect `git status` and `git diff --stat`.
-   - Compose a structured multi-line commit message (Conventional Commits title + bulleted explanation body).
-   - Commit and push to `main` (or user-specified branch).
-   - Report the committed SHA and branch to the user.
+3. **Interactive Git Approval Modal:** Invoke the `ask_question` tool with:
+   - `question`: *"Wszystkie zmiany zostały zweryfikowane. Co chcesz zrobić z wprowadzonymi zmianami?"*
+   - `options`:
+     - `(Recommended) Tak, wykonaj commit i push na gałąź main`
+     - `Wypchnij na inną gałąź (podam nazwę w odpowiedzi)`
+     - `Pomiń commit (pozostaw zmiany robocze lokalnie)`
+4. **Execute Git Release:**
+   - **If option 1 is chosen:** Trigger `@git-commit`:
+     - Inspect `git status` and `git diff --stat`.
+     - Compose a structured multi-line commit message (Conventional Commits title + bulleted explanation body in English).
+     - Commit and push to `origin main`.
+     - Report the committed SHA and branch to the user.
+   - **If option 2 is chosen:** Prompt for the branch name (if not provided in modal write-in), create/checkout that branch, and push to that branch.
+   - **If option 3 is chosen:** Conclude without committing, leaving all working files intact.
+

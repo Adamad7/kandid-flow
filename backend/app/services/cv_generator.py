@@ -151,7 +151,7 @@ class CVGeneratorService:
         job: JobOffer,
         tailoring_mode: str,
     ) -> list[dict[str, Any]]:
-        """Ground tailored sections strictly in baseline factual data to eliminate hallucinations."""
+        """Ground tailored sections in baseline factual data to eliminate hallucinations."""
         sanitized_sections: list[dict[str, Any]] = []
 
         for base_sec in baseline_sections:
@@ -194,7 +194,7 @@ class CVGeneratorService:
                     matched_t = None
                     for candidate_t in t_items:
                         cand_comp = candidate_t.get("company", "").strip().lower()
-                        # Reject if company matches the target employer applied to (clear hallucination)
+                        # Reject if company matches the target employer (clear hallucination)
                         if target_company_lower and cand_comp == target_company_lower:
                             continue
                         if (
@@ -212,7 +212,8 @@ class CVGeneratorService:
                         ):
                             matched_t = cand
 
-                    # If tailored highlights are provided, apply them, but strictly preserve factual company, position, dates, location
+                    # If tailored highlights are provided, apply them,
+                    # but strictly preserve factual company, position, dates, location
                     if (
                         matched_t
                         and "highlights" in matched_t
@@ -303,7 +304,8 @@ class CVGeneratorService:
                 "You are an expert ATS-focused Resume Tailoring Assistant.\n"
                 "CRITICAL GROUNDING RULES:\n"
                 "1. Tailor ONLY the 'summary', 'skills', and 'clause' blocks.\n"
-                "2. Keep all 'experience', 'projects', 'education', and 'certificates' blocks strictly UNCHANGED.\n"
+                "2. Keep all 'experience', 'projects', 'education', and 'certificates' "
+                "blocks strictly UNCHANGED.\n"
                 "3. NEVER invent fake companies, fake job titles, fake dates, or fake projects.\n"
                 "4. Return the complete updated resume JSON."
             )
@@ -318,12 +320,20 @@ class CVGeneratorService:
                 "You are an expert ATS-focused Resume Tailoring Assistant.\n"
                 "CRITICAL INVIOLABLE RULES FOR FACTUAL INTEGRITY:\n"
                 "1. NEVER INVENT FAKE COMPANIES, JOBS, DATES, OR WORK EXPERIENCES. "
-                "The candidate's past work experience entries (companies, job titles, dates) must match EXACTLY the baseline. "
-                "Do NOT add new jobs (e.g. do not invent that the candidate worked at the target company or in the target role).\n"
-                "2. NEVER INVENT FAKE PROJECTS. Only tailor descriptions of EXISTING projects in 'Baseline Resume JSON'. Do NOT add new fabricated projects.\n"
-                "3. FOR 'experience' SECTIONS: Keep existing company names, job titles, and dates. You may ONLY reword existing bullet points (highlights) to emphasize transferable skills (mentoring, problem-solving, communication, programming, automation) that align with the target role.\n"
-                "4. FOR 'summary': Rewrite the professional summary to present the candidate's genuine background as enthusiastic and well-suited for the target role.\n"
-                "5. FOR 'skills': Reorder and highlight existing relevant skills, or add relevant technical keywords from the candidate's tech domain.\n"
+                "The candidate's past work experience entries (companies, job titles, dates) "
+                "must match EXACTLY the baseline. "
+                "Do NOT add new jobs (e.g. do not invent that the candidate worked at the "
+                "target company or in the target role).\n"
+                "2. NEVER INVENT FAKE PROJECTS. Only tailor descriptions of EXISTING "
+                "projects in 'Baseline Resume JSON'. Do NOT add new fabricated projects.\n"
+                "3. FOR 'experience' SECTIONS: Keep existing company names, job titles, "
+                "and dates. You may ONLY reword existing bullet points (highlights) to "
+                "emphasize transferable skills (mentoring, problem-solving, communication, "
+                "programming, automation) that align with the target role.\n"
+                "4. FOR 'summary': Rewrite the professional summary to present the candidate's "
+                "genuine background as enthusiastic and well-suited for the target role.\n"
+                "5. FOR 'skills': Reorder and highlight existing relevant skills, or add "
+                "relevant technical keywords from the candidate's tech domain.\n"
                 "6. FOR 'clause': Set the GDPR clause specifically for the target company.\n"
                 "7. Return the full resume in valid JSON matching the exact input structure."
             )
@@ -338,10 +348,15 @@ class CVGeneratorService:
         deterministic_fallback = self._apply_deterministic_tailoring(
             baseline_payload, job, request.tailoring_mode
         )
+        provider = request.llm_provider if request.llm_provider != "default" else None
         tailored_data = await llm_client.generate_json(
             system_prompt=system_prompt,
             user_prompt=user_prompt,
             fallback_data=deterministic_fallback,
+            provider=provider,
+            model=request.llm_model,
+            enable_thinking=True,
+            timeout=120.0,
         )
 
         if not isinstance(tailored_data, dict) or "sections" not in tailored_data:
@@ -449,7 +464,8 @@ class CVGeneratorService:
         system_prompt = (
             "You are an ATS Resume Editor. Refine a single resume section block "
             "according to candidate instructions. Maintain the exact JSON structure. "
-            "CRITICAL: Do NOT invent fake companies, fake positions, or fake projects. Maintain factual integrity. "
+            "CRITICAL: Do NOT invent fake companies, fake positions, or fake projects. "
+            "Maintain factual integrity. "
             "Return only the refined JSON block object."
         )
         user_prompt = (
@@ -464,6 +480,8 @@ class CVGeneratorService:
             system_prompt=system_prompt,
             user_prompt=user_prompt,
             fallback_data=fallback_block,
+            enable_thinking=True,
+            timeout=60.0,
         )
 
         if not isinstance(refined, dict) or ("type" not in refined and "id" not in refined):
