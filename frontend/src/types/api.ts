@@ -459,3 +459,31 @@ export interface AppSettingsRead extends AppSettingsBase {
   id: number;
   updated_at: string; // ISO 8601
 }
+
+// ============================================================================
+// Realtime Server-Sent Events (SSE) Schemas
+// ============================================================================
+
+export type RealtimeEventType =
+  | "job_created"
+  | "job_updated"
+  | "job_deleted"
+  | "recruitment_event_created"
+  | "recruitment_event_updated"
+  | "recruitment_event_deleted"
+  | "ping";
+
+export interface RealtimeEventPayload {
+  job_id?: string | null;
+  event_id?: string | null;
+  role_title?: string | null;
+  company_name?: string | null;
+  status?: string | null;
+  message?: string | null;
+}
+
+export interface RealtimeEvent {
+  event: RealtimeEventType;
+  payload: RealtimeEventPayload;
+  timestamp: string;
+}

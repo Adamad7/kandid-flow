@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import {
   LayoutDashboard,
   User,
@@ -22,6 +22,7 @@ import { SettingsView } from "./components/settings/SettingsView";
 import { JobListView } from "./components/jobs/JobListView";
 import { ThemeToggle } from "./components/ui/ThemeToggle";
 import { api } from "./lib/api";
+import { useRealtime } from "./hooks/useRealtime";
 
 type ActiveTab =  "list" | "kanban" | "profile" | "presets" | "settings";
 
@@ -44,6 +45,52 @@ export const App: React.FC = () => {
 
   // Refresh trigger counter
   const [refreshTrigger, setRefreshTrigger] = useState(0);
+
+  // Keep a ref to the selected job for realtime event handlers
+  const selectedJobRef = useRef<JobOfferRead | null>(null);
+  useEffect(() => {
+    selectedJobRef.current = selectedJob;
+  }, [selectedJob]);
+
+  // Real-time SSE synchronization
+  const { status: realtimeStatus } = useRealtime({
+    onEvent: (event) => {
+      if (event.event === "ping") return;
+
+      if (
+        event.event === "job_created" ||
+        event.event === "job_updated" ||
+        event.event === "job_deleted"
+      ) {
+        setRefreshTrigger((prev) => prev + 1);
+
+        const currentJob = selectedJobRef.current;
+        if (currentJob && event.payload.job_id === currentJob.id) {
+          if (event.event === "job_deleted") {
+            setIsDetailsOpen(false);
+            setSelectedJob(null);
+          } else if (event.event === "job_updated") {
+            api.jobs
+              .get(currentJob.id)
+              .then((updated) => {
+                setSelectedJob(updated);
+              })
+              .catch(() => {
+                // Job might have been deleted or unavailable
+              });
+          }
+        }
+      }
+
+      if (
+        event.event === "recruitment_event_created" ||
+        event.event === "recruitment_event_updated" ||
+        event.event === "recruitment_event_deleted"
+      ) {
+        setRefreshTrigger((prev) => prev + 1);
+      }
+    },
+  });
 
   const handleSelectJob = (job: JobOfferRead) => {
     setSelectedJob(job);
@@ -125,6 +172,35 @@ export const App: React.FC = () => {
                 <span className="rounded-full bg-blue-50 dark:bg-blue-950/60 px-2 py-0.5 text-[10px] font-bold text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
                   v1.1
                 </span>
+
+                {/* Real-time SSE Status Badge */}
+                {realtimeStatus === "connected" && (
+                  <span
+                    className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950/50 dark:text-emerald-300 dark:border-emerald-800"
+                    title="Połączono ze strumieniem zdarzeń w czasie rzeczywistym"
+                  >
+                    <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+                    Na żywo
+                  </span>
+                )}
+                {realtimeStatus === "connecting" && (
+                  <span
+                    className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-50 text-amber-700 border border-amber-200 dark:bg-amber-950/50 dark:text-amber-300 dark:border-amber-800"
+                    title="Nawiązywanie połączenia na żywo..."
+                  >
+                    <span className="h-2 w-2 rounded-full bg-amber-500 animate-pulse" />
+                    Łączenie...
+                  </span>
+                )}
+                {realtimeStatus === "disconnected" && (
+                  <span
+                    className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-slate-100 text-slate-600 border border-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700"
+                    title="Brak połączenia na żywo (aktywne odpytywanie rezerwowe)"
+                  >
+                    <span className="h-2 w-2 rounded-full bg-slate-400 dark:bg-slate-500" />
+                    Offline
+                  </span>
+                )}
               </div>
               <p className="text-[11px] text-slate-400 dark:text-slate-500 font-medium hidden sm:block">
                 Automatyzacja rekrutacji IT & Wektorowy generator CV
@@ -218,7 +294,10 @@ export const App: React.FC = () => {
             activeTab === "kanban" || activeTab === "list" ? "mb-6" : "hidden"
           }
         >
-          <UpcomingEventsWidget onSelectJob={handleSelectJobById} />
+          <UpcomingEventsWidget
+            onSelectJob={handleSelectJobById}
+            refreshTrigger={refreshTrigger}
+          />
         </div>
 
         {/* Tab Views */}

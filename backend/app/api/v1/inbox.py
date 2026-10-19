@@ -11,6 +11,8 @@ from app.config import settings
 from app.database import get_db_session
 from app.models.job import JobOffer
 from app.schemas.inbox import ExtractedJobPayload, InboxCheckResponse, InboxResponse
+from app.schemas.realtime import RealtimeEventPayload
+from app.services.events_broadcaster import events_broadcaster
 from app.services.job_parser import canonicalize_url
 
 logger = logging.getLogger(__name__)
@@ -139,6 +141,16 @@ async def ingest_job_offer(
         existing.raw_payload = raw_dict
         await db.commit()
         await db.refresh(existing)
+        await events_broadcaster.broadcast(
+            "job_updated",
+            RealtimeEventPayload(
+                job_id=existing.id,
+                role_title=existing.role_title,
+                company_name=existing.company_name,
+                status=existing.status,
+                message="Oferta została zaktualizowana w bazie",
+            ),
+        )
         return InboxResponse(
             id=existing.id,
             status=existing.status,
@@ -170,6 +182,16 @@ async def ingest_job_offer(
     await db.refresh(job_offer)
 
     logger.info("Successfully ingested job offer %s from %s", job_offer.id, payload.source_portal)
+    await events_broadcaster.broadcast(
+        "job_created",
+        RealtimeEventPayload(
+            job_id=job_offer.id,
+            role_title=job_offer.role_title,
+            company_name=job_offer.company_name,
+            status=job_offer.status,
+            message="Nowa oferta została zarejestrowana",
+        ),
+    )
 
     return InboxResponse(
         id=job_offer.id,

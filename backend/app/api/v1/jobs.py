@@ -17,6 +17,8 @@ from app.schemas.job import (
     JobStatusType,
     WorkModelType,
 )
+from app.schemas.realtime import RealtimeEventPayload
+from app.services.events_broadcaster import events_broadcaster
 from app.services.job_parser import reparse_job_by_id
 
 logger = logging.getLogger(__name__)
@@ -121,6 +123,16 @@ async def update_job_by_id(
 
     await db.commit()
     await db.refresh(job)
+    await events_broadcaster.broadcast(
+        "job_updated",
+        RealtimeEventPayload(
+            job_id=job.id,
+            role_title=job.role_title,
+            company_name=job.company_name,
+            status=job.status,
+            message="Zaktualizowano dane oferty",
+        ),
+    )
     return JobOfferRead.model_validate(job)
 
 
@@ -167,5 +179,19 @@ async def delete_job_by_id(
             detail=f"Job offer with ID '{job_id}' not found",
         )
 
+    deleted_id = job.id
+    role_title = job.role_title
+    company_name = job.company_name
+
     await db.delete(job)
     await db.commit()
+
+    await events_broadcaster.broadcast(
+        "job_deleted",
+        RealtimeEventPayload(
+            job_id=deleted_id,
+            role_title=role_title,
+            company_name=company_name,
+            message="Usunięto ofertę",
+        ),
+    )

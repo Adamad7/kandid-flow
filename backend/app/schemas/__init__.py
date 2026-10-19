@@ -65,6 +65,11 @@ from app.schemas.preset import (
     BaseCVPresetRead,
     BaseCVPresetUpdate,
 )
+from app.schemas.realtime import (
+    RealtimeEvent,
+    RealtimeEventPayload,
+    RealtimeEventType,
+)
 from app.schemas.settings import (
     ApiProviderType,
     AppSettingsBase,
@@ -139,4 +144,8 @@ __all__ = [
     "AppSettingsRead",
     "AppSettingsUpdate",
     "AutoParseModeType",
+    # Real-time Events
+    "RealtimeEventType",
+    "RealtimeEventPayload",
+    "RealtimeEvent",
 ]

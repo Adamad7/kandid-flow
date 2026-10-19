@@ -17,6 +17,8 @@ from app.schemas.event import (
     RecruitmentEventRead,
     RecruitmentEventUpdate,
 )
+from app.schemas.realtime import RealtimeEventPayload
+from app.services.events_broadcaster import events_broadcaster
 
 logger = logging.getLogger(__name__)
 
@@ -102,6 +104,14 @@ async def create_event(
         event.id,
         event.job_offer_id,
     )
+    await events_broadcaster.broadcast(
+        "recruitment_event_created",
+        RealtimeEventPayload(
+            event_id=event.id,
+            job_id=event.job_offer_id,
+            message=f"Zaplanowano zdarzenie: {event.title}",
+        ),
+    )
     return RecruitmentEventRead.model_validate(event)
 
 
@@ -155,6 +165,14 @@ async def update_event(
 
     await db.commit()
     await db.refresh(event)
+    await events_broadcaster.broadcast(
+        "recruitment_event_updated",
+        RealtimeEventPayload(
+            event_id=event.id,
+            job_id=event.job_offer_id,
+            message=f"Zaktualizowano zdarzenie: {event.title}",
+        ),
+    )
     return RecruitmentEventRead.model_validate(event)
 
 
@@ -178,6 +196,17 @@ async def delete_event(
             detail=f"Recruitment event with ID '{event_id}' not found",
         )
 
+    deleted_event_id = event.id
+    deleted_job_id = event.job_offer_id
+
     await db.delete(event)
     await db.commit()
     logger.info("Deleted recruitment event %s", event_id)
+    await events_broadcaster.broadcast(
+        "recruitment_event_deleted",
+        RealtimeEventPayload(
+            event_id=deleted_event_id,
+            job_id=deleted_job_id,
+            message="Usunięto zdarzenie rekrutacyjne",
+        ),
+    )

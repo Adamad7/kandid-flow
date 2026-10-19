@@ -20,26 +20,30 @@ import { Badge } from "../ui/Badge";
 interface UpcomingEventsWidgetProps {
   onSelectJob?: (jobId: string) => void;
   onAddEventClick?: () => void;
+  refreshTrigger?: number;
 }
 
 export const UpcomingEventsWidget: React.FC<UpcomingEventsWidgetProps> = ({
   onSelectJob,
   onAddEventClick,
+  refreshTrigger,
 }) => {
   const [events, setEvents] = useState<RecruitmentEventRead[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchUpcomingEvents = async () => {
+  const fetchUpcomingEvents = async (silent: boolean = false) => {
     try {
-      setIsLoading(true);
+      if (!silent) {
+        setIsLoading(true);
+      }
       setError(null);
       const data = await api.events.list({
         upcoming_only: true,
         limit: 8,
       });
       setEvents(data);
-    } catch (err) {
+    } catch {
       setError("Nie udało się pobrać nadchodzących wydarzeń");
     } finally {
       setIsLoading(false);
@@ -47,8 +51,8 @@ export const UpcomingEventsWidget: React.FC<UpcomingEventsWidgetProps> = ({
   };
 
   useEffect(() => {
-    fetchUpcomingEvents();
-  }, []);
+    fetchUpcomingEvents(events.length > 0);
+  }, [refreshTrigger]);
 
   const handleToggleComplete = async (event: RecruitmentEventRead) => {
     try {

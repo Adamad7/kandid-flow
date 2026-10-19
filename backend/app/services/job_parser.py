@@ -12,6 +12,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.database import async_session_factory
 from app.models.job import JobOffer
 from app.schemas.job import StructuredJobData
+from app.schemas.realtime import RealtimeEventPayload
+from app.services.events_broadcaster import events_broadcaster
 from app.services.llm_client import llm_client
 
 logger = logging.getLogger(__name__)
@@ -271,6 +273,16 @@ class JobParserWorker:
             job.status = "parsing"
             job.error_message = None
             await session.commit()
+            await events_broadcaster.broadcast(
+                "job_updated",
+                RealtimeEventPayload(
+                    job_id=job.id,
+                    role_title=job.role_title,
+                    company_name=job.company_name,
+                    status=job.status,
+                    message="Rozpoczęto analizę oferty",
+                ),
+            )
 
             # 2. Parse job offer
             await self.parse_job(session, job)
@@ -459,6 +471,16 @@ class JobParserWorker:
 
             await session.commit()
             await session.refresh(job)
+            await events_broadcaster.broadcast(
+                "job_updated",
+                RealtimeEventPayload(
+                    job_id=job.id,
+                    role_title=job.role_title,
+                    company_name=job.company_name,
+                    status=job.status,
+                    message="Pomyślnie przetworzono ofertę",
+                ),
+            )
             logger.info(
                 "Successfully normalized job offer %s to status 'ready' via %s mode",
                 job.id,
@@ -472,6 +494,16 @@ class JobParserWorker:
             try:
                 await session.commit()
                 await session.refresh(job)
+                await events_broadcaster.broadcast(
+                    "job_updated",
+                    RealtimeEventPayload(
+                        job_id=job.id,
+                        role_title=job.role_title,
+                        company_name=job.company_name,
+                        status=job.status,
+                        message=str(err),
+                    ),
+                )
             except Exception as commit_err:
                 logger.error(
                     "Failed to commit failed_parsing status for job %s: %s",
@@ -502,6 +534,16 @@ async def reparse_job_by_id(
     job.status = "parsing"
     job.error_message = None
     await session.commit()
+    await events_broadcaster.broadcast(
+        "job_updated",
+        RealtimeEventPayload(
+            job_id=job.id,
+            role_title=job.role_title,
+            company_name=job.company_name,
+            status=job.status,
+            message="Rozpoczęto ponowną analizę oferty",
+        ),
+    )
 
     worker = JobParserWorker()
     await worker.parse_job(session, job, mode=mode)
