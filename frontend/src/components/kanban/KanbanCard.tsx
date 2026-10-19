@@ -15,7 +15,12 @@ import {
   PORTAL_LABELS,
   WORK_MODEL_LABELS,
 } from "../../lib/constants";
-import { formatDeadline, formatSalary } from "../../lib/formatters";
+import {
+  DEADLINE_BADGE_CLASSES,
+  formatDeadline,
+  formatSalary,
+} from "../../lib/formatters";
+import { cn } from "../../lib/utils";
 import { Badge } from "../ui/Badge";
 import { Button } from "../ui/Button";
 
@@ -197,14 +202,11 @@ export const KanbanCard: React.FC<KanbanCardProps> = ({
       {deadlineInfo && (
         <div className="mb-3">
           <Badge
-            variant={
-              deadlineInfo.isExpired
-                ? "danger"
-                : deadlineInfo.isUrgent
-                ? "warning"
-                : "secondary"
-            }
-            className="text-[11px]"
+            className={cn(
+              "text-[11px]",
+              DEADLINE_BADGE_CLASSES[deadlineInfo.deadlineColor]
+            )}
+            title={deadlineInfo.detailText}
           >
             <Clock className="h-3 w-3 mr-1" />
             {deadlineInfo.text}

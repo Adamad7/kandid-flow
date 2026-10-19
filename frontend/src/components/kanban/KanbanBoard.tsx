@@ -9,8 +9,6 @@ import {
   Users,
   Award,
   XCircle,
-  LayoutDashboard,
-  List,
 } from "lucide-react";
 import { api } from "../../lib/api";
 import type {
@@ -20,7 +18,6 @@ import type {
 import { KanbanCard } from "./KanbanCard";
 import { Button } from "../ui/Button";
 import { Input } from "../ui/Input";
-import { Select } from "../ui/Select";
 
 interface KanbanBoardProps {
   onSelectJob: (job: JobOfferRead) => void;
@@ -86,7 +83,6 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
   onSelectJob,
   onGenerateCV,
   refreshTrigger,
-  onSwitchView,
 }) => {
   const [jobs, setJobs] = useState<JobOfferRead[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -173,12 +169,18 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
   // Filtered jobs
   const filteredJobs = useMemo(() => {
     return jobs.filter((job) => {
-      // Search query (company or title)
+      // Search query (company, title, location, tech stack)
       if (searchTerm.trim()) {
         const query = searchTerm.toLowerCase();
         const titleMatch = (job.role_title || "").toLowerCase().includes(query);
         const compMatch = (job.company_name || "").toLowerCase().includes(query);
-        if (!titleMatch && !compMatch) return false;
+        const matchLocation = (job.locations || []).some((l) =>
+          l.toLowerCase().includes(query)
+        );
+        const matchTech = (
+          job.structured_data?.tech_stack || []
+        ).some((t) => t.toLowerCase().includes(query));
+        if (!titleMatch && !compMatch && !matchLocation && !matchTech) return false;
       }
 
       // Work model
@@ -220,119 +222,110 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
   return (
     <div className="space-y-4">
       {/* Top Filter and Search Bar */}
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-white p-4 rounded-xl border border-slate-200 shadow-sm dark:bg-slate-900 dark:border-slate-800">
-        <div className="relative flex-1 max-w-md">
-          <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400 dark:text-slate-500" />
-          <input
-            type="text"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="Szukaj po stanowisku lub firmie..."
-            className="w-full pl-9 pr-4 py-1.5 text-sm rounded-lg border border-slate-300 bg-white text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:placeholder:text-slate-500"
-          />
-        </div>
-
-        <div className="flex items-center gap-2">
-          <Button
-            size="sm"
-            variant={showFilters ? "secondary" : "outline"}
-            onClick={() => setShowFilters(!showFilters)}
-            className="text-xs"
-          >
-            <Filter className="h-3.5 w-3.5 mr-1.5" />
-            Filtry
-            {hasActiveFilters && (
-              <span className="ml-1.5 rounded-full bg-blue-600 px-1.5 py-0.2 text-[10px] text-white">
-                !
-              </span>
-            )}
-          </Button>
-
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={fetchJobs}
-            isLoading={isLoading}
-            className="text-xs"
-            title="Odśwież tablicę"
-          >
-            <RefreshCw className="h-3.5 w-3.5" />
-          </Button>
-
-          {onSwitchView && (
-            <div className="flex items-center border border-slate-200 rounded-lg p-0.5 bg-slate-50 dark:border-slate-800 dark:bg-slate-800 ml-1">
-              <button
-                type="button"
-                onClick={() => onSwitchView("kanban")}
-                className="flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-semibold bg-white text-slate-900 shadow-xs dark:bg-slate-900 dark:text-white"
-                title="Widok tablicy Kanban"
-              >
-                <LayoutDashboard className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400" />
-                <span className="hidden sm:inline">Tablica</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => onSwitchView("list")}
-                className="flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-semibold text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition-colors"
-                title="Widok listy ofert"
-              >
-                <List className="h-3.5 w-3.5" />
-                <span className="hidden sm:inline">Lista</span>
-              </button>
+      <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-xs dark:border-slate-800 dark:bg-slate-900">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+          <div className="flex flex-1 items-center gap-3 max-w-xl">
+            <div className="relative flex-1 max-w-md">
+              <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400 dark:text-slate-500" />
+              <Input
+                placeholder="Szukaj po stanowisku, firmie, technologii..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-9 h-9 text-xs"
+              />
             </div>
-          )}
+
+            <Button
+              size="sm"
+              variant={showFilters ? "primary" : "outline"}
+              onClick={() => setShowFilters(!showFilters)}
+              className="text-xs shrink-0"
+            >
+              <Filter className="h-3.5 w-3.5 mr-1.5" />
+              Filtry
+              {hasActiveFilters && (
+                <span className="ml-1.5 rounded-full bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300 px-1.5 py-0.2 text-[10px] font-bold">
+                  !
+                </span>
+              )}
+            </Button>
+
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={fetchJobs}
+              isLoading={isLoading}
+              className="text-xs shrink-0"
+              title="Odśwież tablicę ofert"
+            >
+              <RefreshCw className="h-3.5 w-3.5" />
+            </Button>
+          </div>
         </div>
-      </div>
 
-      {/* Expanded Filter Panel */}
-      {showFilters && (
-        <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl grid grid-cols-1 sm:grid-cols-3 gap-4 dark:bg-slate-900/60 dark:border-slate-800">
-          <Select
-            label="Tryb pracy"
-            value={workModelFilter}
-            onChange={(e) => setWorkModelFilter(e.target.value)}
-          >
-            <option value="all">Wszystkie tryby</option>
-            <option value="remote">Zdalnie</option>
-            <option value="hybrid">Hybrydowo</option>
-            <option value="onsite">W biurze</option>
-          </Select>
+        {/* Collapsible Filters */}
+        {showFilters && (
+          <div className="mt-3 pt-3 border-t border-slate-100 dark:border-slate-800 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                Tryb pracy:
+              </label>
+              <select
+                value={workModelFilter}
+                onChange={(e) => setWorkModelFilter(e.target.value)}
+                className="w-full text-xs rounded-md border border-slate-300 bg-white px-2.5 py-1.5 text-slate-800 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
+              >
+                <option value="all">Wszystkie tryby</option>
+                <option value="remote">Tylko zdalnie</option>
+                <option value="hybrid">Hybrydowo</option>
+                <option value="onsite">W biurze</option>
+              </select>
+            </div>
 
-          <Select
-            label="Portal źródłowy"
-            value={portalFilter}
-            onChange={(e) => setPortalFilter(e.target.value)}
-          >
-            <option value="all">Wszystkie portale</option>
-            <option value="justjoin">Just Join IT</option>
-            <option value="pracuj">Pracuj.pl</option>
-            <option value="nofluffjobs">No Fluff Jobs</option>
-            <option value="linkedin">LinkedIn</option>
-            <option value="generic">Inny portal</option>
-          </Select>
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                Portal źródłowy:
+              </label>
+              <select
+                value={portalFilter}
+                onChange={(e) => setPortalFilter(e.target.value)}
+                className="w-full text-xs rounded-md border border-slate-300 bg-white px-2.5 py-1.5 text-slate-800 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
+              >
+                <option value="all">Wszystkie portale</option>
+                <option value="justjoin">Just Join IT</option>
+                <option value="pracuj">Pracuj.pl</option>
+                <option value="nofluffjobs">No Fluff Jobs</option>
+                <option value="linkedin">LinkedIn</option>
+                <option value="generic">Inny portal</option>
+              </select>
+            </div>
 
-          <Input
-            label="Minimalne wynagrodzenie (PLN)"
-            type="number"
-            placeholder="np. 15000"
-            value={minSalaryFilter}
-            onChange={(e) => setMinSalaryFilter(e.target.value)}
-          />
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                Minimalne zarobki (PLN):
+              </label>
+              <Input
+                type="number"
+                placeholder="np. 15000"
+                value={minSalaryFilter}
+                onChange={(e) => setMinSalaryFilter(e.target.value)}
+                className="h-[34px] text-xs"
+              />
+            </div>
 
-          {hasActiveFilters && (
-            <div className="sm:col-span-3 flex justify-end">
+            <div className="flex items-end">
               <Button
                 size="sm"
-                variant="ghost"
+                variant="outline"
                 onClick={clearFilters}
-                className="text-xs text-rose-600 hover:text-rose-700 dark:text-rose-400 dark:hover:text-rose-300"
+                className="text-xs w-full"
               >
-                Wyczyść wszystkie filtry
+                Wyczyść filtry
               </Button>
             </div>
-          )}
-        </div>
-      )}
+          </div>
+        )}
+      </div>
 
       {/* Kanban Columns Layout */}
       <div className="flex gap-4 items-start overflow-x-auto pb-6 pt-1 kanban-scrollbar">

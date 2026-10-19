@@ -16,6 +16,15 @@ export function formatSalary(
   return null;
 }
 
+export type DeadlineColor = "default" | "yellow" | "orange" | "red";
+
+export const DEADLINE_BADGE_CLASSES: Record<DeadlineColor, string> = {
+  red: "bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950/50 dark:text-rose-300 dark:border-rose-800",
+  orange: "bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-950/50 dark:text-orange-300 dark:border-orange-800",
+  yellow: "bg-yellow-50 text-yellow-800 border-yellow-200 dark:bg-yellow-950/50 dark:text-yellow-300 dark:border-yellow-800",
+  default: "bg-slate-50 text-slate-600 border-slate-200 dark:bg-slate-800/60 dark:text-slate-300 dark:border-slate-700",
+};
+
 export interface DeadlineInfo {
   text: string;
   detailText: string;
@@ -23,6 +32,7 @@ export interface DeadlineInfo {
   isExpired: boolean;
   daysRemaining?: number;
   hoursRemaining?: number;
+  deadlineColor: DeadlineColor;
 }
 
 export function formatDeadline(deadlineStr?: string | null): DeadlineInfo | null {
@@ -60,6 +70,7 @@ export function formatDeadline(deadlineStr?: string | null): DeadlineInfo | null
       isExpired: true,
       daysRemaining: 0,
       hoursRemaining: 0,
+      deadlineColor: "red",
     };
   }
 
@@ -91,6 +102,7 @@ export function formatDeadline(deadlineStr?: string | null): DeadlineInfo | null
       isExpired: false,
       hoursRemaining: hours,
       daysRemaining: 0,
+      deadlineColor: "orange",
     };
   }
 
@@ -109,13 +121,23 @@ export function formatDeadline(deadlineStr?: string | null): DeadlineInfo | null
     daysText = `Pozostało ${days} dni`;
   }
 
+  let deadlineColor: DeadlineColor;
+  if (diffMs < 2 * oneDayMs || days < 2) {
+    deadlineColor = "orange";
+  } else if (days <= 6) {
+    deadlineColor = "yellow";
+  } else {
+    deadlineColor = "default";
+  }
+
   return {
     text: daysText,
     detailText: `${daysText} (termin: ${formattedDate})`,
-    isUrgent: days <= 3,
+    isUrgent: deadlineColor === "orange" || deadlineColor === "yellow",
     isExpired: false,
     daysRemaining: days,
     hoursRemaining: Math.floor(diffMs / oneHourMs),
+    deadlineColor,
   };
 }
 
@@ -130,6 +152,31 @@ export function formatDateTime(isoString?: string | null): string {
     hour: "2-digit",
     minute: "2-digit",
   });
+}
+
+/**
+ * Formats relative date when job was created.
+ * Under 24h: "Dzisiaj"
+ * 24h and more: "{dni}d" (e.g. "1d", "3d", "12d")
+ */
+export function formatRelativeCreatedDate(
+  isoString?: string | null
+): { text: string; fullDate: string } | null {
+  if (!isoString) return null;
+  const d = new Date(isoString);
+  if (isNaN(d.getTime())) return null;
+
+  const fullDate = formatDateTime(isoString);
+  const now = new Date();
+  const diffMs = now.getTime() - d.getTime();
+
+  const oneDayMs = 24 * 60 * 60 * 1000;
+  if (diffMs < oneDayMs) {
+    return { text: "Dzisiaj", fullDate };
+  }
+
+  const days = Math.floor(diffMs / oneDayMs);
+  return { text: `${days}d`, fullDate };
 }
 
 /**

@@ -23,10 +23,10 @@ import { JobListView } from "./components/jobs/JobListView";
 import { ThemeToggle } from "./components/ui/ThemeToggle";
 import { api } from "./lib/api";
 
-type ActiveTab = "kanban" | "list" | "profile" | "presets" | "settings";
+type ActiveTab =  "list" | "kanban" | "profile" | "presets" | "settings";
 
 export const App: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<ActiveTab>("kanban");
+  const [activeTab, setActiveTab] = useState<ActiveTab>("list");
 
   // Selection & Modal States
   const [selectedJob, setSelectedJob] = useState<JobOfferRead | null>(null);
@@ -135,18 +135,6 @@ export const App: React.FC = () => {
           {/* Right Header: Navigation Tabs + Theme Toggle */}
           <div className="flex items-center gap-2 sm:gap-4">
             <nav className="flex items-center gap-1 sm:gap-2">
-              <button
-                type="button"
-                onClick={() => setActiveTab("kanban")}
-                className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold transition-colors ${
-                  activeTab === "kanban"
-                    ? "bg-slate-900 text-white shadow-xs dark:bg-slate-100 dark:text-slate-900"
-                    : "text-slate-600 hover:text-slate-900 hover:bg-slate-100 dark:text-slate-300 dark:hover:text-white dark:hover:bg-slate-800"
-                }`}
-              >
-                <LayoutDashboard className="h-4 w-4" />
-                <span className="hidden sm:inline">Tablica ofert</span>
-              </button>
 
               <button
                 type="button"
@@ -161,6 +149,19 @@ export const App: React.FC = () => {
                 <span className="hidden sm:inline">Lista ofert</span>
               </button>
 
+              <button
+                type="button"
+                onClick={() => setActiveTab("kanban")}
+                className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold transition-colors ${
+                  activeTab === "kanban"
+                    ? "bg-slate-900 text-white shadow-xs dark:bg-slate-100 dark:text-slate-900"
+                    : "text-slate-600 hover:text-slate-900 hover:bg-slate-100 dark:text-slate-300 dark:hover:text-white dark:hover:bg-slate-800"
+                }`}
+              >
+                <LayoutDashboard className="h-4 w-4" />
+                <span className="hidden sm:inline">Tablica ofert</span>
+              </button>
+              
               <button
                 type="button"
                 onClick={() => setActiveTab("profile")}
