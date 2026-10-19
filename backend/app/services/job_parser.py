@@ -2,6 +2,7 @@
 
 import asyncio
 import logging
+import re
 from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
 from uuid import UUID
 
@@ -34,6 +35,32 @@ TRACKING_PARAMS = {
     "gclid",
     "source",
 }
+
+# Heuristic pattern to detect hybrid arrangements or mandatory office attendance
+HYBRID_DETECTION_REGEX = re.compile(
+    r"(?:"
+    r"hybrydow[a-ząćęłńóśźż]*"
+    r"|\bhybrid\b"
+    r"|\d+\s*(?:-\s*\d+)?\s*dn[i|ia].*?w\s+biurze"
+    r"|dni\s+w\s+tygodniu\s+w\s+biurze"
+    r"|obecnoś[cć]\s+w\s+biurze"
+    r"|wizyt[y|a]?\s+w\s+biurze"
+    r"|początkowo.*?(?:biur|stacjonarn).*?hybryd"
+    r"|wdrożeni[a-ząćęłńóśźż]*.*?(?:biur|stacjonarn)"
+    r"|onboarding.*?(?:biur|stacjonarn)"
+    r")",
+    re.IGNORECASE,
+)
+
+# Heuristic pattern to extract transitional hybrid sentences
+TRANSITIONAL_HYBRID_REGEX = re.compile(
+    r"(?:"
+    r"początkowo[^\.\n]*?(?:biur|stacjonarn)[^\.\n]*?hybryd[^\.\n]*"
+    r"|wdrożeni[a-ząćęłńóśźż]*[^\.\n]*?(?:biur|stacjonarn)[^\.\n]*"
+    r"|onboarding[^\.\n]*?(?:biur|stacjonarn)[^\.\n]*"
+    r")",
+    re.IGNORECASE,
+)
 
 
 def canonicalize_url(url: str) -> str:
@@ -76,6 +103,112 @@ def canonicalize_url(url: str) -> str:
         )
     )
     return normalized
+
+
+# Regex pattern to strip parenthetical remarks (e.g. "(...)", "[...]")
+PAREN_REMARKS_REGEX = re.compile(
+    r"\s*[\(\[][^)\]]*(?:[\)\]]|$)",
+    re.IGNORECASE | re.DOTALL,
+)
+
+# Meta-reasoning and deliberation keywords indicating absence of factual schedule
+META_REASONING_REGEX = re.compile(
+    r"\b(?:"
+    r"mention|description|provided|stated|specified|no office|"
+    r"brak wzmianki|brak informacji|not defined|per the|"
+    r"attendance rule|cannot assume|re-reading|i must set|"
+    r"based strictly|given the ambiguity|therefore|given that|"
+    r"clarification|default to remote"
+    r")\b",
+    re.IGNORECASE,
+)
+COT_MARKERS_REGEX = META_REASONING_REGEX
+
+# Generic work model labels that should be nullified if returned without specific schedule
+GENERIC_WORK_MODEL_LABELS = {
+    "zdalnie",
+    "zdalna",
+    "praca zdalna",
+    "w pełni zdalna",
+    "100% zdalnie",
+    "100% zdalna",
+    "remote",
+    "fully remote",
+    "100% remote",
+    "stacjonarnie",
+    "stacjonarna",
+    "praca stacjonarna",
+    "onsite",
+    "on-site",
+    "office",
+    "brak",
+    "brak informacji",
+    "brak danych",
+    "nie podano",
+    "not specified",
+    "not defined",
+    "null",
+    "none",
+    "n/a",
+    "-",
+}
+
+# Regex matching generic work model phrases without specific office schedules
+GENERIC_WORK_MODEL_REGEX = re.compile(
+    r"^(?:"
+    r"(?:(?:w\s+)?100%|pełna|w\s+pełni|fully)?\s*(?:praca\s+)?(?:zdalna|zdalnie|remote)(?:\s+praca)?"
+    r"|(?:w\s+pełni\s+)?(?:praca\s+)?(?:stacjonarna|stacjonarnie|onsite|on-site|biuro)(?:\s+praca)?"
+    r"|brak(?:\s+informacji|\s+danych|\s+wzmianki)?"
+    r"|nie\s+podano"
+    r"|not\s+(?:specified|defined)"
+    r"|null|none|n/a|-"
+    r")$",
+    re.IGNORECASE,
+)
+
+
+def sanitize_work_model_details(details: str | None) -> str | None:
+    """Sanitize and clean work_model_details string from LLM output.
+
+    Strips parenthetical commentary, nullifies generic labels ('zdalnie', 'remote', etc.)
+    and meta-reasoning/chain-of-thought leaks, and enforces a maximum length of 80 characters.
+
+    Args:
+        details: Raw string returned by LLM or existing job attribute.
+
+    Returns:
+        Clean, concise factual string, or None if empty / generic / pure reasoning.
+    """
+    if not details or not isinstance(details, str):
+        return None
+
+    clean = details.strip()
+    if not clean or clean.lower() in ("null", "none", "n/a", "-"):
+        return None
+
+    # 1. Strip all parenthetical remarks: e.g. "(...)" or "[...]"
+    clean = PAREN_REMARKS_REGEX.sub("", clean).strip()
+
+    # 2. Strip trailing punctuation
+    clean = re.sub(r"[\s,;:\.\-]+$", "", clean).strip()
+
+    # 3. If empty or a generic label (e.g. 'zdalnie', 'remote', '100% zdalnie'), return None
+    if (
+        not clean
+        or clean.lower() in GENERIC_WORK_MODEL_LABELS
+        or GENERIC_WORK_MODEL_REGEX.match(clean)
+    ):
+        return None
+
+    # 4. If remaining string contains reasoning/meta words or no alphanumeric chars, return None
+    if META_REASONING_REGEX.search(clean) or not any(c.isalnum() for c in clean):
+        return None
+
+    # 5. Enforce maximum length of 80 characters
+    if len(clean) > 80:
+        return None
+
+    return clean
 
 
 class JobParserWorker:
@@ -176,6 +309,21 @@ class JobParserWorker:
                     benefits=[],
                     experience_level="Mid",
                 )
+                # Heuristic detection for transitional or general hybrid requirements in raw_text
+                transitional_match = TRANSITIONAL_HYBRID_REGEX.search(raw_text)
+                if transitional_match:
+                    snippet = transitional_match.group(0).strip()
+                    job.work_model = "hybrid"
+                    job.work_model_details = (
+                        snippet
+                        if len(snippet) <= 80
+                        else "Początkowo praca z biura, następnie hybrydowo"
+                    )
+                elif HYBRID_DETECTION_REGEX.search(raw_text):
+                    job.work_model = "hybrid"
+                    job.work_model_details = "Wykryto wymóg pracy hybrydowej w opisie"
+                elif job.work_model_details:
+                    job.work_model_details = sanitize_work_model_details(job.work_model_details)
             else:
                 # Strict AI normalization via local Ollama or Cloud API
                 language_rule = (
@@ -189,6 +337,33 @@ class JobParserWorker:
                     "(e.g. Python, Docker, Kubernetes) in their standard professional notation."
                 )
 
+                work_model_rule = (
+                    "CRITICAL WORK MODEL & ATTENDANCE RULE: Examine the full job description "
+                    "carefully for any office attendance requirements. Many job postings are "
+                    "initially tagged or labeled as 'remote' (zdalna) in metadata or headers "
+                    "(e.g. on Just Join IT, Pracuj), but explicitly state in the description that "
+                    "the candidate must come to the office (e.g. 1-2 days a week in the office, "
+                    "several days a month, mandatory hybrid schedule, periodic office visits, "
+                    "or transitional / onboarding arrangements where work is initially in-office "
+                    "and later hybrid).\n"
+                    "- If the job description mentions ANY required office days, periodic office "
+                    "visits, hybrid arrangement, or transitional/onboarding in-office presence "
+                    "(e.g. 'Początkowo praca z biura, następnie hybrydowo'), you MUST set "
+                    "'work_model' to 'hybrid' and provide the factual schedule in "
+                    "'work_model_details' as a SHORT PHRASE (MAX 10 WORDS, e.g. '1-2 dni w "
+                    "tygodniu w biurze' or 'Początkowo praca z biura, następnie hybrydowo').\n"
+                    "- If the job posting does not mention office days and has no hybrid or "
+                    "office requirement (100% remote), set 'work_model' to 'remote' (or 'onsite' "
+                    "if full-time office role) and set 'work_model_details' strictly to null. "
+                    "Do NOT write 'Zdalnie', '100% zdalnie', or explanations in "
+                    "work_model_details.\n\n"
+                    "STRICT FORMAT PROHIBITION FOR work_model_details:\n"
+                    "DO NOT WRITE ESSAYS, EXPLANATIONS, REASONING, DELIBERATIONS, "
+                    "OR CITATIONS OF RULES. "
+                    "Never explain your thought process or cite absence of details. "
+                    "Output ONLY the factual concise schedule (max 10 words) or null."
+                )
+
                 system_prompt = (
                     "You are an ATS Recruitment Assistant. Extract structured information from "
                     "the job posting description and return a JSON object with: "
@@ -199,18 +374,26 @@ class JobParserWorker:
                     "benefits (key employment benefits), "
                     "experience_level (Junior/Mid/Senior/Lead), "
                     "work_model (remote/hybrid/onsite), "
-                    "work_model_details (specifics e.g. 2 days office/mo), "
+                    "work_model_details (concise schedule max 10 words or null; "
+                    "NEVER write explanations or reasoning), "
                     "application_deadline (date in YYYY-MM-DD format if explicitly stated, "
                     "or null), "
                     "company_name (if not evident, infer or leave as is), "
                     "role_title (cleaned title).\n\n"
+                    f"{work_model_rule}\n\n"
                     f"{language_rule}"
                 )
 
+                initial_model_info = (
+                    f"Initial Work Model Tag: {job.work_model or 'Not specified'} "
+                    f"({job.work_model_details or ''})"
+                )
+
                 user_prompt = (
-                    f"Title: {title}\nCompany: {company}\nRequirements:\n"
+                    f"Title: {title}\nCompany: {company}\n{initial_model_info}\nRequirements:\n"
                     + "\n".join(f"- {r}" for r in requirements[:15])
-                    + f"\n\nDescription:\n{raw_text[:2500]}\n\n"
+                    + f"\n\nDescription:\n{raw_text[:8000]}\n\n"
+                    + f"{work_model_rule}\n\n"
                     + f"{language_rule}"
                 )
 
@@ -228,10 +411,10 @@ class JobParserWorker:
                 # Normalize structured data with Pydantic
                 structured = StructuredJobData(
                     role_summary=parsed_data.get("role_summary"),
-                    must_have=parsed_data.get("must_have", []),
-                    nice_to_have=parsed_data.get("nice_to_have", []),
-                    tech_stack=parsed_data.get("tech_stack", []),
-                    benefits=parsed_data.get("benefits", []),
+                    must_have=parsed_data.get("must_have") or [],
+                    nice_to_have=parsed_data.get("nice_to_have") or [],
+                    tech_stack=parsed_data.get("tech_stack") or [],
+                    benefits=parsed_data.get("benefits") or [],
                     experience_level=parsed_data.get("experience_level"),
                 )
 
@@ -240,12 +423,16 @@ class JobParserWorker:
                     job.company_name = parsed_data.get("company_name")
                 if not job.role_title and parsed_data.get("role_title"):
                     job.role_title = parsed_data.get("role_title")
-                if not job.work_model and parsed_data.get("work_model"):
-                    model_val = parsed_data.get("work_model", "").lower()
+                if parsed_data.get("work_model"):
+                    model_val = str(parsed_data.get("work_model", "")).lower().strip()
                     if model_val in ("remote", "hybrid", "onsite"):
                         job.work_model = model_val
-                if not job.work_model_details and parsed_data.get("work_model_details"):
-                    job.work_model_details = parsed_data.get("work_model_details")
+                if parsed_data.get("work_model_details"):
+                    job.work_model_details = sanitize_work_model_details(
+                        parsed_data.get("work_model_details")
+                    )
+                elif job.work_model_details:
+                    job.work_model_details = sanitize_work_model_details(job.work_model_details)
                 if not job.application_deadline and parsed_data.get("application_deadline"):
                     try:
                         from datetime import datetime
