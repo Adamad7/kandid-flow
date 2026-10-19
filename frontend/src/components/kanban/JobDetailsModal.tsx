@@ -425,19 +425,17 @@ export const JobDetailsModal: React.FC<JobDetailsModalProps> = ({
                 {/* Benefits */}
                 {structured.benefits && structured.benefits.length > 0 && (
                   <div>
-                    <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2">
+                    <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2.5">
                       Benefity i warunki
                     </h4>
-                    <div className="flex flex-wrap gap-2">
+                    <ul className="space-y-1.5 text-xs text-slate-700 dark:text-slate-300">
                       {structured.benefits.map((b, idx) => (
-                        <span
-                          key={idx}
-                          className="rounded-full bg-emerald-50 border border-emerald-200 px-3 py-1 text-xs text-emerald-800 dark:bg-emerald-950/50 dark:border-emerald-800 dark:text-emerald-300"
-                        >
-                          {b}
-                        </span>
+                        <li key={idx} className="flex items-start gap-2">
+                          <span className="text-emerald-500 font-bold">•</span>
+                          <span>{b}</span>
+                        </li>
                       ))}
-                    </div>
+                    </ul>
                   </div>
                 )}
               </>
