@@ -1,6 +1,7 @@
 """Public export of all KandidFlow Pydantic v2 schemas."""
 
 from app.schemas.candidate import (
+    CandidateAIFillRequest,
     CandidateContactInfo,
     CandidateProfileBase,
     CandidateProfileCreate,
@@ -119,6 +120,7 @@ __all__ = [
     "BaseCVPresetUpdate",
     "BaseCVPresetRead",
     # Candidate Profile
+    "CandidateAIFillRequest",
     "CandidateContactInfo",
     "CandidateProfileBase",
     "CandidateProfileCreate",

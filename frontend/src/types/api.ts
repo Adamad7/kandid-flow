@@ -244,6 +244,15 @@ export interface CandidateProfileRead extends CandidateProfileBase {
   updated_at: string; // ISO 8601
 }
 
+export interface CandidateAIFillRequest {
+  text: string;
+  llm_provider?: LLMProviderType;
+  llm_model?: string | null;
+  api_key?: string | null;
+  enable_thinking?: boolean;
+  mode?: "merge" | "replace";
+}
+
 // ============================================================================
 // Job Offer Schemas
 // ============================================================================

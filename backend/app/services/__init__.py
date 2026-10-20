@@ -1,5 +1,10 @@
 """Services package export."""
 
+from app.services.candidate_parser import (
+    DEFAULT_CANDIDATE_DATA,
+    CandidateParser,
+    candidate_parser,
+)
 from app.services.cv_generator import (
     CVGeneratorService,
     cv_generator,
@@ -21,6 +26,9 @@ from app.services.typst_compiler import (
 )
 
 __all__ = [
+    "DEFAULT_CANDIDATE_DATA",
+    "CandidateParser",
+    "candidate_parser",
     "TypstCompilationError",
     "TypstCompilerService",
     "typst_compiler",

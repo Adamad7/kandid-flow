@@ -114,25 +114,17 @@ class LLMClient:
 
         # 2. Cloud Fallback if configured (only with valid non-placeholder keys)
         gemini_key = (
-            custom_key
-            if (effective_provider == "gemini" and custom_key)
-            else self.gemini_api_key
+            custom_key if (effective_provider == "gemini" and custom_key) else self.gemini_api_key
         )
         openai_key = (
-            custom_key
-            if (effective_provider == "openai" and custom_key)
-            else self.openai_api_key
+            custom_key if (effective_provider == "openai" and custom_key) else self.openai_api_key
         )
 
         has_valid_gemini = bool(
-            gemini_key
-            and not gemini_key.startswith("your_")
-            and len(gemini_key) > 10
+            gemini_key and not gemini_key.startswith("your_") and len(gemini_key) > 10
         )
         has_valid_openai = bool(
-            openai_key
-            and not openai_key.startswith("your_")
-            and len(openai_key) > 10
+            openai_key and not openai_key.startswith("your_") and len(openai_key) > 10
         )
 
         cloud_timeout = timeout if timeout is not None else (120.0 if enable_thinking else 30.0)

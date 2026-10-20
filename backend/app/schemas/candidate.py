@@ -294,3 +294,23 @@ class CandidateProfileRead(CandidateProfileBase):
     updated_at: datetime = Field(..., description="Timestamp of last knowledge base edit")
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class CandidateAIFillRequest(BaseModel):
+    """Request payload for auto-filling candidate knowledge base via AI."""
+
+    text: str = Field(..., min_length=5, description="Full text to extract candidate data from")
+    llm_provider: Literal["default", "local", "api", "ollama", "gemini", "openai"] = Field(
+        default="default",
+        description="Wybrany dostawca LLM: default, local, api, ollama, gemini, openai",
+    )
+    llm_model: str | None = Field(default=None, description="Opcjonalny model LLM")
+    api_key: str | None = Field(default=None, description="Opcjonalny klucz API")
+    enable_thinking: bool = Field(
+        default=True,
+        description="Włącz tryb namysłu (reasoning / thinking)",
+    )
+    mode: Literal["merge", "replace"] = Field(
+        default="merge",
+        description="Tryb: 'merge' (scalenie) lub 'replace' (zastąpienie)",
+    )

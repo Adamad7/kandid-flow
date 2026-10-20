@@ -18,6 +18,7 @@ import {
   FolderGit2,
   FileText,
   FileCode,
+  RotateCcw,
 } from "lucide-react";
 import { api } from "../../lib/api";
 import type {
@@ -44,6 +45,69 @@ import { Button } from "../ui/Button";
 import { Input } from "../ui/Input";
 import { Textarea } from "../ui/Textarea";
 import { DateInput } from "../ui/DateInput";
+import { Modal } from "../ui/Modal";
+import { KnowledgeBaseAIModal } from "./KnowledgeBaseAIModal";
+
+export const STANDARD_SECTION_DEFAULTS: {
+  id: string;
+  type: CandidateSectionBlock["type"];
+  title: string;
+  createDefault: () => CandidateSectionBlock;
+}[] = [
+  {
+    id: "summary",
+    type: "summary",
+    title: "O mnie",
+    createDefault: () => ({ id: "summary", type: "summary", title: "O mnie", content: "" } as SummarySectionBlock),
+  },
+  {
+    id: "skills",
+    type: "skills",
+    title: "Umiejętności",
+    createDefault: () => ({ id: "skills", type: "skills", title: "Umiejętności", items: [] } as SkillsSectionBlock),
+  },
+  {
+    id: "experience",
+    type: "experience",
+    title: "Doświadczenie zawodowe",
+    createDefault: () => ({ id: "experience", type: "experience", title: "Doświadczenie zawodowe", items: [] } as ExperienceSectionBlock),
+  },
+  {
+    id: "projects",
+    type: "projects",
+    title: "Projekty",
+    createDefault: () => ({ id: "projects", type: "projects", title: "Projekty", items: [] } as ProjectsSectionBlock),
+  },
+  {
+    id: "education",
+    type: "education",
+    title: "Edukacja",
+    createDefault: () => ({ id: "education", type: "education", title: "Edukacja", items: [] } as EducationSectionBlock),
+  },
+  {
+    id: "certificates",
+    type: "certificates",
+    title: "Certyfikaty",
+    createDefault: () => ({ id: "certificates", type: "certificates", title: "Certyfikaty", items: [] } as CertificatesSectionBlock),
+  },
+  {
+    id: "clause",
+    type: "clause",
+    title: "Klauzula RODO",
+    createDefault: () => ({ id: "clause", type: "clause", title: "Klauzula RODO", content: "" } as ClauseSectionBlock),
+  },
+];
+
+export const ensureStandardSections = (secs: CandidateSectionBlock[]): CandidateSectionBlock[] => {
+  const result: CandidateSectionBlock[] = [...secs];
+  for (const std of STANDARD_SECTION_DEFAULTS) {
+    const exists = result.some((s) => s.id === std.id || s.type === std.type);
+    if (!exists) {
+      result.push(std.createDefault());
+    }
+  }
+  return result;
+};
 
 export const KnowledgeBaseEditor: React.FC = () => {
   const [, setProfile] = useState<CandidateProfileRead | null>(null);
@@ -80,6 +144,98 @@ export const KnowledgeBaseEditor: React.FC = () => {
   const [skillTagsRaw, setSkillTagsRaw] = useState<Record<number, string>>({});
   const [projectTechsRaw, setProjectTechsRaw] = useState<Record<number, string>>({});
 
+  // Reset confirmation modal & AI modal state
+  const [isResetModalOpen, setIsResetModalOpen] = useState(false);
+  const [isResetting, setIsResetting] = useState(false);
+  const [isAIModalOpen, setIsAIModalOpen] = useState(false);
+  const [feedbackMessage, setFeedbackMessage] = useState<string | null>(null);
+
+  const applyProfileData = (data: CandidateProfileRead) => {
+    setProfile(data);
+
+    const fName = data.full_name || "";
+    const cInfo = data.contact_info || {};
+    const rawDefSecs = data.default_sections || [];
+    const rawSecs = data.sections || [];
+    const secs = ensureStandardSections(rawSecs);
+
+    let defSecs: SectionDefaultConfig[] = [];
+    if (Array.isArray(rawDefSecs) && rawDefSecs.length > 0) {
+      defSecs = rawDefSecs.map((item: unknown) => {
+        if (typeof item === "string") {
+          return { id: item, mode: "ai" as SectionGenerationMode };
+        }
+        const obj = item as { id: string; mode?: SectionGenerationMode };
+        return { id: obj.id, mode: (obj.mode || "ai") as SectionGenerationMode };
+      });
+    } else {
+      defSecs = [
+        { id: "summary", mode: "ai" },
+        { id: "skills", mode: "ai" },
+        { id: "experience", mode: "ai" },
+        { id: "projects", mode: "ai" },
+        { id: "education", mode: "raw" },
+        { id: "certificates", mode: "raw" },
+        { id: "clause", mode: "ai" },
+      ];
+    }
+
+    setFullName(fName);
+    setContactInfo(cInfo);
+    setDefaultSections(defSecs);
+    setSections(secs);
+
+    // Initialize raw text for skills
+    const sSec = secs.find((s) => s.type === "skills") as SkillsSectionBlock | undefined;
+    if (sSec?.items) {
+      const rawMap: Record<number, string> = {};
+      sSec.items.forEach((cat, idx) => {
+        rawMap[idx] = (cat.skills || []).join(", ");
+      });
+      setSkillTagsRaw(rawMap);
+    } else {
+      setSkillTagsRaw({});
+    }
+
+    // Initialize raw text for project technologies
+    const pSec = secs.find((s) => s.type === "projects") as ProjectsSectionBlock | undefined;
+    if (pSec?.items) {
+      const rawPMap: Record<number, string> = {};
+      pSec.items.forEach((proj, idx) => {
+        rawPMap[idx] = (proj.technologies || []).join(", ");
+      });
+      setProjectTechsRaw(rawPMap);
+    } else {
+      setProjectTechsRaw({});
+    }
+
+    setInitialFullName(fName);
+    setInitialContactInfo(JSON.parse(JSON.stringify(cInfo)));
+    setInitialDefaultSections(JSON.parse(JSON.stringify(defSecs)));
+    setInitialSections(JSON.parse(JSON.stringify(secs)));
+  };
+
+  const handleResetConfirm = async () => {
+    try {
+      setIsResetting(true);
+      const updated = await api.candidate.resetDefault();
+      applyProfileData(updated);
+      setIsResetModalOpen(false);
+      setFeedbackMessage("Przywrócono domyślne dane testowe kandydata (Jan Kowalski).");
+      setTimeout(() => setFeedbackMessage(null), 5000);
+    } catch {
+      alert("Wystąpił błąd podczas przywracania danych testowych.");
+    } finally {
+      setIsResetting(false);
+    }
+  };
+
+  const handleAISuccess = (updated: CandidateProfileRead) => {
+    applyProfileData(updated);
+    setFeedbackMessage("Pomyślnie zaktualizowano bazę wiedzy przy użyciu AI!");
+    setTimeout(() => setFeedbackMessage(null), 5000);
+  };
+
   useEffect(() => {
     fetchProfile();
   }, []);
@@ -88,63 +244,7 @@ export const KnowledgeBaseEditor: React.FC = () => {
     try {
       setIsLoading(true);
       const data = await api.candidate.get();
-      setProfile(data);
-
-      const fName = data.full_name || "";
-      const cInfo = data.contact_info || {};
-      const rawDefSecs = data.default_sections || [];
-      const secs = data.sections || [];
-
-      let defSecs: SectionDefaultConfig[] = [];
-      if (Array.isArray(rawDefSecs) && rawDefSecs.length > 0) {
-        defSecs = rawDefSecs.map((item: unknown) => {
-          if (typeof item === "string") {
-            return { id: item, mode: "ai" as SectionGenerationMode };
-          }
-          const obj = item as { id: string; mode?: SectionGenerationMode };
-          return { id: obj.id, mode: (obj.mode || "ai") as SectionGenerationMode };
-        });
-      } else {
-        defSecs = [
-          { id: "summary", mode: "ai" },
-          { id: "skills", mode: "ai" },
-          { id: "experience", mode: "ai" },
-          { id: "projects", mode: "ai" },
-          { id: "education", mode: "raw" },
-          { id: "certificates", mode: "raw" },
-          { id: "clause", mode: "ai" },
-        ];
-      }
-
-      setFullName(fName);
-      setContactInfo(cInfo);
-      setDefaultSections(defSecs);
-      setSections(secs);
-
-      // Initialize raw text for skills
-      const sSec = secs.find((s) => s.type === "skills") as SkillsSectionBlock | undefined;
-      if (sSec?.items) {
-        const rawMap: Record<number, string> = {};
-        sSec.items.forEach((cat, idx) => {
-          rawMap[idx] = cat.skills.join(", ");
-        });
-        setSkillTagsRaw(rawMap);
-      }
-
-      // Initialize raw text for project technologies
-      const pSec = secs.find((s) => s.type === "projects") as ProjectsSectionBlock | undefined;
-      if (pSec?.items) {
-        const rawPMap: Record<number, string> = {};
-        pSec.items.forEach((proj, idx) => {
-          rawPMap[idx] = (proj.technologies || []).join(", ");
-        });
-        setProjectTechsRaw(rawPMap);
-      }
-
-      setInitialFullName(fName);
-      setInitialContactInfo(JSON.parse(JSON.stringify(cInfo)));
-      setInitialDefaultSections(JSON.parse(JSON.stringify(defSecs)));
-      setInitialSections(JSON.parse(JSON.stringify(secs)));
+      applyProfileData(data);
     } catch {
       // If 404 or error, initialize defaults
       const fName = "Jan Kowalski";
@@ -162,7 +262,7 @@ export const KnowledgeBaseEditor: React.FC = () => {
         { id: "certificates", mode: "raw" },
         { id: "clause", mode: "ai" },
       ];
-      const secs: CandidateSectionBlock[] = [
+      const rawSecs: CandidateSectionBlock[] = [
         {
           id: "summary",
           type: "summary",
@@ -234,6 +334,7 @@ export const KnowledgeBaseEditor: React.FC = () => {
             "Wyrażam zgodę na przetwarzanie moich danych osobowych dla potrzeb niezbędnych do realizacji procesu rekrutacji zgodnie z RODO.",
         },
       ];
+      const secs = ensureStandardSections(rawSecs);
 
       setFullName(fName);
       setContactInfo(cInfo);
@@ -284,7 +385,9 @@ export const KnowledgeBaseEditor: React.FC = () => {
       setInitialFullName(updated.full_name || "");
       setInitialContactInfo(JSON.parse(JSON.stringify(updated.contact_info || {})));
       setInitialDefaultSections(JSON.parse(JSON.stringify(updated.default_sections || [])));
-      setInitialSections(JSON.parse(JSON.stringify(updated.sections || [])));
+      const ensuredSecs = ensureStandardSections(updated.sections || []);
+      setSections(ensuredSecs);
+      setInitialSections(JSON.parse(JSON.stringify(ensuredSecs)));
 
       setSuccessSections((prev) => ({ ...prev, [sectionKey]: true }));
       setTimeout(() => {
@@ -774,13 +877,20 @@ export const KnowledgeBaseEditor: React.FC = () => {
   }
 
   // Pre-categorize standard sections
-  const summarySection = sections.find((s) => s.id === "summary") as SummarySectionBlock | undefined;
-  const skillsSection = sections.find((s) => s.type === "skills") as SkillsSectionBlock | undefined;
-  const expSection = sections.find((s) => s.type === "experience") as ExperienceSectionBlock | undefined;
-  const projectsSection = sections.find((s) => s.type === "projects") as ProjectsSectionBlock | undefined;
-  const eduSection = sections.find((s) => s.type === "education") as EducationSectionBlock | undefined;
-  const certsSection = sections.find((s) => s.type === "certificates") as CertificatesSectionBlock | undefined;
-  const clauseSection = sections.find((s) => s.type === "clause") as ClauseSectionBlock | undefined;
+  const summarySection = (sections.find((s) => s.id === "summary" || s.type === "summary") ||
+    STANDARD_SECTION_DEFAULTS.find((s) => s.id === "summary")!.createDefault()) as SummarySectionBlock;
+  const skillsSection = (sections.find((s) => s.type === "skills" || s.id === "skills") ||
+    STANDARD_SECTION_DEFAULTS.find((s) => s.id === "skills")!.createDefault()) as SkillsSectionBlock;
+  const expSection = (sections.find((s) => s.type === "experience" || s.id === "experience") ||
+    STANDARD_SECTION_DEFAULTS.find((s) => s.id === "experience")!.createDefault()) as ExperienceSectionBlock;
+  const projectsSection = (sections.find((s) => s.type === "projects" || s.id === "projects") ||
+    STANDARD_SECTION_DEFAULTS.find((s) => s.id === "projects")!.createDefault()) as ProjectsSectionBlock;
+  const eduSection = (sections.find((s) => s.type === "education" || s.id === "education") ||
+    STANDARD_SECTION_DEFAULTS.find((s) => s.id === "education")!.createDefault()) as EducationSectionBlock;
+  const certsSection = (sections.find((s) => s.type === "certificates" || s.id === "certificates") ||
+    STANDARD_SECTION_DEFAULTS.find((s) => s.id === "certificates")!.createDefault()) as CertificatesSectionBlock;
+  const clauseSection = (sections.find((s) => s.type === "clause" || s.id === "clause") ||
+    STANDARD_SECTION_DEFAULTS.find((s) => s.id === "clause")!.createDefault()) as ClauseSectionBlock;
   const customSections = sections.filter(
     (s) =>
       s.type === "custom" ||
@@ -835,7 +945,25 @@ export const KnowledgeBaseEditor: React.FC = () => {
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
+          <Button
+            variant="destructive"
+            onClick={() => setIsResetModalOpen(true)}
+            className="text-sm font-medium bg-rose-600 hover:bg-rose-700 text-white shadow-xs"
+          >
+            <RotateCcw className="h-4 w-4 mr-2" />
+            Przywróć dane testowe
+          </Button>
+
+          <Button
+            variant="outline"
+            onClick={() => setIsAIModalOpen(true)}
+            className="text-sm font-medium border-blue-200 dark:border-blue-900/60 bg-blue-50/50 hover:bg-blue-100/70 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300 dark:hover:bg-blue-900/60 shadow-xs"
+          >
+            <Sparkles className="h-4 w-4 mr-2 text-blue-600 dark:text-blue-400" />
+            Uzupełnij za pomocą AI
+          </Button>
+
           {successSections["all"] && (
             <span className="flex items-center gap-1 text-xs font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-2.5 py-1.5 rounded-lg border border-emerald-200 dark:border-emerald-900/50">
               <Check className="h-4 w-4" />
@@ -854,6 +982,22 @@ export const KnowledgeBaseEditor: React.FC = () => {
           </Button>
         </div>
       </div>
+
+      {feedbackMessage && (
+        <div className="rounded-xl bg-emerald-50 border border-emerald-200 p-4 text-sm text-emerald-800 dark:bg-emerald-950/40 dark:border-emerald-900/50 dark:text-emerald-300 flex items-center justify-between shadow-xs">
+          <div className="flex items-center gap-2">
+            <Check className="h-5 w-5 text-emerald-600 dark:text-emerald-400 shrink-0" />
+            <span>{feedbackMessage}</span>
+          </div>
+          <button
+            type="button"
+            onClick={() => setFeedbackMessage(null)}
+            className="text-emerald-600 hover:text-emerald-800 dark:text-emerald-400 dark:hover:text-emerald-200 text-xs font-semibold ml-4"
+          >
+            Zamknij
+          </button>
+        </div>
+      )}
 
       {/* Basic Contact Info Block */}
       <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-6 shadow-xs space-y-5">
@@ -1708,6 +1852,53 @@ export const KnowledgeBaseEditor: React.FC = () => {
           Zapisz wszystkie zmiany w bazie wiedzy
         </Button>
       </div>
+
+      {/* Reset Confirmation Modal */}
+      <Modal
+        isOpen={isResetModalOpen}
+        onClose={() => !isResetting && setIsResetModalOpen(false)}
+        title="Przywrócenie domyślnych danych testowych"
+        description="Czy na pewno chcesz przywrócić domyślne dane testowe? Wszystkie dotychczasowe wpisy w Twojej bazie wiedzy zostaną zastąpione wzorcowymi danymi profilu (Jan Kowalski)."
+        maxWidth="md"
+      >
+        <div className="space-y-4 pt-2">
+          <div className="p-3.5 rounded-xl bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-900/50 text-xs text-rose-800 dark:text-rose-300 flex items-start gap-3">
+            <AlertCircle className="h-5 w-5 shrink-0 text-rose-600 dark:text-rose-400 mt-0.5" />
+            <p className="leading-relaxed">
+              Ta operacja jest nieodwracalna. Wszystkie zmodyfikowane lub dodane przez Ciebie sekcje, doświadczenia i projekty zostaną zastąpione standardowym zestawem demonstracyjnym.
+            </p>
+          </div>
+
+          <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setIsResetModalOpen(false)}
+              disabled={isResetting}
+            >
+              Anuluj
+            </Button>
+            <Button
+              type="button"
+              variant="destructive"
+              onClick={handleResetConfirm}
+              disabled={isResetting}
+              isLoading={isResetting}
+              className="bg-rose-600 hover:bg-rose-700 text-white gap-2"
+            >
+              <RotateCcw className="h-4 w-4" />
+              Tak, przywróć dane
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Knowledge Base AI Fill Modal */}
+      <KnowledgeBaseAIModal
+        isOpen={isAIModalOpen}
+        onClose={() => setIsAIModalOpen(false)}
+        onSuccess={handleAISuccess}
+      />
     </div>
   );
 };

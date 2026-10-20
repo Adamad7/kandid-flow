@@ -122,6 +122,7 @@ async def test_cv_preview_and_pdf_export(async_client: httpx.AsyncClient):
 @pytest.mark.asyncio
 async def test_candidate_profile_read(async_client: httpx.AsyncClient):
     """Verify candidate profile knowledge base retrieval."""
+    await async_client.post("/api/v1/candidate/reset-default")
     response = await async_client.get("/api/v1/candidate")
     assert response.status_code == 200
     profile = response.json()

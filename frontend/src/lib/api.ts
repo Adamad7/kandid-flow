@@ -9,6 +9,7 @@ import type {
   BaseCVPresetCreate,
   BaseCVPresetRead,
   BaseCVPresetUpdate,
+  CandidateAIFillRequest,
   CandidateProfileRead,
   CandidateProfileUpdate,
   CVGenerateRequest,
@@ -195,6 +196,19 @@ export const api = {
       return request<CandidateProfileRead>("/api/v1/candidate", {
         method: "PUT",
         body: JSON.stringify(data),
+      });
+    },
+
+    resetDefault: (): Promise<CandidateProfileRead> => {
+      return request<CandidateProfileRead>("/api/v1/candidate/reset-default", {
+        method: "POST",
+      });
+    },
+
+    aiFill: (payload: CandidateAIFillRequest): Promise<CandidateProfileRead> => {
+      return request<CandidateProfileRead>("/api/v1/candidate/ai-fill", {
+        method: "POST",
+        body: JSON.stringify(payload),
       });
     },
   },
