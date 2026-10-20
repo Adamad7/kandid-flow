@@ -4,7 +4,7 @@ from datetime import datetime
 from typing import Any, Literal
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from app.schemas.candidate import CandidateContactInfo, CandidateSectionBlock
 
@@ -70,13 +70,28 @@ class CVPreviewResponse(BaseModel):
     )
 
 
+class CVSectionConfig(BaseModel):
+    """Configuration for an individual CV section in generation request."""
+
+    id: str = Field(..., description="Section identifier (e.g. 'summary', 'skills')")
+    mode: Literal["off", "raw", "ai"] = Field(
+        default="ai",
+        description=(
+            "Section generation mode: 'off' (omit), 'raw' (verbatim from knowledge base), "
+            "'ai' (tailor with AI)"
+        ),
+    )
+
+    model_config = ConfigDict(extra="ignore")
+
+
 class CVGenerateRequest(BaseModel):
     """Request payload to initiate AI synthesis of a tailored CV version."""
 
     job_offer_id: UUID = Field(..., description="Target job offer to tailor against")
-    sections: list[str] = Field(
+    sections: list[CVSectionConfig] = Field(
         default_factory=list,
-        description="List of section IDs selected by candidate (optional if preset is used)",
+        description="List of section configurations (modes: off, raw, ai)",
     )
     preset_id: UUID | None = Field(
         default=None, description="Optional Base CV Preset ID used as archetype foundation"
@@ -89,12 +104,33 @@ class CVGenerateRequest(BaseModel):
     custom_instructions: str | None = Field(
         default=None, description="Additional tailoring directives (e.g. 'Focus on Kubernetes')"
     )
-    llm_provider: Literal["default", "ollama", "gemini", "openai"] = Field(
-        default="default", description="Wybrany dostawca LLM do syntezy CV"
+    llm_provider: Literal["default", "local", "api", "ollama", "gemini", "openai"] = Field(
+        default="default", description="Wybrany dostawca LLM do syntezy CV: default, local, api"
     )
     llm_model: str | None = Field(
         default=None, description="Opcjonalny identyfikator konkretnego modelu LLM"
     )
+    api_key: str | None = Field(
+        default=None, description="Opcjonalny niestandardowy klucz API do jednorazowego użycia"
+    )
+    enable_thinking: bool = Field(
+        default=True, description="Włącz tryb namysłu (reasoning / thinking)"
+    )
+
+    @field_validator("sections", mode="before")
+    @classmethod
+    def parse_sections(cls, v: Any) -> list[dict[str, Any]]:
+        if not isinstance(v, list):
+            return []
+        parsed: list[dict[str, Any]] = []
+        for item in v:
+            if isinstance(item, str):
+                parsed.append({"id": item, "mode": "ai"})
+            elif isinstance(item, dict):
+                parsed.append(item)
+            elif hasattr(item, "model_dump"):
+                parsed.append(item.model_dump())
+        return parsed
 
 
 class CVVersionBase(BaseModel):

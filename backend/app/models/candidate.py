@@ -35,13 +35,11 @@ class CandidateProfile(Base):
         default=list,
         server_default=text("'[]'::jsonb"),
     )
-    default_sections: Mapped[list[str]] = mapped_column(
+    default_sections: Mapped[list[dict[str, Any]]] = mapped_column(
         JSONB,
         nullable=False,
-        default=lambda: ["summary", "skills", "experience", "projects", "education"],
-        server_default=text(
-            '\'["summary", "skills", "experience", "projects", "education"]\'::jsonb'
-        ),
+        default=list,
+        server_default=text("'[]'::jsonb"),
     )
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),

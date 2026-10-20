@@ -54,11 +54,25 @@ class CVGeneratorService:
             raw_sections = candidate.sections if candidate else []
 
         # 3. Filter sections if specified
+        section_mode_map: dict[str, str] = {}
+        for s in request.sections:
+            if hasattr(s, "id"):
+                section_mode_map[s.id] = getattr(s, "mode", "ai")
+            elif isinstance(s, dict):
+                section_mode_map[s.get("id", "")] = s.get("mode", "ai")
+            elif isinstance(s, str):
+                section_mode_map[s] = "ai"
+
         active_sections: list[dict[str, Any]] = []
         if request.sections:
             for sec in raw_sections:
                 sec_id = sec.get("id") or sec.get("type")
-                if sec_id in request.sections:
+                mode = section_mode_map.get(sec_id)
+                # If mode is explicitly 'off', do not include in CV
+                if mode == "off":
+                    continue
+                # If section specified in request or unmentioned, keep it
+                if mode is not None or not section_mode_map:
                     active_sections.append(copy.deepcopy(sec))
         else:
             active_sections = [copy.deepcopy(s) for s in raw_sections]
@@ -150,6 +164,7 @@ class CVGeneratorService:
         tailored_sections: list[dict[str, Any]],
         job: JobOffer,
         tailoring_mode: str,
+        section_mode_map: dict[str, str] | None = None,
     ) -> list[dict[str, Any]]:
         """Ground tailored sections in baseline factual data to eliminate hallucinations."""
         sanitized_sections: list[dict[str, Any]] = []
@@ -157,6 +172,12 @@ class CVGeneratorService:
         for base_sec in baseline_sections:
             sec_id = base_sec.get("id") or base_sec.get("type")
             sec_type = base_sec.get("type") or sec_id
+            mode = (section_mode_map or {}).get(sec_id, "ai")
+
+            # If section was marked as 'raw' (z bazy wiedzy), strictly preserve baseline data
+            if mode == "raw":
+                sanitized_sections.append(copy.deepcopy(base_sec))
+                continue
 
             # Find matching tailored block if produced by LLM
             matching_tailored = None
@@ -345,19 +366,38 @@ class CVGeneratorService:
             )
 
         # 4. Tailor schema with LLM or deterministic fallback
+        section_mode_map: dict[str, str] = {}
+        for s in request.sections:
+            if hasattr(s, "id"):
+                section_mode_map[s.id] = getattr(s, "mode", "ai")
+            elif isinstance(s, dict):
+                section_mode_map[s.get("id", "")] = s.get("mode", "ai")
+            elif isinstance(s, str):
+                section_mode_map[s] = "ai"
+
+        has_ai_sections = any(
+            section_mode_map.get(sec.get("id") or sec.get("type"), "ai") == "ai"
+            for sec in baseline_payload.get("sections", [])
+        )
+
         deterministic_fallback = self._apply_deterministic_tailoring(
             baseline_payload, job, request.tailoring_mode
         )
         provider = request.llm_provider if request.llm_provider != "default" else None
-        tailored_data = await llm_client.generate_json(
-            system_prompt=system_prompt,
-            user_prompt=user_prompt,
-            fallback_data=deterministic_fallback,
-            provider=provider,
-            model=request.llm_model,
-            enable_thinking=True,
-            timeout=120.0,
-        )
+
+        if has_ai_sections:
+            tailored_data = await llm_client.generate_json(
+                system_prompt=system_prompt,
+                user_prompt=user_prompt,
+                fallback_data=deterministic_fallback,
+                provider=provider,
+                model=request.llm_model,
+                enable_thinking=request.enable_thinking,
+                timeout=120.0,
+                api_key=request.api_key,
+            )
+        else:
+            tailored_data = deterministic_fallback
 
         if not isinstance(tailored_data, dict) or "sections" not in tailored_data:
             tailored_data = deterministic_fallback
@@ -368,6 +408,7 @@ class CVGeneratorService:
             tailored_data.get("sections", []),
             job,
             request.tailoring_mode,
+            section_mode_map=section_mode_map,
         )
 
         # Ensure name, contact and language are strictly preserved

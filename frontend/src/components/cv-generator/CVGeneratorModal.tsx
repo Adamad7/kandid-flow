@@ -1,24 +1,28 @@
 import React, { useEffect, useState } from "react";
 import {
   Sparkles,
-  Layers,
   User,
-  CheckCircle2,
   AlertCircle,
   Brain,
+  Zap,
   Cpu,
-  Server,
-  Cloud,
-  Bot,
+  Briefcase,
+  FolderGit2,
+  GraduationCap,
+  Award,
+  FileText,
+  FileCode,
 } from "lucide-react";
 import { api } from "../../lib/api";
 import type {
   BaseCVPresetRead,
+  CandidateProfileRead,
   CVGenerateRequest,
+  CVSectionConfig,
   CVVersionRead,
   JobOfferRead,
   LLMProviderType,
-  TailoringModeType,
+  SectionGenerationMode,
 } from "../../types";
 import { Button } from "../ui/Button";
 import { Input } from "../ui/Input";
@@ -33,6 +37,58 @@ interface CVGeneratorModalProps {
   onSuccess: (version: CVVersionRead, job: JobOfferRead) => void;
 }
 
+interface SectionDefinition {
+  id: string;
+  title: string;
+  description: string;
+  icon: React.ComponentType<{ className?: string }>;
+}
+
+const STANDARD_SECTIONS: SectionDefinition[] = [
+  {
+    id: "summary",
+    title: "O mnie",
+    description: "Podsumowanie profilu zawodowego, mocnych stron i celów",
+    icon: User,
+  },
+  {
+    id: "skills",
+    title: "Umiejętności",
+    description: "Kategorie technologii, języków i kompetencji twardych",
+    icon: Cpu,
+  },
+  {
+    id: "experience",
+    title: "Doświadczenie zawodowe",
+    description: "Historia zatrudnienia z uderzającymi punktami osiągnięć",
+    icon: Briefcase,
+  },
+  {
+    id: "projects",
+    title: "Projekty",
+    description: "Najważniejsze realizacje, architektura i stack technologiczny",
+    icon: FolderGit2,
+  },
+  {
+    id: "education",
+    title: "Edukacja",
+    description: "Uczelnie, stopnie naukowe oraz kierunki kształcenia",
+    icon: GraduationCap,
+  },
+  {
+    id: "certificates",
+    title: "Certyfikaty",
+    description: "Uprawnienia branżowe, licencje i ukończone akredytacje",
+    icon: Award,
+  },
+  {
+    id: "clause",
+    title: "Klauzula RODO",
+    description: "Zgoda na przetwarzanie danych osobowych pod danego pracodawcę",
+    icon: FileText,
+  },
+];
+
 export const CVGeneratorModal: React.FC<CVGeneratorModalProps> = ({
   job,
   isOpen,
@@ -40,25 +96,28 @@ export const CVGeneratorModal: React.FC<CVGeneratorModalProps> = ({
   onSuccess,
 }) => {
   const [presets, setPresets] = useState<BaseCVPresetRead[]>([]);
-  const [isLoadingPresets, setIsLoadingPresets] = useState(true);
+  const [availableSections, setAvailableSections] = useState<SectionDefinition[]>(STANDARD_SECTIONS);
 
   // Form State
-  const [baselineType, setBaselineType] = useState<"profile" | "preset">("profile");
   const [selectedPresetId, setSelectedPresetId] = useState<string>("");
-  const [tailoringMode, setTailoringMode] =
-    useState<TailoringModeType>("full");
-  const [llmProvider, setLlmProvider] = useState<LLMProviderType>("default");
-  const [customModel, setCustomModel] = useState<string>("");
+  const [llmEngine, setLlmEngine] = useState<"default" | "local" | "api">("default");
+  const [useDefaultApiKey, setUseDefaultApiKey] = useState(true);
+  const [customApiKey, setCustomApiKey] = useState("");
+  const [customModel, setCustomModel] = useState("");
   const [language, setLanguage] = useState<"pl" | "en">("pl");
   const [customInstructions, setCustomInstructions] = useState("");
-  const [selectedSections, setSelectedSections] = useState<string[]>([
-    "summary",
-    "skills",
-    "experience",
-    "projects",
-    "education",
-    "clause",
-  ]);
+  const [enableThinking, setEnableThinking] = useState(true);
+
+  // Map of sectionId -> mode ('off' | 'raw' | 'ai')
+  const [sectionModes, setSectionModes] = useState<Record<string, SectionGenerationMode>>({
+    summary: "ai",
+    skills: "ai",
+    experience: "ai",
+    projects: "ai",
+    education: "raw",
+    certificates: "raw",
+    clause: "ai",
+  });
 
   // Generation state
   const [isGenerating, setIsGenerating] = useState(false);
@@ -67,34 +126,79 @@ export const CVGeneratorModal: React.FC<CVGeneratorModalProps> = ({
 
   useEffect(() => {
     if (isOpen) {
-      loadPresets();
+      loadInitialData();
       if (job) {
-        setLanguage(job.language || "pl");
+        setLanguage((job.language as "pl" | "en") || "pl");
       }
       setIsGenerating(false);
       setErrorMessage(null);
     }
   }, [isOpen, job]);
 
-  const loadPresets = async () => {
+  const loadInitialData = async () => {
     try {
-      setIsLoadingPresets(true);
-      const data = await api.presets.list();
-      setPresets(data);
-      if (data.length > 0) {
-        setSelectedPresetId(data[0].id);
+      const [presetsData, profileData] = await Promise.all([
+        api.presets.list().catch(() => [] as BaseCVPresetRead[]),
+        api.candidate.get().catch(() => null as CandidateProfileRead | null),
+      ]);
+
+      setPresets(presetsData);
+
+      // Assemble sections: standard + custom from candidate profile
+      const sectionsList: SectionDefinition[] = [...STANDARD_SECTIONS];
+      const initialModes: Record<string, SectionGenerationMode> = {
+        summary: "ai",
+        skills: "ai",
+        experience: "ai",
+        projects: "ai",
+        education: "raw",
+        certificates: "raw",
+        clause: "ai",
+      };
+
+      if (profileData) {
+        // Find custom sections
+        if (profileData.sections) {
+          profileData.sections.forEach((sec) => {
+            if (sec.type === "custom") {
+              const existing = sectionsList.find((s) => s.id === sec.id);
+              if (!existing) {
+                sectionsList.push({
+                  id: sec.id,
+                  title: sec.title || "Własna sekcja",
+                  description: "Niestandardowa sekcja z Twojej bazy wiedzy",
+                  icon: FileCode,
+                });
+                initialModes[sec.id] = "raw";
+              }
+            }
+          });
+        }
+
+        // Apply saved default_sections from profile
+        if (profileData.default_sections && Array.isArray(profileData.default_sections)) {
+          profileData.default_sections.forEach((item) => {
+            if (typeof item === "string") {
+              initialModes[item] = "ai";
+            } else if (item && typeof item === "object" && item.id) {
+              initialModes[item.id] = item.mode || "ai";
+            }
+          });
+        }
       }
+
+      setAvailableSections(sectionsList);
+      setSectionModes(initialModes);
     } catch {
-      // ignore
-    } finally {
-      setIsLoadingPresets(false);
+      // Fallback
     }
   };
 
-  const toggleSection = (secId: string) => {
-    setSelectedSections((prev) =>
-      prev.includes(secId) ? prev.filter((s) => s !== secId) : [...prev, secId]
-    );
+  const handleSetSectionMode = (secId: string, mode: SectionGenerationMode) => {
+    setSectionModes((prev) => ({
+      ...prev,
+      [secId]: mode,
+    }));
   };
 
   const stages = [
@@ -117,15 +221,35 @@ export const CVGeneratorModal: React.FC<CVGeneratorModalProps> = ({
         setGenerationStage((prev) => (prev < 3 ? prev + 1 : prev));
       }, 1400);
 
+      // Convert section modes to CVSectionConfig array
+      const sectionsConfig: CVSectionConfig[] = availableSections.map((sec) => ({
+        id: sec.id,
+        mode: sectionModes[sec.id] || "ai",
+      }));
+
+      // Map llmEngine to provider
+      let providerValue: LLMProviderType = "default";
+      if (llmEngine === "local") {
+        providerValue = "local";
+      } else if (llmEngine === "api") {
+        providerValue = "api";
+      }
+
       const requestPayload: CVGenerateRequest = {
         job_offer_id: job.id,
-        sections: selectedSections,
-        preset_id: baselineType === "preset" ? selectedPresetId || null : null,
-        tailoring_mode: tailoringMode,
+        sections: sectionsConfig,
+        preset_id: selectedPresetId.trim() ? selectedPresetId : null,
+        tailoring_mode: "full",
         language: language,
         custom_instructions: customInstructions.trim() || null,
-        llm_provider: llmProvider,
-        llm_model: customModel.trim() || null,
+        llm_provider: providerValue,
+        llm_model:
+          llmEngine !== "default" && customModel.trim() ? customModel.trim() : null,
+        api_key:
+          llmEngine === "api" && !useDefaultApiKey && customApiKey.trim()
+            ? customApiKey.trim()
+            : null,
+        enable_thinking: enableThinking,
       };
 
       const newVersion = await api.cv.generate(requestPayload);
@@ -133,7 +257,7 @@ export const CVGeneratorModal: React.FC<CVGeneratorModalProps> = ({
 
       // Trigger success callback to open Split-View CV Editor
       onSuccess(newVersion, job);
-    } catch (err: unknown) {
+    } catch {
       setIsGenerating(false);
       setErrorMessage(
         "Wystąpił błąd podczas generowania CV. Upewnij się, że usługa LLM jest dostępna."
@@ -202,270 +326,260 @@ export const CVGeneratorModal: React.FC<CVGeneratorModalProps> = ({
             </div>
           )}
 
-          {/* 1. Baseline Selection */}
+          {/* 1. Base Template Selection */}
+          <div className="space-y-1.5">
+            <label className="block text-xs font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+              1. Szablon bazowy:
+            </label>
+            <Select
+              value={selectedPresetId}
+              onChange={(e) => setSelectedPresetId(e.target.value)}
+              helperText="Brak wyboru szablonu oznacza użycie danych z całej bazy wiedzy."
+            >
+              <option value="">Brak szablonu (użyj całej bazy wiedzy)</option>
+              {presets.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.title} ({p.language.toUpperCase()})
+                </option>
+              ))}
+            </Select>
+          </div>
+
+          {/* 2. AI Engine Selection */}
           <div className="space-y-3">
             <label className="block text-xs font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-300">
-              1. Wybierz punkt wyjścia (Baseline):
+              2. Silnik sztucznej inteligencji:
             </label>
+            <Select
+              value={llmEngine}
+              onChange={(e) => setLlmEngine(e.target.value as "default" | "local" | "api")}
+            >
+              <option value="default">Domyślnie (zgodnie z konfiguracją systemu)</option>
+              <option value="local">Lokalny model (Ollama na Twoim sprzęcie)</option>
+              <option value="api">API w chmurze (Gemini / OpenAI)</option>
+            </Select>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div
-                onClick={() => setBaselineType("profile")}
-                className={`rounded-xl border p-4 cursor-pointer transition-all ${
-                  baselineType === "profile"
-                    ? "border-blue-600 bg-blue-50/50 shadow-xs ring-1 ring-blue-600 dark:bg-blue-950/40 dark:border-blue-500"
-                    : "border-slate-200 hover:border-slate-300 bg-white dark:border-slate-800 dark:bg-slate-900 dark:hover:border-slate-700"
-                }`}
-              >
-                <div className="flex items-center justify-between mb-1.5">
-                  <div className="flex items-center gap-2">
-                    <User className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-                    <span className="font-semibold text-sm text-slate-900 dark:text-slate-100">
-                      Moja baza wiedzy
-                    </span>
-                  </div>
-                  {baselineType === "profile" && (
-                    <CheckCircle2 className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-                  )}
-                </div>
-                <p className="text-xs text-slate-500 dark:text-slate-400">
-                  Wykorzystaj kompletny profil kandydata i automatycznie wybierz najtrafniejsze sekcje.
-                </p>
-              </div>
+            {/* API Options */}
+            {llmEngine === "api" && (
+              <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 space-y-3">
+                <label className="flex items-center gap-2.5 cursor-pointer text-xs font-medium text-slate-700 dark:text-slate-300">
+                  <input
+                    type="checkbox"
+                    checked={useDefaultApiKey}
+                    onChange={(e) => setUseDefaultApiKey(e.target.checked)}
+                    className="rounded border-slate-300 dark:border-slate-700 text-blue-600 focus:ring-blue-500 h-4 w-4"
+                  />
+                  <span>Użyj domyślnego klucza API z konfiguracji serwera</span>
+                </label>
 
-              <div
-                onClick={() => setBaselineType("preset")}
-                className={`rounded-xl border p-4 cursor-pointer transition-all ${
-                  baselineType === "preset"
-                    ? "border-blue-600 bg-blue-50/50 shadow-xs ring-1 ring-blue-600 dark:bg-blue-950/40 dark:border-blue-500"
-                    : "border-slate-200 hover:border-slate-300 bg-white dark:border-slate-800 dark:bg-slate-900 dark:hover:border-slate-700"
-                }`}
-              >
-                <div className="flex items-center justify-between mb-1.5">
-                  <div className="flex items-center gap-2">
-                    <Layers className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
-                    <span className="font-semibold text-sm text-slate-900 dark:text-slate-100">
-                      Szablon bazowy (Archetyp)
-                    </span>
-                  </div>
-                  {baselineType === "preset" && (
-                    <CheckCircle2 className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-                  )}
-                </div>
-                <p className="text-xs text-slate-500 dark:text-slate-400">
-                  Użyj predefiniowanego wzorca stanowiskowego (np. Flutter Dev, DevOps) jako fundamentu.
-                </p>
-              </div>
-            </div>
-
-            {baselineType === "preset" && (
-              <div className="pt-1">
-                {isLoadingPresets ? (
-                  <p className="text-xs text-slate-400 dark:text-slate-500">Ładowanie szablonów...</p>
-                ) : presets.length === 0 ? (
-                  <p className="text-xs text-amber-600 dark:text-amber-400">
-                    Brak szablonów bazowych. Utwórz szablon w zakładce "Szablony bazowe" lub wybierz Bazę wiedzy.
-                  </p>
-                ) : (
-                  <Select
-                    label="Wybierz szablon archetypu"
-                    value={selectedPresetId}
-                    onChange={(e) => setSelectedPresetId(e.target.value)}
-                  >
-                    {presets.map((p) => (
-                      <option key={p.id} value={p.id}>
-                        {p.title} ({p.language.toUpperCase()})
-                      </option>
-                    ))}
-                  </Select>
-                )}
+                <Input
+                  label="Własny klucz API"
+                  type="password"
+                  placeholder={
+                    useDefaultApiKey
+                      ? "Aktywny klucz domyślny z pliku .env"
+                      : "Wklej swój klucz API (np. AIza... lub sk-...)"
+                  }
+                  value={customApiKey}
+                  onChange={(e) => setCustomApiKey(e.target.value)}
+                  disabled={useDefaultApiKey}
+                  helperText={
+                    useDefaultApiKey
+                      ? "Odznacz powyższy checkbox, aby podać inny klucz API."
+                      : "System automatycznie rozpozna dostawcę (Gemini lub OpenAI) na podstawie formatu klucza."
+                  }
+                />
               </div>
             )}
-          </div>
 
-          {/* 2. Tailoring Mode */}
-          <div className="space-y-3">
-            <label className="block text-xs font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-300">
-              2. Tryb dostosowania AI:
-            </label>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div
-                onClick={() => setTailoringMode("targeted_summary_keywords")}
-                className={`rounded-xl border p-4 cursor-pointer transition-all ${
-                  tailoringMode === "targeted_summary_keywords"
-                    ? "border-blue-600 bg-blue-50/50 shadow-xs ring-1 ring-blue-600 dark:bg-blue-950/40 dark:border-blue-500"
-                    : "border-slate-200 hover:border-slate-300 bg-white dark:border-slate-800 dark:bg-slate-900 dark:hover:border-slate-700"
-                }`}
-              >
-                <div className="flex items-center justify-between mb-1.5">
-                  <span className="font-semibold text-sm text-slate-900 dark:text-slate-100">
-                    Słowa kluczowe i podsumowanie
-                  </span>
-                  {tailoringMode === "targeted_summary_keywords" && (
-                    <CheckCircle2 className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-                  )}
-                </div>
-                <p className="text-xs text-slate-500 dark:text-slate-400">
-                  Zachowuje chronologię doświadczeń, modyfikując podsumowanie oraz akcentując kluczowe umiejętności pod ATS.
-                </p>
-              </div>
-
-              <div
-                onClick={() => setTailoringMode("full")}
-                className={`rounded-xl border p-4 cursor-pointer transition-all ${
-                  tailoringMode === "full"
-                    ? "border-blue-600 bg-blue-50/50 shadow-xs ring-1 ring-blue-600 dark:bg-blue-950/40 dark:border-blue-500"
-                    : "border-slate-200 hover:border-slate-300 bg-white dark:border-slate-800 dark:bg-slate-900 dark:hover:border-slate-700"
-                }`}
-              >
-                <div className="flex items-center justify-between mb-1.5">
-                  <span className="font-semibold text-sm text-slate-900 dark:text-slate-100">
-                    Pełne dostosowanie sekcji
-                  </span>
-                  {tailoringMode === "full" && (
-                    <CheckCircle2 className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-                  )}
-                </div>
-                <p className="text-xs text-slate-500 dark:text-slate-400">
-                  Przebudowuje i akcentuje punkty osiągnięć w doświadczeniu i projektach, precyzyjnie odpowiadając na profil oferty.
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* 3. AI Provider Selection */}
-          <div className="space-y-3">
-            <label className="block text-xs font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-300">
-              3. Silnik sztucznej inteligencji (Dostawca LLM):
-            </label>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {[
-                {
-                  id: "default" as const,
-                  label: "Domyślny (zgodnie z Ustawieniami)",
-                  description: "Wykorzystuje model i parametry skonfigurowane w Ustawieniach aplikacji.",
-                  icon: Cpu,
-                },
-                {
-                  id: "ollama" as const,
-                  label: "Lokalna Ollama (na Twoim sprzęcie)",
-                  description: "Prywatne wnioskowanie bezpośrednio na Twoim sprzęcie bez kosztów API.",
-                  icon: Server,
-                },
-                {
-                  id: "gemini" as const,
-                  label: "Google Gemini API (Chmura)",
-                  description: "Wysoka szybkość generowania i precyzja analizy wymagań rekrutacyjnych.",
-                  icon: Cloud,
-                },
-                {
-                  id: "openai" as const,
-                  label: "OpenAI API (Chmura)",
-                  description: "Zaawansowane modele językowe GPT gwarantujące najwyższą jakość syntezy.",
-                  icon: Bot,
-                },
-              ].map((provider) => {
-                const IconComponent = provider.icon;
-                const isSelected = llmProvider === provider.id;
-                return (
-                  <div
-                    key={provider.id}
-                    onClick={() => setLlmProvider(provider.id)}
-                    className={`rounded-xl border p-3.5 cursor-pointer transition-all ${
-                      isSelected
-                        ? "border-blue-600 bg-blue-50/50 shadow-xs ring-1 ring-blue-600 dark:bg-blue-950/40 dark:border-blue-500"
-                        : "border-slate-200 hover:border-slate-300 bg-white dark:border-slate-800 dark:bg-slate-900 dark:hover:border-slate-700"
-                    }`}
-                  >
-                    <div className="flex items-center justify-between mb-1.5">
-                      <div className="flex items-center gap-2">
-                        <IconComponent
-                          className={`h-4 w-4 ${
-                            isSelected
-                              ? "text-blue-600 dark:text-blue-400"
-                              : "text-slate-500 dark:text-slate-400"
-                          }`}
-                        />
-                        <span className="font-semibold text-xs sm:text-sm text-slate-900 dark:text-slate-100">
-                          {provider.label}
-                        </span>
-                      </div>
-                      {isSelected && (
-                        <CheckCircle2 className="h-4 w-4 text-blue-600 dark:text-blue-400 shrink-0" />
-                      )}
-                    </div>
-                    <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-                      {provider.description}
-                    </p>
-                  </div>
-                );
-              })}
-            </div>
-
-            <div className="pt-1">
+            {/* Optional Model Override (shown only when not default engine) */}
+            {llmEngine !== "default" && (
               <Input
                 label="Niestandardowa nazwa modelu (Opcjonalnie)"
-                placeholder="Domyślny model lub wpisz np. deepseek-r1:14b, gemini-2.5-flash"
+                placeholder={
+                  llmEngine === "local"
+                    ? "np. qwen2.5:14b, deepseek-r1:14b"
+                    : "np. gemini-2.5-flash, gpt-4o, gpt-4o-mini"
+                }
                 value={customModel}
                 onChange={(e) => setCustomModel(e.target.value)}
-                helperText="Pozostaw puste, aby zastosować zalecany model domyślny dla wybranego dostawcy."
+                helperText="Pozostaw puste, aby zastosować zalecany model domyślny dla wybranego silnika."
               />
-            </div>
+            )}
 
-            <div className="rounded-xl border border-blue-200 bg-blue-50/70 p-3 text-xs text-blue-900 flex items-start gap-2.5 dark:border-blue-900/60 dark:bg-blue-950/40 dark:text-blue-200">
-              <Brain className="h-4 w-4 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" />
-              <span className="leading-relaxed">
-                🧠 <strong>Aktywny tryb namysłu (Reasoning):</strong> model poświęci dodatkowy czas na analizę wymagań oferty i precyzyjną syntezę osiągnięć.
+            {/* Thinking / Reasoning Mode Switch */}
+            <div className="flex items-center justify-between p-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/60">
+              <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                Tryb pracy modelu:
               </span>
+
+              {/* 2-Option Switch: Tryb namysłu (LEFT), Natychmiastowa odpowiedź (RIGHT) */}
+              <div className="inline-flex rounded-lg border border-slate-200 dark:border-slate-700 p-0.5 bg-slate-100 dark:bg-slate-800 text-xs font-medium">
+                <button
+                  type="button"
+                  onClick={() => setEnableThinking(true)}
+                  className={`px-3 py-1.5 rounded-md transition-colors duration-150 flex items-center gap-1.5 select-none whitespace-nowrap font-medium ${
+                    enableThinking
+                      ? "bg-blue-600 text-white shadow-xs"
+                      : "text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200"
+                  }`}
+                >
+                  <Brain className="h-3.5 w-3.5 shrink-0" />
+                  Tryb namysłu
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setEnableThinking(false)}
+                  className={`px-3 py-1.5 rounded-md transition-colors duration-150 flex items-center gap-1.5 select-none whitespace-nowrap font-medium ${
+                    !enableThinking
+                      ? "bg-amber-500 text-white shadow-xs"
+                      : "text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200"
+                  }`}
+                >
+                  <Zap className="h-3.5 w-3.5 shrink-0" />
+                  Natychmiastowa odpowiedź
+                </button>
+              </div>
             </div>
           </div>
 
-          {/* 4. Language & Sections Selection */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          {/* 3. Output Language */}
+          <div className="space-y-1.5">
+            <label className="block text-xs font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+              3. Język wyjściowy CV:
+            </label>
             <Select
-              label="Język wyjściowy CV"
               value={language}
               onChange={(e) => setLanguage(e.target.value as "pl" | "en")}
             >
               <option value="pl">Polski (PL)</option>
               <option value="en">Angielski (EN)</option>
             </Select>
+          </div>
 
-            <div className="sm:col-span-2">
-              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">
-                Sekcje do wygenerowania:
+          {/* 4. Sections to Generate (Full Width Stack with 3-Position Toggles) */}
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                4. Sekcje do wygenerowania:
               </label>
-              <div className="flex flex-wrap gap-2">
-                {[
-                  { id: "summary", label: "O mnie" },
-                  { id: "skills", label: "Umiejętności" },
-                  { id: "experience", label: "Doświadczenie" },
-                  { id: "projects", label: "Projekty" },
-                  { id: "education", label: "Edukacja" },
-                  { id: "clause", label: "Klauzula" },
-                ].map((s) => (
-                  <button
-                    key={s.id}
-                    type="button"
-                    onClick={() => toggleSection(s.id)}
-                    className={`px-2.5 py-1 rounded-md text-xs font-medium border transition-colors ${
-                      selectedSections.includes(s.id)
-                        ? "bg-blue-600 text-white border-blue-600 dark:bg-blue-600 dark:border-blue-600"
-                        : "bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700 dark:hover:bg-slate-700"
+              <span className="text-[11px] text-slate-400 dark:text-slate-500">
+                Domyślne ustawienia pobrane z Bazy Wiedzy
+              </span>
+            </div>
+
+            <div className="space-y-2.5">
+              {availableSections.map((sec) => {
+                const IconComponent = sec.icon;
+                const currentMode = sectionModes[sec.id] || "ai";
+                const isOff = currentMode === "off";
+                const isRaw = currentMode === "raw";
+                const isAi = currentMode === "ai";
+
+                return (
+                  <div
+                    key={sec.id}
+                    className={`w-full flex flex-col sm:flex-row sm:items-center justify-between p-3.5 rounded-xl border transition-colors duration-150 gap-3 ${
+                      isOff
+                        ? "bg-slate-50/60 dark:bg-slate-900/30 border-slate-200/60 dark:border-slate-800/60 opacity-60"
+                        : isAi
+                        ? "bg-indigo-50/20 dark:bg-indigo-950/20 border-indigo-200/70 dark:border-indigo-900/60 shadow-xs"
+                        : "bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 shadow-xs"
                     }`}
                   >
-                    {s.label}
-                  </button>
-                ))}
-              </div>
+                    {/* Section Info */}
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div
+                        className={`p-2 rounded-lg shrink-0 ${
+                          isOff
+                            ? "bg-slate-200 dark:bg-slate-800 text-slate-400"
+                            : isAi
+                            ? "bg-indigo-100 dark:bg-indigo-900/50 text-indigo-600 dark:text-indigo-400"
+                            : "bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-400"
+                        }`}
+                      >
+                        <IconComponent className="h-4 w-4" />
+                      </div>
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span
+                            className={`text-sm font-medium truncate ${
+                              isOff
+                                ? "text-slate-400 dark:text-slate-500"
+                                : "text-slate-900 dark:text-slate-100"
+                            }`}
+                          >
+                            {sec.title}
+                          </span>
+                          {isOff && (
+                            <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400">
+                              Nie umieszczaj
+                            </span>
+                          )}
+                          {isRaw && (
+                            <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300">
+                              Z bazy wiedzy
+                            </span>
+                          )}
+                          {isAi && (
+                            <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-indigo-100 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300 flex items-center gap-1">
+                              <Sparkles className="h-2.5 w-2.5 shrink-0" />
+                              Generuj AI
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-xs text-slate-500 dark:text-slate-400 truncate">
+                          {sec.description}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* 3-Position Toggle Switch */}
+                    <div className="inline-flex shrink-0 self-end sm:self-auto rounded-lg border border-slate-200 dark:border-slate-700 p-0.5 bg-slate-100 dark:bg-slate-800 text-xs font-medium">
+                      <button
+                        type="button"
+                        onClick={() => handleSetSectionMode(sec.id, "off")}
+                        className={`px-2.5 py-1 rounded-md transition-colors duration-150 select-none whitespace-nowrap font-medium ${
+                          isOff
+                            ? "bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-100 shadow-xs"
+                            : "text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200"
+                        }`}
+                      >
+                        Nie umieszczaj
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleSetSectionMode(sec.id, "raw")}
+                        className={`px-2.5 py-1 rounded-md transition-colors duration-150 select-none whitespace-nowrap font-medium ${
+                          isRaw
+                            ? "bg-blue-600 text-white shadow-xs"
+                            : "text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200"
+                        }`}
+                      >
+                        Z bazy wiedzy
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleSetSectionMode(sec.id, "ai")}
+                        className={`px-2.5 py-1 rounded-md transition-colors duration-150 flex items-center gap-1 select-none whitespace-nowrap font-medium ${
+                          isAi
+                            ? "bg-indigo-600 text-white shadow-xs"
+                            : "text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200"
+                        }`}
+                      >
+                        <Sparkles className="h-3 w-3 shrink-0" />
+                        Generuj AI
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </div>
 
           {/* 5. Custom Instructions */}
           <Textarea
-            label="Dodatkowe wytyczne dla AI (Opcjonalne)"
+            label="5. Dodatkowe wytyczne dla AI (Opcjonalne)"
             value={customInstructions}
             onChange={(e) => setCustomInstructions(e.target.value)}
             placeholder="np. Połóż szczególny nacisk na znajomość Kubernetes, architektury event-driven i optymalizacji zapytań SQL..."

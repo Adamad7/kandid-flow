@@ -103,3 +103,60 @@ async def test_tailored_cv_generation_from_preset(async_client: httpx.AsyncClien
     versions = versions_res.json()
     assert len(versions) >= 1
     assert any(v["id"] == cv_version["id"] for v in versions)
+
+
+@pytest.mark.asyncio
+async def test_cv_generation_with_section_modes_and_candidate_profile(
+    async_client: httpx.AsyncClient,
+):
+    """Verify CV generation respecting section modes ('off', 'raw', 'ai') and profile defaults."""
+    # 1. Update candidate profile with new default_sections structure
+    cand_res = await async_client.get("/api/v1/candidate")
+    assert cand_res.status_code == 200
+
+    new_defaults = [
+        {"id": "summary", "mode": "ai"},
+        {"id": "skills", "mode": "ai"},
+        {"id": "experience", "mode": "raw"},
+        {"id": "projects", "mode": "off"},
+        {"id": "education", "mode": "raw"},
+    ]
+    update_res = await async_client.put(
+        "/api/v1/candidate",
+        json={"default_sections": new_defaults},
+    )
+    assert update_res.status_code == 200
+    updated_profile = update_res.json()
+    assert len(updated_profile["default_sections"]) == 5
+    assert updated_profile["default_sections"][0]["mode"] == "ai"
+
+    # 2. Fetch job offer
+    jobs_res = await async_client.get("/api/v1/jobs")
+    assert jobs_res.status_code == 200
+    jobs = jobs_res.json()
+    assert len(jobs) > 0
+    job = jobs[0]
+
+    # 3. Generate CV with explicit section modes (projects off, experience raw)
+    gen_payload = {
+        "job_offer_id": job["id"],
+        "preset_id": None,
+        "language": "pl",
+        "llm_provider": "api",
+        "api_key": "dummy_test_key_sk_for_unit_tests",
+        "sections": [
+            {"id": "summary", "mode": "ai"},
+            {"id": "experience", "mode": "raw"},
+            {"id": "projects", "mode": "off"},
+            {"id": "clause", "mode": "ai"},
+        ],
+    }
+    gen_res = await async_client.post("/api/v1/cv/generate", json=gen_payload)
+    assert gen_res.status_code == 201
+    cv = gen_res.json()
+
+    sec_ids = [s.get("id") or s.get("type") for s in cv["layout_schema"]["sections"]]
+    assert "summary" in sec_ids
+    assert "experience" in sec_ids
+    assert "clause" in sec_ids
+    assert "projects" not in sec_ids  # Because mode was 'off'

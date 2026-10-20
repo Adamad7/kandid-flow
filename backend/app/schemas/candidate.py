@@ -1,10 +1,10 @@
 """Pydantic schemas for Candidate Knowledge Base and Profile."""
 
 from datetime import datetime
-from typing import Literal
+from typing import Any, Literal
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
 class CandidateContactInfo(BaseModel):
@@ -194,6 +194,24 @@ CandidateSectionBlock = (
 )
 
 
+SectionGenerationMode = Literal["off", "raw", "ai"]
+
+
+class SectionDefaultConfig(BaseModel):
+    """Configuration specifying default inclusion and generation mode for a CV section."""
+
+    id: str = Field(..., description="Section identifier (e.g. 'summary', 'skills')")
+    mode: SectionGenerationMode = Field(
+        default="ai",
+        description=(
+            "Default mode: 'off' (do not include), 'raw' (from knowledge base), "
+            "'ai' (generate with AI)"
+        ),
+    )
+
+    model_config = ConfigDict(extra="ignore")
+
+
 class CandidateProfileBase(BaseModel):
     """Base schema for candidate profile."""
 
@@ -208,10 +226,33 @@ class CandidateProfileBase(BaseModel):
             "Polymorphic list of knowledge base blocks (experience, projects, education, certs)"
         ),
     )
-    default_sections: list[str] = Field(
-        default_factory=lambda: ["summary", "skills", "experience", "projects", "education"],
-        description="List of section IDs pre-selected by default in CV generation dialog",
+    default_sections: list[SectionDefaultConfig] = Field(
+        default_factory=lambda: [
+            SectionDefaultConfig(id="summary", mode="ai"),
+            SectionDefaultConfig(id="skills", mode="ai"),
+            SectionDefaultConfig(id="experience", mode="ai"),
+            SectionDefaultConfig(id="projects", mode="ai"),
+            SectionDefaultConfig(id="education", mode="raw"),
+            SectionDefaultConfig(id="certificates", mode="raw"),
+            SectionDefaultConfig(id="clause", mode="ai"),
+        ],
+        description="List of section configurations specifying default generation mode",
     )
+
+    @field_validator("default_sections", mode="before")
+    @classmethod
+    def parse_default_sections(cls, v: Any) -> list[dict[str, Any]]:
+        if not isinstance(v, list):
+            return []
+        parsed: list[dict[str, Any]] = []
+        for item in v:
+            if isinstance(item, str):
+                parsed.append({"id": item, "mode": "ai"})
+            elif isinstance(item, dict):
+                parsed.append(item)
+            elif hasattr(item, "model_dump"):
+                parsed.append(item.model_dump())
+        return parsed
 
 
 class CandidateProfileCreate(CandidateProfileBase):
@@ -226,7 +267,24 @@ class CandidateProfileUpdate(BaseModel):
     full_name: str | None = None
     contact_info: CandidateContactInfo | None = None
     sections: list[CandidateSectionBlock] | None = None
-    default_sections: list[str] | None = None
+    default_sections: list[SectionDefaultConfig] | None = None
+
+    @field_validator("default_sections", mode="before")
+    @classmethod
+    def parse_default_sections(cls, v: Any) -> list[dict[str, Any]] | None:
+        if v is None:
+            return None
+        if not isinstance(v, list):
+            return []
+        parsed: list[dict[str, Any]] = []
+        for item in v:
+            if isinstance(item, str):
+                parsed.append({"id": item, "mode": "ai"})
+            elif isinstance(item, dict):
+                parsed.append(item)
+            elif hasattr(item, "model_dump"):
+                parsed.append(item.model_dump())
+        return parsed
 
 
 class CandidateProfileRead(CandidateProfileBase):

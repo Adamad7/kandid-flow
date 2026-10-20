@@ -48,7 +48,7 @@ export type AutoParseModeType =
 
 export type ApiProviderType = "gemini" | "openai";
 
-export type LLMProviderType = "default" | "ollama" | "gemini" | "openai";
+export type LLMProviderType = "default" | "local" | "api" | "ollama" | "gemini" | "openai";
 
 // ============================================================================
 // Inbox Schemas (Extension <-> Backend)
@@ -216,11 +216,18 @@ export type CandidateSectionBlock =
   | ClauseSectionBlock
   | CustomSectionBlock;
 
+export type SectionGenerationMode = "off" | "raw" | "ai";
+
+export interface SectionDefaultConfig {
+  id: string;
+  mode: SectionGenerationMode;
+}
+
 export interface CandidateProfileBase {
   full_name: string;
   contact_info: CandidateContactInfo;
   sections: CandidateSectionBlock[];
-  default_sections: string[];
+  default_sections: SectionDefaultConfig[];
 }
 
 export interface CandidateProfileCreate extends CandidateProfileBase {}
@@ -229,7 +236,7 @@ export interface CandidateProfileUpdate {
   full_name?: string | null;
   contact_info?: CandidateContactInfo | null;
   sections?: CandidateSectionBlock[] | null;
-  default_sections?: string[] | null;
+  default_sections?: SectionDefaultConfig[] | null;
 }
 
 export interface CandidateProfileRead extends CandidateProfileBase {
@@ -364,15 +371,22 @@ export interface CVPreviewResponse {
   version_id?: string | null; // UUID
 }
 
+export interface CVSectionConfig {
+  id: string;
+  mode: SectionGenerationMode;
+}
+
 export interface CVGenerateRequest {
   job_offer_id: string; // UUID
-  sections?: string[];
+  sections?: CVSectionConfig[];
   preset_id?: string | null; // UUID
   tailoring_mode?: TailoringModeType;
   language?: string;
   custom_instructions?: string | null;
   llm_provider?: LLMProviderType;
   llm_model?: string | null;
+  api_key?: string | null;
+  enable_thinking?: boolean;
 }
 
 export interface CVVersionBase {

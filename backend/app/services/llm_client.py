@@ -49,11 +49,34 @@ class LLMClient:
         model: str | None = None,
         enable_thinking: bool = False,
         timeout: float | None = None,
+        api_key: str | None = None,
     ) -> Any:
         """Attempt local Ollama or specified provider; fall back to cloud API or fallback data."""
+        custom_key = api_key.strip() if (api_key and api_key.strip()) else None
+
+        # Resolve provider for "local" or "api"
+        effective_provider = provider
+        if provider == "api":
+            if custom_key:
+                if custom_key.startswith("AIza"):
+                    effective_provider = "gemini"
+                elif custom_key.startswith("sk-"):
+                    effective_provider = "openai"
+                else:
+                    effective_provider = self.api_provider or "gemini"
+            else:
+                if self.api_provider in ("gemini", "openai"):
+                    effective_provider = self.api_provider
+                elif bool(self.gemini_api_key and len(self.gemini_api_key) > 10):
+                    effective_provider = "gemini"
+                elif bool(self.openai_api_key and len(self.openai_api_key) > 10):
+                    effective_provider = "openai"
+                else:
+                    effective_provider = "gemini"
+
         # 1. Attempt local Ollama
-        should_use_ollama = provider == "ollama" or (
-            provider is None
+        should_use_ollama = effective_provider in ("local", "ollama") or (
+            effective_provider is None
             and settings.AUTO_PARSE_MODE in ("auto_ollama_fallback_api", "auto_ollama_only")
         )
         if should_use_ollama:
@@ -90,26 +113,37 @@ class LLMClient:
                 logger.warning("Local Ollama request failed (%s): %s", ollama_target_model, err)
 
         # 2. Cloud Fallback if configured (only with valid non-placeholder keys)
+        gemini_key = (
+            custom_key
+            if (effective_provider == "gemini" and custom_key)
+            else self.gemini_api_key
+        )
+        openai_key = (
+            custom_key
+            if (effective_provider == "openai" and custom_key)
+            else self.openai_api_key
+        )
+
         has_valid_gemini = bool(
-            self.gemini_api_key
-            and not self.gemini_api_key.startswith("your_")
-            and len(self.gemini_api_key) > 10
+            gemini_key
+            and not gemini_key.startswith("your_")
+            and len(gemini_key) > 10
         )
         has_valid_openai = bool(
-            self.openai_api_key
-            and not self.openai_api_key.startswith("your_")
-            and len(self.openai_api_key) > 10
+            openai_key
+            and not openai_key.startswith("your_")
+            and len(openai_key) > 10
         )
 
         cloud_timeout = timeout if timeout is not None else (120.0 if enable_thinking else 30.0)
 
-        should_use_gemini = provider == "gemini" or (
-            provider is None
+        should_use_gemini = effective_provider == "gemini" or (
+            effective_provider is None
             and settings.AUTO_PARSE_MODE in ("auto_ollama_fallback_api", "auto_api_only")
             and self.api_provider == "gemini"
         )
-        should_use_openai = provider == "openai" or (
-            provider is None
+        should_use_openai = effective_provider == "openai" or (
+            effective_provider is None
             and settings.AUTO_PARSE_MODE in ("auto_ollama_fallback_api", "auto_api_only")
             and self.api_provider == "openai"
         )
@@ -129,7 +163,7 @@ class LLMClient:
                     )
                     response = await litellm.acompletion(
                         model=litellm_model,
-                        api_key=self.gemini_api_key,
+                        api_key=gemini_key,
                         messages=[
                             {"role": "system", "content": system_prompt},
                             {"role": "user", "content": user_prompt},
@@ -158,7 +192,7 @@ class LLMClient:
 
                     response = await litellm.acompletion(
                         model=target_api_model,
-                        api_key=self.openai_api_key,
+                        api_key=openai_key,
                         messages=[
                             {"role": "system", "content": system_prompt},
                             {"role": "user", "content": user_prompt},

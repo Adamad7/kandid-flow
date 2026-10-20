@@ -13,6 +13,11 @@ import {
   ShieldCheck,
   FolderPlus,
   Edit2,
+  Sparkles,
+  Cpu,
+  FolderGit2,
+  FileText,
+  FileCode,
 } from "lucide-react";
 import { api } from "../../lib/api";
 import type {
@@ -32,6 +37,8 @@ import type {
   SummarySectionBlock,
   ClauseSectionBlock,
   CustomSectionBlock,
+  SectionDefaultConfig,
+  SectionGenerationMode,
 } from "../../types";
 import { Button } from "../ui/Button";
 import { Input } from "../ui/Input";
@@ -51,18 +58,20 @@ export const KnowledgeBaseEditor: React.FC = () => {
   // Original saved state snapshots for dirty-checking
   const [initialFullName, setInitialFullName] = useState("");
   const [initialContactInfo, setInitialContactInfo] = useState<CandidateContactInfo>({});
-  const [initialDefaultSections, setInitialDefaultSections] = useState<string[]>([]);
+  const [initialDefaultSections, setInitialDefaultSections] = useState<SectionDefaultConfig[]>([]);
   const [initialSections, setInitialSections] = useState<CandidateSectionBlock[]>([]);
 
   // Current Form State
   const [fullName, setFullName] = useState("");
   const [contactInfo, setContactInfo] = useState<CandidateContactInfo>({});
-  const [defaultSections, setDefaultSections] = useState<string[]>([
-    "summary",
-    "skills",
-    "experience",
-    "projects",
-    "education",
+  const [defaultSections, setDefaultSections] = useState<SectionDefaultConfig[]>([
+    { id: "summary", mode: "ai" },
+    { id: "skills", mode: "ai" },
+    { id: "experience", mode: "ai" },
+    { id: "projects", mode: "ai" },
+    { id: "education", mode: "raw" },
+    { id: "certificates", mode: "raw" },
+    { id: "clause", mode: "ai" },
   ]);
   const [sections, setSections] = useState<CandidateSectionBlock[]>([]);
 
@@ -83,8 +92,29 @@ export const KnowledgeBaseEditor: React.FC = () => {
 
       const fName = data.full_name || "";
       const cInfo = data.contact_info || {};
-      const defSecs = data.default_sections || [];
+      const rawDefSecs = data.default_sections || [];
       const secs = data.sections || [];
+
+      let defSecs: SectionDefaultConfig[] = [];
+      if (Array.isArray(rawDefSecs) && rawDefSecs.length > 0) {
+        defSecs = rawDefSecs.map((item: unknown) => {
+          if (typeof item === "string") {
+            return { id: item, mode: "ai" as SectionGenerationMode };
+          }
+          const obj = item as { id: string; mode?: SectionGenerationMode };
+          return { id: obj.id, mode: (obj.mode || "ai") as SectionGenerationMode };
+        });
+      } else {
+        defSecs = [
+          { id: "summary", mode: "ai" },
+          { id: "skills", mode: "ai" },
+          { id: "experience", mode: "ai" },
+          { id: "projects", mode: "ai" },
+          { id: "education", mode: "raw" },
+          { id: "certificates", mode: "raw" },
+          { id: "clause", mode: "ai" },
+        ];
+      }
 
       setFullName(fName);
       setContactInfo(cInfo);
@@ -123,7 +153,15 @@ export const KnowledgeBaseEditor: React.FC = () => {
         phone: "+48 123 456 789",
         location: "Warszawa, Polska",
       };
-      const defSecs = ["summary", "skills", "experience", "projects", "education"];
+      const defSecs: SectionDefaultConfig[] = [
+        { id: "summary", mode: "ai" },
+        { id: "skills", mode: "ai" },
+        { id: "experience", mode: "ai" },
+        { id: "projects", mode: "ai" },
+        { id: "education", mode: "raw" },
+        { id: "certificates", mode: "raw" },
+        { id: "clause", mode: "ai" },
+      ];
       const secs: CandidateSectionBlock[] = [
         {
           id: "summary",
@@ -287,10 +325,23 @@ export const KnowledgeBaseEditor: React.FC = () => {
     await saveProfileData("all");
   };
 
-  const toggleDefaultSection = (secId: string) => {
-    setDefaultSections((prev) =>
-      prev.includes(secId) ? prev.filter((id) => id !== secId) : [...prev, secId]
-    );
+  const getSectionDefaultMode = (secId: string): SectionGenerationMode => {
+    const found = defaultSections.find((ds) => ds.id === secId);
+    if (found) return found.mode;
+    if (["summary", "skills", "experience", "projects", "clause"].includes(secId)) {
+      return "ai";
+    }
+    return "raw";
+  };
+
+  const handleSetDefaultSectionMode = (secId: string, mode: SectionGenerationMode) => {
+    setDefaultSections((prev) => {
+      const existing = prev.find((ds) => ds.id === secId);
+      if (existing) {
+        return prev.map((ds) => (ds.id === secId ? { ...ds, mode } : ds));
+      }
+      return [...prev, { id: secId, mode }];
+    });
   };
 
   // Section title modifier (generic for any section)
@@ -876,39 +927,171 @@ export const KnowledgeBaseEditor: React.FC = () => {
           </div>
         </div>
 
-        {/* Default sections selector */}
+        {/* Default sections selector with 3-position toggle switch */}
         <div className="pt-4 border-t border-slate-100 dark:border-slate-800 flex flex-col gap-3">
-          <label className="block text-xs font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-300">
-            Domyślnie zaznaczane sekcje przy generowaniu CV:
-          </label>
-          <div className="flex flex-wrap gap-2.5">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+            <label className="block text-xs font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+              Domyślne zachowanie sekcji przy generowaniu CV:
+            </label>
+            <span className="text-[11px] text-slate-400 dark:text-slate-500">
+              Konfiguracja domyślna dla każdej nowo tworzonej oferty pracy
+            </span>
+          </div>
+
+          <div className="space-y-2.5">
             {[
-              { id: "summary", label: "O mnie" },
-              { id: "skills", label: "Umiejętności" },
-              { id: "experience", label: "Doświadczenie" },
-              { id: "projects", label: "Projekty" },
-              { id: "education", label: "Edukacja" },
-              { id: "certificates", label: "Certyfikaty" },
-              { id: "clause", label: "Klauzula RODO" },
-              ...customSections.map((cs) => ({ id: cs.id, label: cs.title || "Własna" })),
-            ].map((sec) => (
-              <label
-                key={sec.id}
-                className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border text-xs font-medium cursor-pointer transition-colors ${
-                  defaultSections.includes(sec.id)
-                    ? "bg-blue-50 dark:bg-blue-950/40 border-blue-300 dark:border-blue-800 text-blue-700 dark:text-blue-300"
-                    : "bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700/60"
-                }`}
-              >
-                <input
-                  type="checkbox"
-                  checked={defaultSections.includes(sec.id)}
-                  onChange={() => toggleDefaultSection(sec.id)}
-                  className="rounded border-slate-300 dark:border-slate-700 text-blue-600 focus:ring-blue-500 h-3.5 w-3.5"
-                />
-                {sec.label}
-              </label>
-            ))}
+              {
+                id: "summary",
+                label: "O mnie",
+                description: "Podsumowanie profilu zawodowego, mocnych stron i celów",
+                icon: User,
+              },
+              {
+                id: "skills",
+                label: "Umiejętności",
+                description: "Kategorie technologii, języków i kompetencji twardych",
+                icon: Cpu,
+              },
+              {
+                id: "experience",
+                label: "Doświadczenie zawodowe",
+                description: "Historia zatrudnienia z punktami osiągnięć",
+                icon: Briefcase,
+              },
+              {
+                id: "projects",
+                label: "Projekty",
+                description: "Portfolio zrealizowanych projektów",
+                icon: FolderGit2,
+              },
+              {
+                id: "education",
+                label: "Edukacja",
+                description: "Uczelnie, stopnie naukowe oraz kierunki kształcenia",
+                icon: GraduationCap,
+              },
+              {
+                id: "certificates",
+                label: "Certyfikaty",
+                description: "Uprawnienia branżowe, licencje i akredytacje",
+                icon: Award,
+              },
+              {
+                id: "clause",
+                label: "Klauzula RODO",
+                description: "Zgoda na przetwarzanie danych pod danego pracodawcę",
+                icon: FileText,
+              },
+              ...customSections.map((cs) => ({
+                id: cs.id,
+                label: cs.title || "Własna sekcja",
+                description: "Niestandardowy blok wiedzy",
+                icon: FileCode,
+              })),
+            ].map((sec) => {
+              const IconComp = sec.icon;
+              const currentMode = getSectionDefaultMode(sec.id);
+              const isOff = currentMode === "off";
+              const isRaw = currentMode === "raw";
+              const isAi = currentMode === "ai";
+
+              return (
+                <div
+                  key={sec.id}
+                  className={`w-full flex flex-col sm:flex-row sm:items-center justify-between p-3 rounded-xl border transition-colors duration-150 gap-3 ${
+                    isOff
+                      ? "bg-slate-50/50 dark:bg-slate-900/30 border-slate-200/60 dark:border-slate-800/60 opacity-60"
+                      : isAi
+                      ? "bg-indigo-50/20 dark:bg-indigo-950/20 border-indigo-200/70 dark:border-indigo-900/60 shadow-xs"
+                      : "bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 shadow-xs"
+                  }`}
+                >
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div
+                      className={`p-2 rounded-lg shrink-0 ${
+                        isOff
+                          ? "bg-slate-200 dark:bg-slate-800 text-slate-400"
+                          : isAi
+                          ? "bg-indigo-100 dark:bg-indigo-900/50 text-indigo-600 dark:text-indigo-400"
+                          : "bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-400"
+                      }`}
+                    >
+                      <IconComp className="h-4 w-4" />
+                    </div>
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span
+                          className={`text-sm font-medium truncate ${
+                            isOff
+                              ? "text-slate-400 dark:text-slate-500"
+                              : "text-slate-900 dark:text-slate-100"
+                          }`}
+                        >
+                          {sec.label}
+                        </span>
+                        {isOff && (
+                          <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400">
+                            Nie umieszczaj
+                          </span>
+                        )}
+                        {isRaw && (
+                          <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300">
+                            Z bazy wiedzy
+                          </span>
+                        )}
+                        {isAi && (
+                          <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-indigo-100 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300 flex items-center gap-1">
+                            <Sparkles className="h-2.5 w-2.5 shrink-0" />
+                            Generuj AI
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 truncate">
+                        {sec.description}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* 3-Position Toggle Switch */}
+                  <div className="inline-flex shrink-0 self-end sm:self-auto rounded-lg border border-slate-200 dark:border-slate-700 p-0.5 bg-slate-100 dark:bg-slate-800 text-xs font-medium">
+                    <button
+                      type="button"
+                      onClick={() => handleSetDefaultSectionMode(sec.id, "off")}
+                      className={`px-2.5 py-1 rounded-md transition-colors duration-150 select-none whitespace-nowrap font-medium ${
+                        isOff
+                          ? "bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-100 shadow-xs"
+                          : "text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200"
+                      }`}
+                    >
+                      Nie umieszczaj
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleSetDefaultSectionMode(sec.id, "raw")}
+                      className={`px-2.5 py-1 rounded-md transition-colors duration-150 select-none whitespace-nowrap font-medium ${
+                        isRaw
+                          ? "bg-blue-600 text-white shadow-xs"
+                            : "text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200"
+                      }`}
+                    >
+                      Z bazy wiedzy
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleSetDefaultSectionMode(sec.id, "ai")}
+                      className={`px-2.5 py-1 rounded-md transition-colors duration-150 flex items-center gap-1 select-none whitespace-nowrap font-medium ${
+                        isAi
+                          ? "bg-indigo-600 text-white shadow-xs"
+                          : "text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200"
+                      }`}
+                    >
+                      <Sparkles className="h-3 w-3 shrink-0" />
+                      Generuj AI
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
 
