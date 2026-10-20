@@ -182,7 +182,7 @@ class CVGeneratorService:
             # Find matching tailored block if produced by LLM
             matching_tailored = None
             for t_sec in tailored_sections:
-                if (t_sec.get("id") or t_sec.get("type")) == sec_id:
+                if isinstance(t_sec, dict) and (t_sec.get("id") or t_sec.get("type")) == sec_id:
                     matching_tailored = t_sec
                     break
 

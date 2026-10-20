@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Sparkles,
   Brain,
@@ -38,8 +38,29 @@ export const KnowledgeBaseAIModal: React.FC<KnowledgeBaseAIModalProps> = ({
   const [enableThinking, setEnableThinking] = useState(true);
   const [mode, setMode] = useState<"merge" | "replace">("merge");
 
+  const [activeSettings, setActiveSettings] = useState<{
+    ollama_model: string;
+    api_model: string;
+  } | null>(null);
+
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (isOpen) {
+      api.settings
+        .get()
+        .then((data) => {
+          setActiveSettings({
+            ollama_model: data.ollama_model,
+            api_model: data.api_model,
+          });
+        })
+        .catch(() => {
+          // Ignore settings fetch failure silently
+        });
+    }
+  }, [isOpen]);
 
   const handleClose = () => {
     if (!isAnalyzing) {
@@ -211,12 +232,16 @@ export const KnowledgeBaseAIModal: React.FC<KnowledgeBaseAIModalProps> = ({
                 label="Niestandardowa nazwa modelu (Opcjonalnie)"
                 placeholder={
                   llmEngine === "local"
-                    ? "np. qwen2.5:14b, deepseek-r1:14b"
-                    : "np. gemini-2.5-flash, gpt-4o, gpt-4o-mini"
+                    ? activeSettings?.ollama_model || "gemma4:12b"
+                    : activeSettings?.api_model || "gemini-2.5-flash"
                 }
                 value={customModel}
                 onChange={(e) => setCustomModel(e.target.value)}
-                helperText="Pozostaw puste, aby zastosować zalecany model domyślny dla wybranego silnika."
+                helperText={
+                  llmEngine === "local"
+                    ? `Pozostaw puste, aby zastosować aktywny model z ustawień (${activeSettings?.ollama_model || "gemma4:12b"}).`
+                    : `Pozostaw puste, aby zastosować aktywny model z ustawień (${activeSettings?.api_model || "gemini-2.5-flash"}).`
+                }
               />
             )}
 

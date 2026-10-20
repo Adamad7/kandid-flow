@@ -89,15 +89,23 @@ async def test_settings_read_and_update(async_client: httpx.AsyncClient):
     # Verify secret token is NOT leaked in database settings
     assert "extension_api_token" not in app_settings
 
-    # 2. Update settings
-    update_res = await async_client.put(
-        "/api/v1/settings",
-        json={"ollama_model": "qwen2.5:32b", "api_provider": "gemini"},
-    )
-    assert update_res.status_code == 200
-    updated = update_res.json()
-    assert updated["ollama_model"] == "qwen2.5:32b"
-    assert "updated_at" in updated
+    # 2. Update settings and restore in finally block
+    orig_ollama_model = app_settings.get("ollama_model", "gemma4:12b")
+    orig_api_provider = app_settings.get("api_provider", "gemini")
+    try:
+        update_res = await async_client.put(
+            "/api/v1/settings",
+            json={"ollama_model": "qwen2.5:32b", "api_provider": "gemini"},
+        )
+        assert update_res.status_code == 200
+        updated = update_res.json()
+        assert updated["ollama_model"] == "qwen2.5:32b"
+        assert "updated_at" in updated
+    finally:
+        await async_client.put(
+            "/api/v1/settings",
+            json={"ollama_model": orig_ollama_model, "api_provider": orig_api_provider},
+        )
 
 
 @pytest.mark.asyncio
