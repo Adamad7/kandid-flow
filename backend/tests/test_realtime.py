@@ -137,6 +137,7 @@ def test_realtime_route_registered_on_fastapi_app() -> None:
 async def test_inbox_ingestion_broadcasts_event(async_client: httpx.AsyncClient) -> None:
     """Verify that posting a job to /api/v1/inbox emits a 'job_created' realtime event."""
     queue = events_broadcaster.subscribe()
+    job_id = None
     try:
         unique_id = uuid4()
         url = f"https://justjoin.it/offers/realtime-test-{unique_id}"
@@ -155,6 +156,7 @@ async def test_inbox_ingestion_broadcasts_event(async_client: httpx.AsyncClient)
             json=payload,
         )
         assert res.status_code == 201
+        job_id = res.json().get("id")
 
         # Check that the broadcaster queued a job_created event
         received = await asyncio.wait_for(queue.get(), timeout=2.0)
@@ -163,6 +165,8 @@ async def test_inbox_ingestion_broadcasts_event(async_client: httpx.AsyncClient)
         assert received.payload.company_name == "FastStream Inc"
     finally:
         events_broadcaster.unsubscribe(queue)
+        if job_id:
+            await async_client.delete(f"/api/v1/jobs/{job_id}")
 
 
 @pytest.mark.asyncio
@@ -209,6 +213,7 @@ async def test_jobs_patch_and_delete_broadcasts(async_client: httpx.AsyncClient)
         assert str(deleted_event.payload.job_id) == str(job_id)
     finally:
         events_broadcaster.unsubscribe(queue)
+        await async_client.delete(f"/api/v1/jobs/{job_id}")
 
 
 @pytest.mark.asyncio
@@ -229,6 +234,7 @@ async def test_recruitment_events_broadcasts(async_client: httpx.AsyncClient) ->
         headers={"Authorization": f"Bearer {settings.EXTENSION_API_TOKEN}"},
         json=payload,
     )
+    assert create_job_res.status_code == 201
     job_id = create_job_res.json()["id"]
 
     queue = events_broadcaster.subscribe()
@@ -269,3 +275,4 @@ async def test_recruitment_events_broadcasts(async_client: httpx.AsyncClient) ->
         assert str(ev3.payload.event_id) == str(event_id)
     finally:
         events_broadcaster.unsubscribe(queue)
+        await async_client.delete(f"/api/v1/jobs/{job_id}")

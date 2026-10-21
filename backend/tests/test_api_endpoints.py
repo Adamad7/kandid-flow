@@ -63,35 +63,45 @@ async def test_inbox_authentication_and_ingestion(async_client: httpx.AsyncClien
     assert check_before.status_code == 200
     assert check_before.json()["exists"] is False
 
-    # 4. Valid token with Bearer header should succeed with 201
-    valid_res = await async_client.post(
-        "/api/v1/inbox",
-        headers={"Authorization": f"Bearer {settings.EXTENSION_API_TOKEN}"},
-        json=payload,
-    )
-    assert valid_res.status_code == 201
-    body = valid_res.json()
-    assert body["status"] == "inbox"
-    assert "id" in body
+    created_job_ids: list[str] = []
+    try:
+        # 4. Valid token with Bearer header should succeed with 201
+        valid_res = await async_client.post(
+            "/api/v1/inbox",
+            headers={"Authorization": f"Bearer {settings.EXTENSION_API_TOKEN}"},
+            json=payload,
+        )
+        assert valid_res.status_code == 201
+        body = valid_res.json()
+        assert body["status"] == "inbox"
+        assert "id" in body
+        created_job_ids.append(body["id"])
 
-    # 5. Check duplicate endpoint after ingestion (should return exists=True)
-    check_after = await async_client.get(
-        f"/api/v1/inbox/check?url={test_url}",
-        headers={"Authorization": f"Bearer {settings.EXTENSION_API_TOKEN}"},
-    )
-    assert check_after.status_code == 200
-    assert check_after.json()["exists"] is True
-    assert check_after.json()["job_id"] == body["id"]
+        # 5. Check duplicate endpoint after ingestion (should return exists=True)
+        check_after = await async_client.get(
+            f"/api/v1/inbox/check?url={test_url}",
+            headers={"Authorization": f"Bearer {settings.EXTENSION_API_TOKEN}"},
+        )
+        assert check_after.status_code == 200
+        assert check_after.json()["exists"] is True
+        assert check_after.json()["job_id"] == body["id"]
 
-    # 6. Valid token with X-API-Token header should also succeed with 201
-    payload["source_url"] = f"https://pracuj.pl/praca/pytest-job-{uuid.uuid4()}"
-    payload["source_portal"] = "pracuj"
-    header_res = await async_client.post(
-        "/api/v1/inbox",
-        headers={"X-API-Token": settings.EXTENSION_API_TOKEN},
-        json=payload,
-    )
-    assert header_res.status_code == 201
+        # 6. Valid token with X-API-Token header should also succeed with 201
+        payload["source_url"] = f"https://pracuj.pl/praca/pytest-job-{uuid.uuid4()}"
+        payload["source_portal"] = "pracuj"
+        header_res = await async_client.post(
+            "/api/v1/inbox",
+            headers={"X-API-Token": settings.EXTENSION_API_TOKEN},
+            json=payload,
+        )
+        assert header_res.status_code == 201
+        created_job_ids.append(header_res.json()["id"])
+    finally:
+        if created_job_ids:
+            await async_client.post(
+                "/api/v1/jobs/batch/delete",
+                json={"job_ids": created_job_ids},
+            )
 
 
 @pytest.mark.asyncio
@@ -139,82 +149,92 @@ async def test_batch_job_operations(async_client: httpx.AsyncClient):
     job1_url = f"https://justjoin.it/offers/batch-test-1-{uuid.uuid4()}"
     job2_url = f"https://justjoin.it/offers/batch-test-2-{uuid.uuid4()}"
 
-    res1 = await async_client.post(
-        "/api/v1/inbox",
-        headers=headers,
-        json={
-            "source_url": job1_url,
-            "source_portal": "justjoin",
-            "title": "Batch Engineer 1",
-            "company": "BatchCorp",
-        },
-    )
-    assert res1.status_code == 201
-    job1_id = res1.json()["id"]
+    created_job_ids: list[str] = []
+    try:
+        res1 = await async_client.post(
+            "/api/v1/inbox",
+            headers=headers,
+            json={
+                "source_url": job1_url,
+                "source_portal": "justjoin",
+                "title": "Batch Engineer 1",
+                "company": "BatchCorp",
+            },
+        )
+        assert res1.status_code == 201
+        job1_id = res1.json()["id"]
+        created_job_ids.append(job1_id)
 
-    res2 = await async_client.post(
-        "/api/v1/inbox",
-        headers=headers,
-        json={
-            "source_url": job2_url,
-            "source_portal": "justjoin",
-            "title": "Batch Engineer 2",
-            "company": "BatchCorp",
-        },
-    )
-    assert res2.status_code == 201
-    job2_id = res2.json()["id"]
+        res2 = await async_client.post(
+            "/api/v1/inbox",
+            headers=headers,
+            json={
+                "source_url": job2_url,
+                "source_portal": "justjoin",
+                "title": "Batch Engineer 2",
+                "company": "BatchCorp",
+            },
+        )
+        assert res2.status_code == 201
+        job2_id = res2.json()["id"]
+        created_job_ids.append(job2_id)
 
-    # 2. Validation check: empty job_ids must return 422
-    empty_status_res = await async_client.post(
-        "/api/v1/jobs/batch/status",
-        json={"job_ids": [], "status": "interview"},
-    )
-    assert empty_status_res.status_code == 422
+        # 2. Validation check: empty job_ids must return 422
+        empty_status_res = await async_client.post(
+            "/api/v1/jobs/batch/status",
+            json={"job_ids": [], "status": "interview"},
+        )
+        assert empty_status_res.status_code == 422
 
-    empty_delete_res = await async_client.post(
-        "/api/v1/jobs/batch/delete",
-        json={"job_ids": []},
-    )
-    assert empty_delete_res.status_code == 422
+        empty_delete_res = await async_client.post(
+            "/api/v1/jobs/batch/delete",
+            json={"job_ids": []},
+        )
+        assert empty_delete_res.status_code == 422
 
-    # 3. Batch status update to 'interview'
-    batch_status_res = await async_client.post(
-        "/api/v1/jobs/batch/status",
-        json={"job_ids": [job1_id, job2_id], "status": "interview"},
-    )
-    assert batch_status_res.status_code == 200
-    assert batch_status_res.json()["affected_count"] == 2
+        # 3. Batch status update to 'interview'
+        batch_status_res = await async_client.post(
+            "/api/v1/jobs/batch/status",
+            json={"job_ids": [job1_id, job2_id], "status": "interview"},
+        )
+        assert batch_status_res.status_code == 200
+        assert batch_status_res.json()["affected_count"] == 2
 
-    # Verify both jobs now have status 'interview'
-    check1 = await async_client.get(f"/api/v1/jobs/{job1_id}")
-    assert check1.status_code == 200
-    assert check1.json()["status"] == "interview"
+        # Verify both jobs now have status 'interview'
+        check1 = await async_client.get(f"/api/v1/jobs/{job1_id}")
+        assert check1.status_code == 200
+        assert check1.json()["status"] == "interview"
 
-    check2 = await async_client.get(f"/api/v1/jobs/{job2_id}")
-    assert check2.status_code == 200
-    assert check2.json()["status"] == "interview"
+        check2 = await async_client.get(f"/api/v1/jobs/{job2_id}")
+        assert check2.status_code == 200
+        assert check2.json()["status"] == "interview"
 
-    # 4. Batch status update on non-existent UUID returns affected_count=0
-    random_uuid = str(uuid.uuid4())
-    ghost_status_res = await async_client.post(
-        "/api/v1/jobs/batch/status",
-        json={"job_ids": [random_uuid], "status": "offer"},
-    )
-    assert ghost_status_res.status_code == 200
-    assert ghost_status_res.json()["affected_count"] == 0
+        # 4. Batch status update on non-existent UUID returns affected_count=0
+        random_uuid = str(uuid.uuid4())
+        ghost_status_res = await async_client.post(
+            "/api/v1/jobs/batch/status",
+            json={"job_ids": [random_uuid], "status": "offer"},
+        )
+        assert ghost_status_res.status_code == 200
+        assert ghost_status_res.json()["affected_count"] == 0
 
-    # 5. Batch delete the two offers
-    batch_del_res = await async_client.post(
-        "/api/v1/jobs/batch/delete",
-        json={"job_ids": [job1_id, job2_id]},
-    )
-    assert batch_del_res.status_code == 200
-    assert batch_del_res.json()["affected_count"] == 2
+        # 5. Batch delete the two offers
+        batch_del_res = await async_client.post(
+            "/api/v1/jobs/batch/delete",
+            json={"job_ids": [job1_id, job2_id]},
+        )
+        assert batch_del_res.status_code == 200
+        assert batch_del_res.json()["affected_count"] == 2
 
-    # Verify both jobs are deleted (404)
-    del_check1 = await async_client.get(f"/api/v1/jobs/{job1_id}")
-    assert del_check1.status_code == 404
+        # Verify both jobs are deleted (404)
+        del_check1 = await async_client.get(f"/api/v1/jobs/{job1_id}")
+        assert del_check1.status_code == 404
 
-    del_check2 = await async_client.get(f"/api/v1/jobs/{job2_id}")
-    assert del_check2.status_code == 404
+        del_check2 = await async_client.get(f"/api/v1/jobs/{job2_id}")
+        assert del_check2.status_code == 404
+    finally:
+        if created_job_ids:
+            await async_client.post(
+                "/api/v1/jobs/batch/delete",
+                json={"job_ids": created_job_ids},
+            )
