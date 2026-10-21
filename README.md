@@ -10,11 +10,65 @@
 
 ## 🚀 Overview
 
-**KandidFlow** is a modular self-hosted platform designed to automate and streamline the IT recruitment workflow:
+**KandidFlow** is a modern, privacy-first, self-hosted platform engineered to automate and streamline the entire IT recruitment lifecycle. It eliminates tedious manual job tracking, repetitive copy-pasting, and document formatting overhead by unifying:
 
-1. **Browser Extension (Chromium MV3):** One-click capture of job postings from Polish and international job portals (*Just Join IT*, *Pracuj.pl*, *No Fluff Jobs*, *LinkedIn*) with automated URL canonicalization, DOM noise removal, and duplicate detection.
-2. **Backend & AI Engine (FastAPI / Typst / LiteLLM):** Job normalization via a resilient database-backed worker queue (`SELECT ... FOR UPDATE SKIP LOCKED`), hybrid AI model chain (local Ollama with automatic fallback to Gemini/OpenAI API), candidate knowledge base, archetype presets, and sub-50ms Typst resume rendering (multi-page vector SVG preview & binary PDF export).
-3. **Web UI (React 18 / Vite / Tailwind CSS / shadcn/ui):** Polish-language interface featuring a Kanban pipeline board, interview timeline manager, candidate knowledge base, base CV presets manager, and an interactive Split-View CV editor with inline AI section refinement and version switcher.
+- **Browser-based job capture** with automated noise cleaning and duplicate detection.
+- **Asynchronous, hybrid AI normalization** of job requirements and technical stacks.
+- **End-to-end recruitment pipeline management** with a visual Kanban board and interview timeline tracker.
+- **Knowledge-driven, tailored CV generation** powered by strict data schemas, inline AI refinement, and instant vector/PDF rendering via Typst.
+
+---
+
+## ✨ Key Features & Capabilities
+
+### 1. 🧩 One-Click Job Capture (Chromium MV3 Extension)
+- **Strategy-Pattern Extractors:** Dedicated DOM extractors for leading job boards (*Just Join IT*, *Pracuj.pl*, *No Fluff Jobs*, *LinkedIn*) plus a robust generic fallback extractor.
+- **Automated URL Canonicalization:** Strips tracking parameters (`utm_*`, `searchId`, tokens) to ensure clean source references.
+- **Real-Time Duplicate Detection:** Instantly notifies you in the popup if an offer from the active URL already exists in your database.
+- **Zero-Friction Ingestion:** Cleanly strips page noise (cookie banners, corporate footers, navigation widgets) and sends structured payloads directly to your self-hosted backend via secure API token authorization.
+
+### 2. ⚡ Resilient AI Ingestion & Queue Worker
+- **Database-Backed Queue:** Background worker loop utilizing PostgreSQL `SELECT ... FOR UPDATE SKIP LOCKED` guarantees reliable, crash-resilient asynchronous parsing.
+- **Hybrid LLM Orchestrator:** Intelligent fallback chain running locally on **Ollama** (e.g., Qwen 2.5) with automatic failover to cloud LLMs (**Google Gemini 2.5 Flash** or **OpenAI**) in case of timeouts or connection issues.
+- **Strictly Typed Structured Outputs:** Powered by Pydantic v2 schemas and JSON Schema validation to eliminate model hallucinations, extracting:
+  - Must-have and nice-to-have skill requirements
+  - Technology stack categorizations
+  - Work model (remote, hybrid, onsite) and detailed location arrays
+  - Normalized salary brackets and contract types (B2B, UoP)
+- **Manual Retry Mechanism:** One-click re-parse capabilities for any failed ingestion jobs directly from the UI.
+
+### 3. 📋 Recruitment Pipeline & Kanban Board
+- **Visual Status Workflow:** Track progress across customizable recruitment stages:
+  `Inbox` ➔ `Parsing` ➔ `Ready` ➔ `Applied` ➔ `Interview` ➔ `Offer` / `Rejected`.
+- **Smart Cards & Indicators:** Displays salary badges, workplace model indicators, application deadline countdown timers, and live parsing status indicators.
+- **Search & Filtering:** Quickly organize opportunities by company, role title, skills, or pipeline status.
+
+### 4. 📅 Interview Timeline & Recruitment Events Tracker
+- **Stage Scheduling:** Plan and manage upcoming recruitment milestones linked directly to each application:
+  - HR Screenings
+  - Technical Interviews & Live Coding
+  - Homework Task Deadlines
+  - Manager & Final Interviews
+- **Meeting Organization:** Store Google Meet / Teams links, interviewer names, and preparation notes.
+- **Dashboard Highlights:** Dedicated "Upcoming Interviews" widget on the pipeline view ensures you never miss a deadline or interview stage.
+
+### 5. 🧠 Candidate Knowledge Base & Archetype Presets
+- **Modular Knowledge Base:** Maintain a single source of truth for your professional journey, including structured blocks for work experience, education, certifications, portfolio projects, and technical skills.
+- **Flexible Date Expressions:** First-class support for diverse date resolutions (`YYYY`, `YYYY-MM`, `YYYY-MM-DD`, `present`).
+- **Role Archetype Presets:** Create and manage baseline templates (e.g., *"Full-Stack Engineer"*, *"DevOps / Cloud Specialist"*, *"Mobile Developer"*) as reusable starting points for rapid application generation.
+
+### 6. 🎯 AI-Powered CV Tailoring & Version Control
+- **Dual Tailoring Modes:**
+  - *Targeted Summary & Keywords:* Optimizes the professional summary and skill tags for ATS match while keeping standard history intact.
+  - *Full Tailoring:* Comprehensively re-weights bullet points and project highlights to align precisely with the job's must-have requirements.
+- **Inline AI Block Refinement:** Highlight any section inside the editor to request instant AI modifications (*"Shorten summary"*, *"Shift emphasis towards Kubernetes and CI/CD"*, *"Emphasize leadership experience"*).
+- **Immutable Version History:** Each generation automatically creates a versioned record (`v1`, `v2`, ...) with change summaries, allowing you to compare and roll back modifications at any time.
+
+### 7. 🏎️ Sub-50ms Typst Resume Engine (Split-View Workspace)
+- **Rust-Powered Typst Compilation:** Generates clean, single-column, ATS-optimized resumes with modern typography.
+- **Live Debounced Multi-Page SVG Preview:** Split-view editor renders vector SVG pages in real time with sub-50ms updates as you type or apply AI refinements.
+- **Pixel-Perfect PDF Export:** Download crisp, binary PDF files with selectable text and clickable links on demand.
+- **Mobile-Responsive Editing:** Adaptive view with seamless tab switching between structured editing and full-screen document preview.
 
 ---
 
@@ -53,16 +107,29 @@
 
 ---
 
-## ⚠️ Inviolable Rules (Multi-Agent & Developer Guidelines)
+## 🤖 Agentic Software Engineering Workflow
+
+KandidFlow was designed and built utilizing **Agentic Software Engineering** principles, coordinating autonomous specialized AI subagents within a disciplined development framework:
+
+- **Lead Orchestrator:** Oversees architecture evolution, approves implementation plans, and enforces cross-system boundaries.
+- **Domain Specialists:**
+  - `backend-specialist`: FastAPI, SQLAlchemy/SQLModel, Alembic migrations, LiteLLM integrations, and Typst compilation services.
+  - `frontend-specialist`: React, TypeScript 1:1 schema mirroring, Tailwind CSS, shadcn/ui, and reactive split-view components.
+  - `extension-specialist`: Chromium Manifest v3 extractors, DOM sanitation, and extension UI.
+- **Strict Quality Gates:** Every code modification is automatically validated through isolated Docker container checks (`ruff`, `pytest`, `npm run build`) before release.
+
+---
+
+## ⚠️ Inviolable Development Rules
 
 - **Docker-Only Execution (NEVER Run on Host):**  
-  Do **NOT** run dev servers, package managers, or linters directly on the host machine (`npm`, `pip`, `ruff`, `tsc`, `alembic` on host are forbidden). All commands, tests, and builds must be run inside Docker containers via `docker compose exec` or `docker compose run --rm`.
+  Do **NOT** run dev servers, package managers, or linters directly on the host machine (`npm`, `pip`, `ruff`, `tsc`, `alembic` on host are forbidden). All commands, tests, and builds must execute inside Docker containers via `docker compose exec` or `docker compose run --rm`.
 - **Schema-First & Zero Raw Dicts for JSONB:**  
-  All database JSONB fields (`raw_payload`, `structured_data`, `contact_info`, `sections`, `layout_schema`) must have strict, nested Pydantic v2 schemas mirrored 1:1 in TypeScript (no `dict[str, Any]` or `any`).
+  All PostgreSQL JSONB columns (`raw_payload`, `structured_data`, `contact_info`, `sections`, `layout_schema`) require strict, nested Pydantic v2 schemas mirrored 1:1 in TypeScript (raw `dict` or `any` are forbidden).
 - **English Codebase & Polish UI:**  
-  All code, comments, documentation, and database schemas are in English. User-facing UI labels, placeholders, and default CV templates are in Polish.
-- **No Secrets in Repo:**  
-  API keys (`GEMINI_API_KEY`, `OPENAI_API_KEY`) and tokens (`EXTENSION_API_TOKEN`) are configured strictly via `.env` and loaded through Pydantic `BaseSettings`.
+  All code, comments, documentation, and database schemas are in English. User-facing web UI labels, extension screens, and default CV templates are in Polish.
+- **Zero Secrets in Repository:**  
+  API keys (`GEMINI_API_KEY`, `OPENAI_API_KEY`) and tokens (`EXTENSION_API_TOKEN`) are injected strictly through `.env` and loaded via Pydantic `BaseSettings`.
 
 ---
 
