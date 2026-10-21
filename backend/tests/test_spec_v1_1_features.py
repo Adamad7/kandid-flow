@@ -1,6 +1,5 @@
-"""Comprehensive tests for KandidFlow spec v1.1 features."""
-
 from datetime import UTC, datetime
+from typing import Any
 
 import httpx
 import pytest
@@ -185,3 +184,76 @@ async def test_cv_generate_with_provider_and_model(async_client: httpx.AsyncClie
     cv_version = gen_res.json()
     assert cv_version["id"] is not None
     assert cv_version["version_number"] >= 1
+
+
+@pytest.mark.asyncio
+async def test_cv_refine_block_with_provider_and_grounding(
+    async_client: httpx.AsyncClient, monkeypatch: pytest.MonkeyPatch
+):
+    """Verify refine-block passes LLM provider, reasoning flag, and grounds with context."""
+    from app.services.llm_client import llm_client
+
+    captured_kwargs: dict[str, Any] = {}
+
+    async def mock_generate_json(**kwargs: Any) -> Any:
+        captured_kwargs.update(kwargs)
+        return {
+            "id": "summary",
+            "type": "summary",
+            "title": "Podsumowanie zawodowe",
+            "content": "Senior Python Engineer, expert in FastAPI and Kubernetes.",
+        }
+
+    monkeypatch.setattr(llm_client, "generate_json", mock_generate_json)
+
+    # 1. Fetch available preset and job
+    presets_res = await async_client.get("/api/v1/presets")
+    preset = presets_res.json()[0]
+    jobs_res = await async_client.get("/api/v1/jobs")
+    job = jobs_res.json()[0]
+
+    # 2. Generate a CV version
+    gen_res = await async_client.post(
+        "/api/v1/cv/generate",
+        json={
+            "job_offer_id": job["id"],
+            "preset_id": preset["id"],
+            "tailoring_mode": "targeted_summary_keywords",
+            "language": "pl",
+        },
+    )
+    assert gen_res.status_code == 201
+    cv_version = gen_res.json()
+    cv_version_id = cv_version["id"]
+
+    # 3. Refine summary block with explicit llm_provider, llm_model, enable_thinking
+    refine_res = await async_client.post(
+        f"/api/v1/cv/{cv_version_id}/refine-block",
+        json={
+            "block_id": "summary",
+            "instruction": "Podkreśl doświadczenie w chmurze i architekturze mikrousług",
+            "llm_provider": "gemini",
+            "llm_model": "gemini-2.5-flash",
+            "enable_thinking": False,
+        },
+    )
+    assert refine_res.status_code == 200
+    refine_body = refine_res.json()
+    assert refine_body["block_id"] == "summary"
+    assert "FastAPI and Kubernetes" in refine_body["refined_block"]["content"]
+
+    # 4. Assert LLM invocation received provider, model, enable_thinking, and grounding sections
+    assert captured_kwargs.get("provider") == "gemini"
+    assert captured_kwargs.get("model") == "gemini-2.5-flash"
+    assert captured_kwargs.get("enable_thinking") is False
+
+    system_prompt = captured_kwargs.get("system_prompt", "")
+    assert "ATS Resume Editor" in system_prompt
+    assert "Candidate Knowledge Base" in system_prompt
+
+    user_prompt = captured_kwargs.get("user_prompt", "")
+    assert "=== TARGET JOB OFFER ===" in user_prompt
+    assert "=== CANDIDATE KNOWLEDGE BASE (GROUND TRUTH) ===" in user_prompt
+    assert "=== CURRENT CV SECTION BLOCK TO REFINE ===" in user_prompt
+    assert "=== CANDIDATE INSTRUCTION ===" in user_prompt
+    assert "Podkreśl doświadczenie w chmurze" in user_prompt

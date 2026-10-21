@@ -446,6 +446,9 @@ export interface CVRefineBlockRequest {
   block_id: string;
   instruction: string;
   current_block?: CandidateSectionBlock | null;
+  llm_provider?: "default" | "local" | "api" | "ollama" | "gemini" | "openai";
+  llm_model?: string | null;
+  enable_thinking?: boolean;
 }
 
 export interface CVRefineBlockResponse {

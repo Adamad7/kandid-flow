@@ -183,6 +183,13 @@ class CVRefineBlockRequest(BaseModel):
     current_block: CandidateSectionBlock | None = Field(
         default=None, description="Current content of the block if refining prior to save"
     )
+    llm_provider: Literal["default", "local", "api", "ollama", "gemini", "openai"] = Field(
+        default="default", description="Wybrany dostawca LLM do udoskonalenia bloku"
+    )
+    llm_model: str | None = Field(default=None, description="Opcjonalny konkretny model LLM")
+    enable_thinking: bool = Field(
+        default=True, description="Włącz tryb namysłu (reasoning / thinking)"
+    )
 
 
 class CVRefineBlockResponse(BaseModel):

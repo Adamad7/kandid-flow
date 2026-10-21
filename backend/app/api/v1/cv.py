@@ -235,6 +235,9 @@ async def refine_cv_block(
         instruction=payload.instruction,
         db=db,
         current_block=payload.current_block,
+        llm_provider=payload.llm_provider,
+        llm_model=payload.llm_model,
+        enable_thinking=payload.enable_thinking,
     )
 
     return CVRefineBlockResponse(

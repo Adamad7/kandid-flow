@@ -205,7 +205,6 @@ CandidateSectionBlock = (
 )
 
 
-
 SectionGenerationMode = Literal["off", "raw", "ai"]
 
 

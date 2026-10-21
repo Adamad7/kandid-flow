@@ -520,8 +520,11 @@ class CVGeneratorService:
         instruction: str,
         db: AsyncSession,
         current_block: CandidateSectionBlock | None = None,
+        llm_provider: str = "default",
+        llm_model: str | None = None,
+        enable_thinking: bool = True,
     ) -> tuple[dict[str, Any], CVVersion]:
-        """Use LLM to refine an individual block in a CV version and persist the update."""
+        """Use LLM to refine an individual block in a CV version with full context and persist."""
         stmt = select(CVVersion).where(CVVersion.id == cv_version_id)
         result = await db.execute(stmt)
         cv_version = result.scalar_one_or_none()
@@ -530,6 +533,32 @@ class CVGeneratorService:
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail=f"CV Version with ID '{cv_version_id}' not found",
             )
+
+        # 1. Fetch associated JobOffer
+        job: JobOffer | None = None
+        if cv_version.job_offer_id:
+            stmt_job = select(JobOffer).where(JobOffer.id == cv_version.job_offer_id)
+            res_job = await db.execute(stmt_job)
+            job = res_job.scalar_one_or_none()
+
+        # 2. Fetch candidate profile (Knowledge Base)
+        stmt_cand = select(CandidateProfile).limit(1)
+        res_cand = await db.execute(stmt_cand)
+        candidate = res_cand.scalar_one_or_none()
+
+        # Extract Job Offer data
+        job_role = (job.role_title if job else None) or "Target Role"
+        job_company = (job.company_name if job else None) or "Target Company"
+        job_structured = job.structured_data if job and job.structured_data else {}
+        job_desc = (
+            job.raw_payload.get("description_text", "")
+            if job and isinstance(job.raw_payload, dict)
+            else ""
+        )[:1500]
+
+        # Extract Candidate Knowledge Base data
+        cand_name = (candidate.full_name if candidate else None) or "Candidate"
+        cand_sections = candidate.sections if candidate and candidate.sections else []
 
         if isinstance(cv_version.layout_schema, dict):
             layout = cv_version.layout_schema
@@ -557,34 +586,59 @@ class CVGeneratorService:
                 detail=f"Section block with ID '{block_id}' not found in CV version",
             )
 
-        # Call LLM for block refinement
+        # Call LLM for block refinement with full ATS context and strict factual grounding
         system_prompt = (
-            "You are an ATS Resume Editor. Refine a single resume section block "
-            "according to candidate instructions. Maintain the exact JSON structure.\n"
-            "CRITICAL FACTUAL INTEGRITY RULES:\n"
-            "1. NEVER invent fake companies, fake positions, or fake projects.\n"
-            "2. NEVER add information, facts, or claims not present in the candidate database "
-            "or not directly derived from existing entries.\n"
-            "3. If refining projects, only keep and refine projects pertinent to the role.\n"
-            "4. If refining education or certificates, do NOT alter original names "
-            "(unless translating to English).\n"
-            "Return only the refined JSON block object."
+            "You are an ATS Resume Editor and Expert Career Strategist. Refine a single resume "
+            "section block according to the candidate's instructions, tailored specifically "
+            "for the target job offer.\n\n"
+            "CRITICAL FACTUAL INTEGRITY & GROUNDING RULES:\n"
+            "1. STRICT FACTUAL FIDELITY: The Candidate Knowledge Base is your sole source of truth "
+            "(ground truth). NEVER invent fake companies, fake job titles, fake dates, "
+            "fake projects, or technical skills not possessed by the candidate.\n"
+            "2. DO NOT HALLUCINATE: Never attribute work at the target hiring company to the "
+            "candidate's past history unless explicitly in their knowledge base.\n"
+            "3. STRATEGIC ATS TAILORING: Emphasize genuine candidate skills, achievements, and "
+            "keywords that match the job requirements (must-have, nice-to-have, tech stack).\n"
+            "4. SCHEMA INTEGRITY: Maintain the exact JSON structure and fields of the target block "
+            "(id, type, title, and its internal fields like items, content, etc.).\n"
+            "5. Return ONLY a valid JSON object representing the refined section block."
         )
+
         user_prompt = (
-            f"Block JSON to refine:\n{target_block}\n\nCandidate Instruction: {instruction}"
+            "=== TARGET JOB OFFER ===\n"
+            f"Role: {job_role}\n"
+            f"Company: {job_company}\n"
+            f"Structured Requirements: {job_structured}\n"
+            f"Description Excerpt:\n{job_desc}\n\n"
+            "=== CANDIDATE KNOWLEDGE BASE (GROUND TRUTH) ===\n"
+            f"Candidate: {cand_name}\n"
+            f"Sections & Profile:\n{cand_sections}\n\n"
+            "=== CURRENT CV SECTION BLOCK TO REFINE ===\n"
+            f"{target_block}\n\n"
+            "=== CANDIDATE INSTRUCTION ===\n"
+            f"{instruction}\n\n"
+            "Refine the above section block JSON following all factual grounding rules."
         )
 
         fallback_block = copy.deepcopy(target_block)
         if "content" in fallback_block and isinstance(fallback_block["content"], str):
             fallback_block["content"] = f"{fallback_block['content'].rstrip('. ')}. ({instruction})"
 
-        refined = await llm_client.generate_json(
-            system_prompt=system_prompt,
-            user_prompt=user_prompt,
-            fallback_data=fallback_block,
-            enable_thinking=True,
-            timeout=60.0,
-        )
+        provider = llm_provider if llm_provider != "default" else None
+
+        try:
+            refined = await llm_client.generate_json(
+                system_prompt=system_prompt,
+                user_prompt=user_prompt,
+                fallback_data=fallback_block,
+                provider=provider,
+                model=llm_model,
+                enable_thinking=enable_thinking,
+                timeout=60.0,
+            )
+        except Exception as e:
+            logger.warning("LLM block refinement failed, falling back to deterministic: %s", e)
+            refined = fallback_block
 
         if not isinstance(refined, dict) or ("type" not in refined and "id" not in refined):
             refined = fallback_block
