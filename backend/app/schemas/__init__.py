@@ -50,6 +50,9 @@ from app.schemas.inbox import (
     SourcePortalType,
 )
 from app.schemas.job import (
+    JobBatchDelete,
+    JobBatchResult,
+    JobBatchStatusUpdate,
     JobLanguageType,
     JobOfferBase,
     JobOfferCreate,
@@ -91,6 +94,9 @@ __all__ = [
     "JobOfferCreate",
     "JobOfferUpdate",
     "JobOfferRead",
+    "JobBatchStatusUpdate",
+    "JobBatchDelete",
+    "JobBatchResult",
     "JobStatusType",
     "StructuredJobData",
     "WorkModelType",

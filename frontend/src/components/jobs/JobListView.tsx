@@ -1,4 +1,5 @@
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState, useMemo, useRef } from "react";
+import { createPortal } from "react-dom";
 import {
   Search,
   Filter,
@@ -72,23 +73,47 @@ export const JobListView: React.FC<JobListViewProps> = ({
   const [sortField, setSortField] = useState<SortField>("deadline");
   const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
 
-  // Action menu state
-  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+  // Selection & Bulk actions states
+  const [selectedJobIds, setSelectedJobIds] = useState<Set<string>>(new Set());
+  const [isBatchProcessing, setIsBatchProcessing] = useState(false);
+  const [bulkStatus, setBulkStatus] = useState<JobStatusType>("ready");
+  const masterCheckboxRef = useRef<HTMLInputElement>(null);
 
-  // Close menu on click outside
+  // Context menu portal state
+  const [activeMenu, setActiveMenu] = useState<{
+    job: JobOfferRead;
+    rect: DOMRect;
+  } | null>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  // Close context menu on scroll, resize, or outside click
   useEffect(() => {
-    const handleGlobalClick = (e: MouseEvent) => {
-      if (!(e.target as HTMLElement).closest(".action-menu-container")) {
-        setOpenMenuId(null);
+    if (!activeMenu) return;
+
+    const handleDismiss = () => {
+      setActiveMenu(null);
+    };
+
+    const handlePointerDown = (e: MouseEvent) => {
+      if (
+        menuRef.current &&
+        !menuRef.current.contains(e.target as Node) &&
+        !(e.target as HTMLElement).closest(`[data-menu-trigger="${activeMenu.job.id}"]`)
+      ) {
+        setActiveMenu(null);
       }
     };
-    if (openMenuId) {
-      window.addEventListener("click", handleGlobalClick);
-    }
+
+    window.addEventListener("scroll", handleDismiss, { capture: true, passive: true });
+    window.addEventListener("resize", handleDismiss, { passive: true });
+    document.addEventListener("mousedown", handlePointerDown);
+
     return () => {
-      window.removeEventListener("click", handleGlobalClick);
+      window.removeEventListener("scroll", handleDismiss, { capture: true });
+      window.removeEventListener("resize", handleDismiss);
+      document.removeEventListener("mousedown", handlePointerDown);
     };
-  }, [openMenuId]);
+  }, [activeMenu]);
 
   const fetchJobs = async () => {
     try {
@@ -154,8 +179,62 @@ export const JobListView: React.FC<JobListViewProps> = ({
     try {
       await api.jobs.delete(job.id);
       setJobs((prev) => prev.filter((j) => j.id !== job.id));
+      setSelectedJobIds((prev) => {
+        if (prev.has(job.id)) {
+          const next = new Set(prev);
+          next.delete(job.id);
+          return next;
+        }
+        return prev;
+      });
     } catch {
       alert("Nie udało się usunąć oferty.");
+    }
+  };
+
+  const handleBatchStatusUpdate = async () => {
+    if (selectedJobIds.size === 0) return;
+    try {
+      setIsBatchProcessing(true);
+      const ids = Array.from(selectedJobIds);
+      await api.jobs.batchUpdateStatus(ids, bulkStatus);
+      setJobs((prev) =>
+        prev.map((j) => (selectedJobIds.has(j.id) ? { ...j, status: bulkStatus } : j))
+      );
+      setSelectedJobIds(new Set());
+    } catch {
+      alert("Nie udało się zaktualizować statusu zaznaczonych ofert.");
+    } finally {
+      setIsBatchProcessing(false);
+    }
+  };
+
+  const handleBatchDelete = async () => {
+    if (selectedJobIds.size === 0) return;
+    const count = selectedJobIds.size;
+    if (
+      !confirm(
+        `Czy na pewno chcesz usunąć ${count} ${
+          count === 1
+            ? "zaznaczoną ofertę"
+            : count < 5
+            ? "zaznaczone oferty"
+            : "zaznaczonych ofert"
+        }? Ta operacja jest nieodwracalna.`
+      )
+    ) {
+      return;
+    }
+    try {
+      setIsBatchProcessing(true);
+      const ids = Array.from(selectedJobIds);
+      await api.jobs.batchDelete(ids);
+      setJobs((prev) => prev.filter((j) => !selectedJobIds.has(j.id)));
+      setSelectedJobIds(new Set());
+    } catch {
+      alert("Nie udało się usunąć zaznaczonych ofert.");
+    } finally {
+      setIsBatchProcessing(false);
     }
   };
 
@@ -293,6 +372,50 @@ export const JobListView: React.FC<JobListViewProps> = ({
       });
   }, [jobs, searchTerm, workModelFilter, statusFilter, sortField, sortDirection]);
 
+  const visibleJobIds = useMemo(
+    () => filteredAndSortedJobs.map((j) => j.id),
+    [filteredAndSortedJobs]
+  );
+
+  const allVisibleSelected =
+    visibleJobIds.length > 0 && visibleJobIds.every((id) => selectedJobIds.has(id));
+  const someVisibleSelected =
+    visibleJobIds.some((id) => selectedJobIds.has(id)) && !allVisibleSelected;
+
+  useEffect(() => {
+    if (masterCheckboxRef.current) {
+      masterCheckboxRef.current.indeterminate = someVisibleSelected;
+    }
+  }, [someVisibleSelected]);
+
+  const handleToggleSelectAll = () => {
+    setSelectedJobIds((prev) => {
+      const next = new Set(prev);
+      if (allVisibleSelected) {
+        visibleJobIds.forEach((id) => next.delete(id));
+      } else {
+        visibleJobIds.forEach((id) => next.add(id));
+      }
+      return next;
+    });
+  };
+
+  const handleToggleSelectJob = (
+    jobId: string,
+    e: React.MouseEvent | React.ChangeEvent
+  ) => {
+    e.stopPropagation();
+    setSelectedJobIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(jobId)) {
+        next.delete(jobId);
+      } else {
+        next.add(jobId);
+      }
+      return next;
+    });
+  };
+
   const renderSortIndicator = (field: SortField) => {
     if (sortField !== field) {
       return <ArrowUpDown className="h-3.5 w-3.5 text-slate-300 group-hover:text-slate-500" />;
@@ -404,12 +527,102 @@ export const JobListView: React.FC<JobListViewProps> = ({
         )}
       </div>
 
+      {/* Bulk Actions Bar */}
+      {selectedJobIds.size > 0 && (
+        <div className="rounded-xl border border-blue-200 bg-blue-50/90 p-3 shadow-xs dark:border-blue-900/60 dark:bg-blue-950/40 flex flex-wrap items-center justify-between gap-3 animate-in fade-in slide-in-from-top-2 duration-150">
+          <div className="flex items-center gap-2.5">
+            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-blue-600 text-xs font-bold text-white shadow-xs">
+              {selectedJobIds.size}
+            </span>
+            <span className="text-xs font-semibold text-blue-950 dark:text-blue-100">
+              Zaznaczono: {selectedJobIds.size}{" "}
+              {selectedJobIds.size === 1
+                ? "ofertę"
+                : selectedJobIds.size < 5
+                ? "oferty"
+                : "ofert"}
+              {visibleJobIds.length > 0 && (
+                <span className="font-normal text-blue-700 dark:text-blue-300 ml-1">
+                  (z {visibleJobIds.length} widocznych)
+                </span>
+              )}
+            </span>
+            <button
+              type="button"
+              onClick={() => setSelectedJobIds(new Set())}
+              disabled={isBatchProcessing}
+              className="text-xs text-blue-600 dark:text-blue-400 hover:underline font-medium ml-2 disabled:opacity-50 cursor-pointer"
+            >
+              Odznacz wszystkie
+            </button>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="flex items-center gap-1.5">
+              <span className="text-xs font-medium text-slate-700 dark:text-slate-300 hidden sm:inline">
+                Zmień status:
+              </span>
+              <select
+                value={bulkStatus}
+                onChange={(e) => setBulkStatus(e.target.value as JobStatusType)}
+                disabled={isBatchProcessing}
+                className="h-8 rounded-lg border border-slate-300 bg-white px-2.5 py-1 text-xs text-slate-800 shadow-2xs dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:opacity-50"
+              >
+                <option value="inbox">Do przetworzenia</option>
+                <option value="ready">Gotowe do aplikacji</option>
+                <option value="applied">Zaaplikowano</option>
+                <option value="interview">Rozmowy</option>
+                <option value="offer">Oferta</option>
+                <option value="rejected">Odrzucone</option>
+              </select>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={handleBatchStatusUpdate}
+                isLoading={isBatchProcessing}
+                disabled={isBatchProcessing}
+                className="h-8 text-xs bg-white dark:bg-slate-800"
+              >
+                Zastosuj status
+              </Button>
+            </div>
+
+            <div className="h-4 w-px bg-blue-200 dark:bg-blue-800/80 mx-1 hidden sm:block" />
+
+            <Button
+              size="sm"
+              variant="destructive"
+              onClick={handleBatchDelete}
+              isLoading={isBatchProcessing}
+              disabled={isBatchProcessing}
+              className="h-8 text-xs gap-1.5"
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+              Usuń zaznaczone ({selectedJobIds.size})
+            </Button>
+          </div>
+        </div>
+      )}
+
       {/* Main List Container */}
       <div className="rounded-xl border border-slate-200 bg-white shadow-xs dark:border-slate-800 dark:bg-slate-900 overflow-hidden">
         <div className="overflow-x-auto min-w-full">
-          <div className="md:min-w-[920px]">
+          <div className="md:min-w-[960px]">
             {/* Table / List Header */}
-            <div className="bg-slate-50 border-b border-slate-200 px-6 py-3.5 hidden md:grid md:grid-cols-[minmax(50px,0.5fr)_minmax(180px,2.5fr)_minmax(110px,1.4fr)_minmax(120px,1.4fr)_minmax(95px,1.1fr)_minmax(110px,1.3fr)_minmax(130px,1.6fr)] gap-4 text-xs font-semibold text-slate-600 select-none dark:bg-slate-800/80 dark:border-slate-800 dark:text-slate-300">
+            <div className="bg-slate-50 border-b border-slate-200 px-6 py-3.5 hidden md:grid md:grid-cols-[40px_minmax(50px,0.5fr)_minmax(180px,2.5fr)_minmax(110px,1.4fr)_minmax(120px,1.4fr)_minmax(95px,1.1fr)_minmax(110px,1.3fr)_minmax(130px,1.6fr)] gap-4 text-xs font-semibold text-slate-600 select-none dark:bg-slate-800/80 dark:border-slate-800 dark:text-slate-300">
+              {/* Checkbox (zaznacz wszystkie) */}
+              <div className="flex items-center justify-center">
+                <input
+                  ref={masterCheckboxRef}
+                  type="checkbox"
+                  checked={allVisibleSelected}
+                  onChange={handleToggleSelectAll}
+                  className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 dark:border-slate-700 dark:bg-slate-800 dark:ring-offset-slate-900 cursor-pointer"
+                  aria-label="Zaznacz wszystkie widoczne oferty"
+                  title="Zaznacz wszystkie widoczne oferty"
+                />
+              </div>
+
               {/* Dodano (Sortable, narrow, on the far left) */}
               <div
                 onClick={() => handleToggleSort("created_at")}
@@ -487,7 +700,7 @@ export const JobListView: React.FC<JobListViewProps> = ({
               </div>
             ) : (
               <div className="divide-y divide-slate-100 dark:divide-slate-800">
-                {filteredAndSortedJobs.map((job, index) => {
+                {filteredAndSortedJobs.map((job) => {
                   const salaryText = formatSalary(
                     job.salary_min,
                     job.salary_max,
@@ -496,15 +709,37 @@ export const JobListView: React.FC<JobListViewProps> = ({
                   const deadlineInfo = formatDeadline(job.application_deadline);
                   const createdDateInfo = formatRelativeCreatedDate(job.created_at);
                   const isReparsing = reparsingIds.has(job.id);
-                  const isMenuOpen = openMenuId === job.id;
-                  const isNearBottom = index >= Math.max(1, filteredAndSortedJobs.length - 3);
+                  const isSelected = selectedJobIds.has(job.id);
+                  const isMenuOpen = activeMenu?.job.id === job.id;
 
                   return (
                     <div
                       key={job.id}
                       onClick={() => onSelectJob(job)}
-                      className="group px-6 py-4 hover:bg-slate-50/80 dark:hover:bg-slate-800/60 transition-colors cursor-pointer grid grid-cols-1 md:grid-cols-[minmax(50px,0.5fr)_minmax(180px,2.5fr)_minmax(110px,1.4fr)_minmax(120px,1.4fr)_minmax(95px,1.1fr)_minmax(110px,1.3fr)_minmax(130px,1.6fr)] gap-3 md:gap-4 items-center"
+                      className={cn(
+                        "group px-6 py-4 hover:bg-slate-50/80 dark:hover:bg-slate-800/60 transition-colors cursor-pointer grid grid-cols-1 md:grid-cols-[40px_minmax(50px,0.5fr)_minmax(180px,2.5fr)_minmax(110px,1.4fr)_minmax(120px,1.4fr)_minmax(95px,1.1fr)_minmax(110px,1.3fr)_minmax(130px,1.6fr)] gap-3 md:gap-4 items-center",
+                        isSelected && "bg-blue-50/40 dark:bg-blue-950/20"
+                      )}
                     >
+                      {/* Checkbox (Kolumna 1) */}
+                      <div
+                        className="flex items-center justify-start md:justify-center"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <label className="flex items-center gap-2 cursor-pointer select-none">
+                          <input
+                            type="checkbox"
+                            checked={isSelected}
+                            onChange={(e) => handleToggleSelectJob(job.id, e)}
+                            className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 dark:border-slate-700 dark:bg-slate-800 dark:ring-offset-slate-900 cursor-pointer"
+                            aria-label={`Wybierz ofertę ${job.role_title || ""}`}
+                          />
+                          <span className="md:hidden text-xs font-medium text-slate-600 dark:text-slate-400">
+                            Zaznacz ofertę
+                          </span>
+                        </label>
+                      </div>
+
                       {/* Dodano (narrow) - po lewej stronie */}
                       <div className="flex items-center justify-center text-center text-xs text-slate-500 dark:text-slate-400">
                         {createdDateInfo ? (
@@ -621,126 +856,33 @@ export const JobListView: React.FC<JobListViewProps> = ({
                           )}
                         </div>
 
-                        {/* Actions Menu */}
+                        {/* Actions Menu Trigger */}
                         <div
-                          className="relative shrink-0 action-menu-container"
+                          className="relative shrink-0"
                           onClick={(e) => e.stopPropagation()}
                         >
                           <button
                             type="button"
-                            onClick={() => setOpenMenuId(isMenuOpen ? null : job.id)}
-                            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 dark:text-slate-500 dark:hover:text-slate-300 dark:hover:bg-slate-800 transition-colors"
+                            data-menu-trigger={job.id}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (activeMenu?.job.id === job.id) {
+                                setActiveMenu(null);
+                              } else {
+                                const rect = e.currentTarget.getBoundingClientRect();
+                                setActiveMenu({ job, rect });
+                              }
+                            }}
+                            className={cn(
+                              "p-1.5 rounded-lg transition-colors cursor-pointer",
+                              isMenuOpen
+                                ? "text-blue-600 bg-blue-50 dark:text-blue-400 dark:bg-slate-800"
+                                : "text-slate-400 hover:text-slate-700 hover:bg-slate-100 dark:text-slate-500 dark:hover:text-slate-300 dark:hover:bg-slate-800"
+                            )}
                             title="Opcje oferty"
                           >
                             <MoreVertical className="h-4 w-4" />
                           </button>
-
-                          {isMenuOpen && (
-                            <div
-                              className={`absolute right-0 ${
-                                isNearBottom ? "bottom-8" : "top-8"
-                              } z-50 w-48 rounded-xl border border-slate-200 bg-white py-1.5 shadow-xl dark:border-slate-800 dark:bg-slate-800`}
-                              onMouseLeave={() => setOpenMenuId(null)}
-                            >
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  setOpenMenuId(null);
-                                  onSelectJob(job);
-                                }}
-                                className="w-full px-3.5 py-2 text-left text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 flex items-center gap-2"
-                              >
-                                Szczegóły oferty
-                              </button>
-
-                              <div className="px-3.5 py-1 text-[10px] font-semibold uppercase text-slate-400 dark:text-slate-500">
-                                Zmień status
-                              </div>
-                              <div className="px-3.5 pb-2">
-                                <select
-                                  value={job.status}
-                                  onChange={(e) => {
-                                    setOpenMenuId(null);
-                                    handleStatusChange(
-                                      job,
-                                      e.target.value as JobStatusType
-                                    );
-                                  }}
-                                  className="w-full text-xs rounded border border-slate-200 bg-white p-1 text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
-                                >
-                                  <option value="inbox">Do przetworzenia</option>
-                                  <option value="ready">Gotowe do aplikacji</option>
-                                  <option value="applied">Zaaplikowano</option>
-                                  <option value="interview">Rozmowy</option>
-                                  <option value="offer">Oferta</option>
-                                  <option value="rejected">Odrzucone</option>
-                                </select>
-                              </div>
-
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  setOpenMenuId(null);
-                                  onGenerateCV(job);
-                                }}
-                                className="w-full px-3.5 py-2 text-left text-xs text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-slate-700 flex items-center gap-2 font-medium"
-                              >
-                                <Sparkles className="h-3.5 w-3.5" />
-                                Generuj CV
-                              </button>
-
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  setOpenMenuId(null);
-                                  handleReparse(job, "ai");
-                                }}
-                                className="w-full px-3.5 py-2 text-left text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 flex items-center gap-2"
-                              >
-                                <Sparkles className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400" />
-                                Parsuj przez AI
-                              </button>
-
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  setOpenMenuId(null);
-                                  handleReparse(job, "traditional");
-                                }}
-                                className="w-full px-3.5 py-2 text-left text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 flex items-center gap-2"
-                              >
-                                <Cpu className="h-3.5 w-3.5 text-slate-600 dark:text-slate-400" />
-                                Auto-parsuj tradycyjne
-                              </button>
-
-                              {job.source_url && (
-                                <a
-                                  href={normalizeJobOfferUrl(job.source_url)}
-                                  target="_blank"
-                                  rel="noreferrer"
-                                  className="w-full px-3.5 py-2 text-left text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 flex items-center gap-2"
-                                  onClick={() => setOpenMenuId(null)}
-                                >
-                                  <ExternalLink className="h-3.5 w-3.5 text-slate-400 dark:text-slate-500" />
-                                  Otwórz ogłoszenie
-                                </a>
-                              )}
-
-                              <div className="my-1 border-t border-slate-100 dark:border-slate-700" />
-
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  setOpenMenuId(null);
-                                  handleDelete(job);
-                                }}
-                                className="w-full px-3.5 py-2 text-left text-xs text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-slate-700 flex items-center gap-2"
-                              >
-                                <Trash2 className="h-3.5 w-3.5" />
-                                Usuń ofertę
-                              </button>
-                            </div>
-                          )}
                         </div>
                       </div>
                     </div>
@@ -761,6 +903,127 @@ export const JobListView: React.FC<JobListViewProps> = ({
           </span>
         </div>
       </div>
+
+      {/* Context Menu Portal (Rendered to document.body outside scroll container) */}
+      {activeMenu &&
+        createPortal(
+          <div
+            ref={menuRef}
+            style={{
+              position: "fixed",
+              right: `${Math.max(8, window.innerWidth - activeMenu.rect.right)}px`,
+              ...(window.innerHeight - activeMenu.rect.bottom < 280
+                ? { bottom: `${window.innerHeight - activeMenu.rect.top + 4}px` }
+                : { top: `${activeMenu.rect.bottom + 4}px` }),
+              zIndex: 9999,
+            }}
+            className="w-48 rounded-xl border border-slate-200 bg-white py-1.5 shadow-xl dark:border-slate-800 dark:bg-slate-800 animate-in fade-in zoom-in-95 duration-100"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              type="button"
+              onClick={() => {
+                const currentJob = activeMenu.job;
+                setActiveMenu(null);
+                onSelectJob(currentJob);
+              }}
+              className="w-full px-3.5 py-2 text-left text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 flex items-center gap-2 cursor-pointer"
+            >
+              Szczegóły oferty
+            </button>
+
+            <div className="px-3.5 py-1 text-[10px] font-semibold uppercase text-slate-400 dark:text-slate-500">
+              Zmień status
+            </div>
+            <div className="px-3.5 pb-2">
+              <select
+                value={activeMenu.job.status}
+                onChange={(e) => {
+                  const currentJob = activeMenu.job;
+                  const newStatus = e.target.value as JobStatusType;
+                  setActiveMenu(null);
+                  handleStatusChange(currentJob, newStatus);
+                }}
+                className="w-full text-xs rounded border border-slate-200 bg-white p-1 text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 cursor-pointer"
+              >
+                <option value="inbox">Do przetworzenia</option>
+                <option value="ready">Gotowe do aplikacji</option>
+                <option value="applied">Zaaplikowano</option>
+                <option value="interview">Rozmowy</option>
+                <option value="offer">Oferta</option>
+                <option value="rejected">Odrzucone</option>
+              </select>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => {
+                const currentJob = activeMenu.job;
+                setActiveMenu(null);
+                onGenerateCV(currentJob);
+              }}
+              className="w-full px-3.5 py-2 text-left text-xs text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-slate-700 flex items-center gap-2 font-medium cursor-pointer"
+            >
+              <Sparkles className="h-3.5 w-3.5" />
+              Generuj CV
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                const currentJob = activeMenu.job;
+                setActiveMenu(null);
+                handleReparse(currentJob, "ai");
+              }}
+              className="w-full px-3.5 py-2 text-left text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 flex items-center gap-2 cursor-pointer"
+            >
+              <Sparkles className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400" />
+              Parsuj przez AI
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                const currentJob = activeMenu.job;
+                setActiveMenu(null);
+                handleReparse(currentJob, "traditional");
+              }}
+              className="w-full px-3.5 py-2 text-left text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 flex items-center gap-2 cursor-pointer"
+            >
+              <Cpu className="h-3.5 w-3.5 text-slate-600 dark:text-slate-400" />
+              Auto-parsuj tradycyjne
+            </button>
+
+            {activeMenu.job.source_url && (
+              <a
+                href={normalizeJobOfferUrl(activeMenu.job.source_url)}
+                target="_blank"
+                rel="noreferrer"
+                className="w-full px-3.5 py-2 text-left text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 flex items-center gap-2 cursor-pointer"
+                onClick={() => setActiveMenu(null)}
+              >
+                <ExternalLink className="h-3.5 w-3.5 text-slate-400 dark:text-slate-500" />
+                Otwórz ogłoszenie
+              </a>
+            )}
+
+            <div className="my-1 border-t border-slate-100 dark:border-slate-700" />
+
+            <button
+              type="button"
+              onClick={() => {
+                const currentJob = activeMenu.job;
+                setActiveMenu(null);
+                handleDelete(currentJob);
+              }}
+              className="w-full px-3.5 py-2 text-left text-xs text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-slate-700 flex items-center gap-2 cursor-pointer"
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+              Usuń ofertę
+            </button>
+          </div>,
+          document.body
+        )}
     </div>
   );
 };

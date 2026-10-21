@@ -320,6 +320,19 @@ export interface JobOfferRead extends JobOfferBase {
   updated_at: string; // ISO 8601
 }
 
+export interface JobBatchStatusUpdate {
+  job_ids: string[];
+  status: JobStatusType;
+}
+
+export interface JobBatchDelete {
+  job_ids: string[];
+}
+
+export interface JobBatchResult {
+  affected_count: number;
+}
+
 // ============================================================================
 // Recruitment Event Schemas
 // ============================================================================

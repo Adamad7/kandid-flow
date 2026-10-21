@@ -4,12 +4,15 @@ import logging
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from sqlalchemy import or_, select
+from sqlalchemy import delete, func, or_, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db_session
 from app.models.job import JobOffer
 from app.schemas.job import (
+    JobBatchDelete,
+    JobBatchResult,
+    JobBatchStatusUpdate,
     JobLanguageType,
     JobOfferRead,
     JobOfferUpdate,
@@ -71,6 +74,66 @@ async def list_jobs(
     result = await db.execute(stmt)
     records = result.scalars().all()
     return [JobOfferRead.model_validate(rec) for rec in records]
+
+
+@router.post(
+    "/batch/status",
+    response_model=JobBatchResult,
+    summary="Batch update status for multiple job offers",
+)
+async def batch_update_job_status(
+    payload: JobBatchStatusUpdate,
+    db: AsyncSession = Depends(get_db_session),
+) -> JobBatchResult:
+    """Batch update pipeline status for specified job offer UUIDs."""
+    stmt = (
+        update(JobOffer)
+        .where(JobOffer.id.in_(payload.job_ids))
+        .values(status=payload.status, updated_at=func.now())
+        .returning(JobOffer.id)
+    )
+    result = await db.execute(stmt)
+    updated_ids = list(result.scalars().all())
+    await db.commit()
+
+    for job_id in updated_ids:
+        await events_broadcaster.broadcast(
+            "job_updated",
+            RealtimeEventPayload(
+                job_id=job_id,
+                status=payload.status,
+                message="Masowo zaktualizowano status oferty",
+            ),
+        )
+
+    return JobBatchResult(affected_count=len(updated_ids))
+
+
+@router.post(
+    "/batch/delete",
+    response_model=JobBatchResult,
+    summary="Batch delete multiple job offers",
+)
+async def batch_delete_jobs(
+    payload: JobBatchDelete,
+    db: AsyncSession = Depends(get_db_session),
+) -> JobBatchResult:
+    """Batch delete specified job offers and cascading child records."""
+    stmt = delete(JobOffer).where(JobOffer.id.in_(payload.job_ids)).returning(JobOffer.id)
+    result = await db.execute(stmt)
+    deleted_ids = list(result.scalars().all())
+    await db.commit()
+
+    for job_id in deleted_ids:
+        await events_broadcaster.broadcast(
+            "job_deleted",
+            RealtimeEventPayload(
+                job_id=job_id,
+                message="Masowo usunięto ofertę",
+            ),
+        )
+
+    return JobBatchResult(affected_count=len(deleted_ids))
 
 
 @router.get(

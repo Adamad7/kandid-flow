@@ -23,6 +23,7 @@ import type {
   ExtractedJobPayload,
   InboxCheckResponse,
   InboxResponse,
+  JobBatchResult,
   JobLanguageType,
   JobOfferRead,
   JobOfferUpdate,
@@ -137,6 +138,20 @@ export const api = {
     delete: (jobId: string): Promise<void> => {
       return request<void>(`/api/v1/jobs/${jobId}`, {
         method: "DELETE",
+      });
+    },
+
+    batchUpdateStatus: (jobIds: string[], status: JobStatusType): Promise<JobBatchResult> => {
+      return request<JobBatchResult>("/api/v1/jobs/batch/status", {
+        method: "POST",
+        body: JSON.stringify({ job_ids: jobIds, status }),
+      });
+    },
+
+    batchDelete: (jobIds: string[]): Promise<JobBatchResult> => {
+      return request<JobBatchResult>("/api/v1/jobs/batch/delete", {
+        method: "POST",
+        body: JSON.stringify({ job_ids: jobIds }),
       });
     },
   },

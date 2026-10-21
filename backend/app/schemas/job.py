@@ -165,3 +165,24 @@ class JobOfferRead(JobOfferBase):
     updated_at: datetime = Field(..., description="Last update timestamp")
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class JobBatchStatusUpdate(BaseModel):
+    """Schema for batch status update of multiple job offers."""
+
+    job_ids: list[UUID] = Field(..., min_length=1, description="List of job offer UUIDs to update")
+    status: JobStatusType = Field(..., description="Target status for all specified offers")
+
+
+class JobBatchDelete(BaseModel):
+    """Schema for batch deletion of multiple job offers."""
+
+    job_ids: list[UUID] = Field(..., min_length=1, description="List of job offer UUIDs to delete")
+
+
+class JobBatchResult(BaseModel):
+    """Response schema summarizing batch operation outcome."""
+
+    affected_count: int = Field(
+        ..., description="Number of job offers successfully updated or deleted"
+    )
