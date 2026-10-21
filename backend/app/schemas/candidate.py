@@ -182,6 +182,16 @@ class CustomSectionBlock(BaseModel):
     model_config = ConfigDict(extra="ignore")
 
 
+class PageBreakSectionBlock(BaseModel):
+    """Page break separator block between resume sections."""
+
+    id: str = Field(default="pagebreak", description="Section identifier")
+    type: Literal["pagebreak"] = Field(default="pagebreak", description="Section discriminator")
+    title: str = Field(default="Separator stron", description="Header title")
+
+    model_config = ConfigDict(extra="ignore")
+
+
 CandidateSectionBlock = (
     SummarySectionBlock
     | SkillsSectionBlock
@@ -190,8 +200,10 @@ CandidateSectionBlock = (
     | EducationSectionBlock
     | CertificatesSectionBlock
     | ClauseSectionBlock
+    | PageBreakSectionBlock
     | CustomSectionBlock
 )
+
 
 
 SectionGenerationMode = Literal["off", "raw", "ai"]

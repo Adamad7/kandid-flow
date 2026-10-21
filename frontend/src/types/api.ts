@@ -206,6 +206,12 @@ export interface CustomSectionBlock {
   items: string[];
 }
 
+export interface PageBreakSectionBlock {
+  id: string;
+  type: "pagebreak";
+  title?: string;
+}
+
 export type CandidateSectionBlock =
   | SummarySectionBlock
   | SkillsSectionBlock
@@ -214,6 +220,7 @@ export type CandidateSectionBlock =
   | EducationSectionBlock
   | CertificatesSectionBlock
   | ClauseSectionBlock
+  | PageBreakSectionBlock
   | CustomSectionBlock;
 
 export type SectionGenerationMode = "off" | "raw" | "ai";

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import {
   ArrowLeft,
   Sparkles,
@@ -17,6 +17,7 @@ import {
   Trash2,
   ChevronUp,
   ChevronDown,
+  SplitSquareVertical,
 } from "lucide-react";
 import { api } from "../../lib/api";
 import type {
@@ -24,6 +25,7 @@ import type {
   CVRefineBlockRequest,
   CVVersionRead,
   CVVersionUpdate,
+  CandidateContactInfo,
   ExperienceItem,
   ExperienceSectionBlock,
   JobOfferRead,
@@ -38,6 +40,7 @@ import type {
   CertificateItem,
   CustomSectionBlock,
   CandidateSectionBlock,
+  PageBreakSectionBlock,
 } from "../../types";
 import { Button } from "../ui/Button";
 import { Input } from "../ui/Input";
@@ -45,6 +48,58 @@ import { Textarea } from "../ui/Textarea";
 import { Modal } from "../ui/Modal";
 import { DateInput } from "../ui/DateInput";
 import { CVLivePreview } from "./CVLivePreview";
+
+interface CommaSeparatedInputProps {
+  label?: string;
+  value: string[];
+  onChange: (values: string[]) => void;
+  placeholder?: string;
+  className?: string;
+}
+
+const CommaSeparatedInput: React.FC<CommaSeparatedInputProps> = ({
+  label,
+  value,
+  onChange,
+  placeholder,
+  className,
+}) => {
+  const [text, setText] = useState(() => (value || []).join(", "));
+  const isFocusedRef = useRef(false);
+
+  useEffect(() => {
+    if (!isFocusedRef.current) {
+      setText((value || []).join(", "));
+    }
+  }, [value]);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    setText(val);
+    const parsed = val
+      .split(",")
+      .map((s) => s.trim())
+      .filter((s) => s.length > 0);
+    onChange(parsed);
+  };
+
+  return (
+    <Input
+      label={label}
+      value={text}
+      onFocus={() => {
+        isFocusedRef.current = true;
+      }}
+      onBlur={() => {
+        isFocusedRef.current = false;
+        setText((value || []).join(", "));
+      }}
+      onChange={handleChange}
+      placeholder={placeholder}
+      className={className}
+    />
+  );
+};
 
 interface CVEditorProps {
   initialVersion: CVVersionRead;
@@ -213,7 +268,7 @@ export const CVEditor: React.FC<CVEditorProps> = ({
   };
 
   // ==========================================
-  // Section Reordering Handlers
+  // Section & Page Break Reordering Handlers
   // ==========================================
   const moveSectionUp = (index: number) => {
     if (index <= 0) return;
@@ -235,6 +290,222 @@ export const CVEditor: React.FC<CVEditorProps> = ({
       newSections[index] = temp;
       return { ...prev, sections: newSections };
     });
+  };
+
+  const addPageBreakAt = (index: number) => {
+    const newPageBreak: PageBreakSectionBlock = {
+      id: `pagebreak_${Date.now()}`,
+      type: "pagebreak",
+      title: "Separator stron",
+    };
+    setLayoutSchema((prev) => {
+      const newSections = [...prev.sections];
+      newSections.splice(index, 0, newPageBreak);
+      return { ...prev, sections: newSections };
+    });
+  };
+
+  const removePageBreakAt = (index: number) => {
+    setLayoutSchema((prev) => {
+      const newSections = prev.sections.filter((_, i) => i !== index);
+      return { ...prev, sections: newSections };
+    });
+  };
+
+  const updateContactInfo = (
+    field: keyof CandidateContactInfo,
+    value: string
+  ) => {
+    setLayoutSchema((prev) => ({
+      ...prev,
+      contact_info: {
+        ...(prev.contact_info || {}),
+        [field]: value || null,
+      },
+    }));
+  };
+
+  // ==========================================
+  // Item-level Reordering Handlers (Inside Sections)
+  // ==========================================
+  const moveExperienceItemUp = (sectionId: string, index: number) => {
+    if (index <= 0) return;
+    setLayoutSchema((prev) => ({
+      ...prev,
+      sections: prev.sections.map((sec) => {
+        if (sec.id === sectionId && sec.type === "experience") {
+          const exp = sec as ExperienceSectionBlock;
+          const items = [...(exp.items || [])];
+          const temp = items[index - 1];
+          items[index - 1] = items[index];
+          items[index] = temp;
+          return { ...exp, items };
+        }
+        return sec;
+      }),
+    }));
+  };
+
+  const moveExperienceItemDown = (sectionId: string, index: number) => {
+    setLayoutSchema((prev) => ({
+      ...prev,
+      sections: prev.sections.map((sec) => {
+        if (sec.id === sectionId && sec.type === "experience") {
+          const exp = sec as ExperienceSectionBlock;
+          const items = [...(exp.items || [])];
+          if (index >= items.length - 1) return sec;
+          const temp = items[index + 1];
+          items[index + 1] = items[index];
+          items[index] = temp;
+          return { ...exp, items };
+        }
+        return sec;
+      }),
+    }));
+  };
+
+  const moveProjectItemUp = (sectionId: string, index: number) => {
+    if (index <= 0) return;
+    setLayoutSchema((prev) => ({
+      ...prev,
+      sections: prev.sections.map((sec) => {
+        if (sec.id === sectionId && sec.type === "projects") {
+          const pr = sec as ProjectsSectionBlock;
+          const items = [...(pr.items || [])];
+          const temp = items[index - 1];
+          items[index - 1] = items[index];
+          items[index] = temp;
+          return { ...pr, items };
+        }
+        return sec;
+      }),
+    }));
+  };
+
+  const moveProjectItemDown = (sectionId: string, index: number) => {
+    setLayoutSchema((prev) => ({
+      ...prev,
+      sections: prev.sections.map((sec) => {
+        if (sec.id === sectionId && sec.type === "projects") {
+          const pr = sec as ProjectsSectionBlock;
+          const items = [...(pr.items || [])];
+          if (index >= items.length - 1) return sec;
+          const temp = items[index + 1];
+          items[index + 1] = items[index];
+          items[index] = temp;
+          return { ...pr, items };
+        }
+        return sec;
+      }),
+    }));
+  };
+
+  const moveEducationItemUp = (sectionId: string, index: number) => {
+    if (index <= 0) return;
+    setLayoutSchema((prev) => ({
+      ...prev,
+      sections: prev.sections.map((sec) => {
+        if (sec.id === sectionId && sec.type === "education") {
+          const edu = sec as EducationSectionBlock;
+          const items = [...(edu.items || [])];
+          const temp = items[index - 1];
+          items[index - 1] = items[index];
+          items[index] = temp;
+          return { ...edu, items };
+        }
+        return sec;
+      }),
+    }));
+  };
+
+  const moveEducationItemDown = (sectionId: string, index: number) => {
+    setLayoutSchema((prev) => ({
+      ...prev,
+      sections: prev.sections.map((sec) => {
+        if (sec.id === sectionId && sec.type === "education") {
+          const edu = sec as EducationSectionBlock;
+          const items = [...(edu.items || [])];
+          if (index >= items.length - 1) return sec;
+          const temp = items[index + 1];
+          items[index + 1] = items[index];
+          items[index] = temp;
+          return { ...edu, items };
+        }
+        return sec;
+      }),
+    }));
+  };
+
+  const moveCertificateItemUp = (sectionId: string, index: number) => {
+    if (index <= 0) return;
+    setLayoutSchema((prev) => ({
+      ...prev,
+      sections: prev.sections.map((sec) => {
+        if (sec.id === sectionId && sec.type === "certificates") {
+          const cert = sec as CertificatesSectionBlock;
+          const items = [...(cert.items || [])];
+          const temp = items[index - 1];
+          items[index - 1] = items[index];
+          items[index] = temp;
+          return { ...cert, items };
+        }
+        return sec;
+      }),
+    }));
+  };
+
+  const moveCertificateItemDown = (sectionId: string, index: number) => {
+    setLayoutSchema((prev) => ({
+      ...prev,
+      sections: prev.sections.map((sec) => {
+        if (sec.id === sectionId && sec.type === "certificates") {
+          const cert = sec as CertificatesSectionBlock;
+          const items = [...(cert.items || [])];
+          if (index >= items.length - 1) return sec;
+          const temp = items[index + 1];
+          items[index + 1] = items[index];
+          items[index] = temp;
+          return { ...cert, items };
+        }
+        return sec;
+      }),
+    }));
+  };
+
+  const moveSkillsCategoryUp = (sectionId: string, index: number) => {
+    if (index <= 0) return;
+    setLayoutSchema((prev) => ({
+      ...prev,
+      sections: prev.sections.map((sec) => {
+        if (sec.id === sectionId && sec.type === "skills") {
+          const sk = sec as SkillsSectionBlock;
+          const items = [...(sk.items || [])];
+          const temp = items[index - 1];
+          items[index - 1] = items[index];
+          items[index] = temp;
+          return { ...sk, items };
+        }
+        return sec;
+      }),
+    }));
+  };
+
+  const moveSkillsCategoryDown = (sectionId: string, index: number) => {
+    setLayoutSchema((prev) => ({
+      ...prev,
+      sections: prev.sections.map((sec) => {
+        if (sec.id === sectionId && sec.type === "skills") {
+          const sk = sec as SkillsSectionBlock;
+          const items = [...(sk.items || [])];
+          if (index >= items.length - 1) return sec;
+          const temp = items[index + 1];
+          items[index + 1] = items[index];
+          items[index] = temp;
+          return { ...sk, items };
+        }
+        return sec;
+      }),
+    }));
   };
 
   // ==========================================
@@ -612,16 +883,32 @@ export const CVEditor: React.FC<CVEditorProps> = ({
               >
                 <div className="flex items-center justify-between font-semibold text-slate-800 dark:text-slate-200">
                   <span>{cat.category}:</span>
+                  <div className="flex items-center gap-1">
+                    <button
+                      type="button"
+                      onClick={() => moveSkillsCategoryUp(sec.id, catIdx)}
+                      disabled={catIdx === 0}
+                      className="p-1 rounded text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 disabled:opacity-20"
+                      title="Przesuń kategorię w górę"
+                    >
+                      <ChevronUp className="h-3 w-3" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => moveSkillsCategoryDown(sec.id, catIdx)}
+                      disabled={catIdx === (skillsSec.items || []).length - 1}
+                      className="p-1 rounded text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 disabled:opacity-20"
+                      title="Przesuń kategorię w dół"
+                    >
+                      <ChevronDown className="h-3 w-3" />
+                    </button>
+                  </div>
                 </div>
-                <Input
-                  value={cat.skills.join(", ")}
-                  onChange={(e) => {
-                    const newSkills = e.target.value
-                      .split(",")
-                      .map((s) => s.trim())
-                      .filter((s) => s.length > 0);
-                    updateSkillsCategory(sec.id, catIdx, newSkills);
-                  }}
+                <CommaSeparatedInput
+                  value={cat.skills}
+                  onChange={(newSkills) =>
+                    updateSkillsCategory(sec.id, catIdx, newSkills)
+                  }
                   placeholder="np. React, TypeScript, Tailwind"
                 />
               </div>
@@ -643,14 +930,34 @@ export const CVEditor: React.FC<CVEditorProps> = ({
                   <span className="font-semibold text-slate-800 dark:text-slate-200">
                     Stanowisko #{idx + 1}
                   </span>
-                  <button
-                    type="button"
-                    onClick={() => removeExperienceItem(sec.id, idx)}
-                    className="text-slate-400 dark:text-slate-500 hover:text-rose-600 dark:hover:text-rose-400 p-1"
-                    title="Usuń stanowisko"
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </button>
+                  <div className="flex items-center gap-1">
+                    <button
+                      type="button"
+                      onClick={() => moveExperienceItemUp(sec.id, idx)}
+                      disabled={idx === 0}
+                      className="p-1 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 disabled:opacity-20 rounded"
+                      title="Przesuń stanowisko w górę"
+                    >
+                      <ChevronUp className="h-3.5 w-3.5" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => moveExperienceItemDown(sec.id, idx)}
+                      disabled={idx === (expSec.items || []).length - 1}
+                      className="p-1 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 disabled:opacity-20 rounded"
+                      title="Przesuń stanowisko w dół"
+                    >
+                      <ChevronDown className="h-3.5 w-3.5" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => removeExperienceItem(sec.id, idx)}
+                      className="text-slate-400 dark:text-slate-500 hover:text-rose-600 dark:hover:text-rose-400 p-1"
+                      title="Usuń stanowisko"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -740,14 +1047,34 @@ export const CVEditor: React.FC<CVEditorProps> = ({
                   <span className="font-semibold text-slate-800 dark:text-slate-200">
                     Projekt #{idx + 1}
                   </span>
-                  <button
-                    type="button"
-                    onClick={() => removeProjectItem(sec.id, idx)}
-                    className="text-slate-400 dark:text-slate-500 hover:text-rose-600 dark:hover:text-rose-400 p-1"
-                    title="Usuń projekt"
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </button>
+                  <div className="flex items-center gap-1">
+                    <button
+                      type="button"
+                      onClick={() => moveProjectItemUp(sec.id, idx)}
+                      disabled={idx === 0}
+                      className="p-1 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 disabled:opacity-20 rounded"
+                      title="Przesuń projekt w górę"
+                    >
+                      <ChevronUp className="h-3.5 w-3.5" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => moveProjectItemDown(sec.id, idx)}
+                      disabled={idx === (prSec.items || []).length - 1}
+                      className="p-1 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 disabled:opacity-20 rounded"
+                      title="Przesuń projekt w dół"
+                    >
+                      <ChevronDown className="h-3.5 w-3.5" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => removeProjectItem(sec.id, idx)}
+                      className="text-slate-400 dark:text-slate-500 hover:text-rose-600 dark:hover:text-rose-400 p-1"
+                      title="Usuń projekt"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -802,16 +1129,12 @@ export const CVEditor: React.FC<CVEditorProps> = ({
                   className="text-xs"
                 />
 
-                <Input
+                <CommaSeparatedInput
                   label="Technologie (rozdzielone przecinkami)"
-                  value={proj.technologies.join(", ")}
-                  onChange={(e) => {
-                    const techs = e.target.value
-                      .split(",")
-                      .map((t) => t.trim())
-                      .filter((t) => t.length > 0);
-                    updateProjectItem(sec.id, idx, "technologies", techs);
-                  }}
+                  value={proj.technologies}
+                  onChange={(techs) =>
+                    updateProjectItem(sec.id, idx, "technologies", techs)
+                  }
                   placeholder="np. React, TypeScript, Tailwind"
                 />
               </div>
@@ -845,14 +1168,34 @@ export const CVEditor: React.FC<CVEditorProps> = ({
                   <span className="font-semibold text-slate-800 dark:text-slate-200">
                     Edukacja #{idx + 1}
                   </span>
-                  <button
-                    type="button"
-                    onClick={() => removeEducationItem(sec.id, idx)}
-                    className="text-slate-400 dark:text-slate-500 hover:text-rose-600 dark:hover:text-rose-400 p-1"
-                    title="Usuń wpis edukacji"
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </button>
+                  <div className="flex items-center gap-1">
+                    <button
+                      type="button"
+                      onClick={() => moveEducationItemUp(sec.id, idx)}
+                      disabled={idx === 0}
+                      className="p-1 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 disabled:opacity-20 rounded"
+                      title="Przesuń edukację w górę"
+                    >
+                      <ChevronUp className="h-3.5 w-3.5" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => moveEducationItemDown(sec.id, idx)}
+                      disabled={idx === (eduSec.items || []).length - 1}
+                      className="p-1 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 disabled:opacity-20 rounded"
+                      title="Przesuń edukację w dół"
+                    >
+                      <ChevronDown className="h-3.5 w-3.5" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => removeEducationItem(sec.id, idx)}
+                      className="text-slate-400 dark:text-slate-500 hover:text-rose-600 dark:hover:text-rose-400 p-1"
+                      title="Usuń wpis edukacji"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -926,14 +1269,34 @@ export const CVEditor: React.FC<CVEditorProps> = ({
                   <span className="font-semibold text-slate-800 dark:text-slate-200">
                     Certyfikat #{idx + 1}
                   </span>
-                  <button
-                    type="button"
-                    onClick={() => removeCertificateItem(sec.id, idx)}
-                    className="text-slate-400 dark:text-slate-500 hover:text-rose-600 dark:hover:text-rose-400 p-1"
-                    title="Usuń certyfikat"
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </button>
+                  <div className="flex items-center gap-1">
+                    <button
+                      type="button"
+                      onClick={() => moveCertificateItemUp(sec.id, idx)}
+                      disabled={idx === 0}
+                      className="p-1 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 disabled:opacity-20 rounded"
+                      title="Przesuń certyfikat w górę"
+                    >
+                      <ChevronUp className="h-3.5 w-3.5" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => moveCertificateItemDown(sec.id, idx)}
+                      disabled={idx === (certSec.items || []).length - 1}
+                      className="p-1 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 disabled:opacity-20 rounded"
+                      title="Przesuń certyfikat w dół"
+                    >
+                      <ChevronDown className="h-3.5 w-3.5" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => removeCertificateItem(sec.id, idx)}
+                      className="text-slate-400 dark:text-slate-500 hover:text-rose-600 dark:hover:text-rose-400 p-1"
+                      title="Usuń certyfikat"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -1125,12 +1488,12 @@ export const CVEditor: React.FC<CVEditorProps> = ({
             mobileTab === "preview" ? "hidden lg:block" : "block"
           }`}
         >
-          {/* Candidate Full Name and Basic Info */}
+          {/* Candidate Full Name and Contact Info */}
           <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-xs space-y-4 dark:border-slate-800 dark:bg-slate-900">
             <div className="flex items-center gap-2 border-b border-slate-100 dark:border-slate-800 pb-2.5">
               <User className="h-4 w-4 text-blue-600 dark:text-blue-400" />
               <h3 className="font-semibold text-sm text-slate-900 dark:text-slate-100">
-                Nagłówek dokumentu
+                Nagłówek dokumentu i dane kontaktowe
               </h3>
             </div>
             <Input
@@ -1140,10 +1503,77 @@ export const CVEditor: React.FC<CVEditorProps> = ({
                 setLayoutSchema({ ...layoutSchema, full_name: e.target.value })
               }
             />
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <Input
+                label="Adres e-mail"
+                type="email"
+                value={layoutSchema.contact_info?.email || ""}
+                onChange={(e) => updateContactInfo("email", e.target.value)}
+                placeholder="np. jan.kowalski@example.com"
+              />
+              <Input
+                label="Numer telefonu"
+                value={layoutSchema.contact_info?.phone || ""}
+                onChange={(e) => updateContactInfo("phone", e.target.value)}
+                placeholder="np. +48 500 600 700"
+              />
+              <Input
+                label="Lokalizacja"
+                value={layoutSchema.contact_info?.location || ""}
+                onChange={(e) => updateContactInfo("location", e.target.value)}
+                placeholder="np. Warszawa, Polska"
+              />
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <Input
+                label="Profil LinkedIn"
+                value={layoutSchema.contact_info?.linkedin || ""}
+                onChange={(e) => updateContactInfo("linkedin", e.target.value)}
+                placeholder="np. linkedin.com/in/jankowalski"
+              />
+              <Input
+                label="Profil GitHub"
+                value={layoutSchema.contact_info?.github || ""}
+                onChange={(e) => updateContactInfo("github", e.target.value)}
+                placeholder="np. github.com/jankowalski"
+              />
+              <Input
+                label="Portfolio / WWW"
+                value={layoutSchema.contact_info?.portfolio || ""}
+                onChange={(e) => updateContactInfo("portfolio", e.target.value)}
+                placeholder="np. jankowalski.dev"
+              />
+            </div>
           </div>
 
           {/* Dynamic Sections Rendered in layoutSchema.sections Order */}
           {layoutSchema.sections.map((sec, index) => {
+            if (sec.type === "pagebreak") {
+              return (
+                <div
+                  key={sec.id || index}
+                  className="rounded-xl border-2 border-dashed border-amber-300 dark:border-amber-700/60 bg-amber-50/70 dark:bg-amber-950/30 p-4 flex items-center justify-between gap-3 shadow-xs transition-colors"
+                >
+                  <div className="flex items-center gap-2 text-xs font-semibold text-amber-800 dark:text-amber-300">
+                    <SplitSquareVertical className="h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" />
+                    <span>Separator strony (wymuszenie nowej strony w Typst / PDF)</span>
+                  </div>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => removePageBreakAt(index)}
+                    className="text-xs h-7 text-rose-600 border-rose-200 hover:bg-rose-50 dark:border-rose-900/60 dark:text-rose-400 dark:hover:bg-rose-950/40"
+                    title="Usuń separator stron"
+                  >
+                    <Trash2 className="h-3 w-3 mr-1" />
+                    Usuń separator
+                  </Button>
+                </div>
+              );
+            }
+
             const isCustomOrOther =
               sec.type === "custom" ||
               ![
@@ -1156,79 +1586,101 @@ export const CVEditor: React.FC<CVEditorProps> = ({
                 "clause",
               ].includes(sec.type);
 
-            return (
-              <div
-                key={sec.id || index}
-                className="rounded-xl border border-slate-200 bg-white p-5 shadow-xs space-y-4 dark:border-slate-800 dark:bg-slate-900 transition-shadow"
-              >
-                {/* Section Header */}
-                <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2.5 gap-2">
-                  <div className="flex items-center gap-2 flex-1 min-w-0">
-                    {getSectionIcon(sec.type)}
-                    <input
-                      type="text"
-                      value={sec.title}
-                      onChange={(e) => updateSectionTitle(sec.id, e.target.value)}
-                      className="font-semibold text-sm text-slate-900 dark:text-slate-100 bg-transparent border-b border-transparent hover:border-slate-300 dark:hover:border-slate-700 focus:border-blue-500 focus:outline-none px-1 py-0.5 truncate max-w-[240px] sm:max-w-xs"
-                      title="Kliknij, aby edytować nagłówek sekcji"
-                    />
-                  </div>
+            const hasNextSection = index < layoutSchema.sections.length - 1;
+            const nextSec = hasNextSection ? layoutSchema.sections[index + 1] : null;
+            const canShowAddPageBreak =
+              hasNextSection &&
+              sec.type !== "pagebreak" &&
+              nextSec?.type !== "pagebreak";
 
-                  {/* Section Actions: Reorder, AI Refine, Delete */}
-                  <div className="flex items-center gap-1.5 shrink-0">
-                    {/* Reordering Up/Down */}
-                    <div className="flex items-center bg-slate-100 dark:bg-slate-800 rounded-md p-0.5 border border-slate-200 dark:border-slate-700">
-                      <button
-                        type="button"
-                        onClick={() => moveSectionUp(index)}
-                        disabled={index === 0}
-                        className="p-1 rounded text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white disabled:opacity-25 disabled:cursor-not-allowed hover:bg-white dark:hover:bg-slate-700 transition-colors"
-                        title="Przesuń sekcję w górę"
-                      >
-                        <ChevronUp className="h-3.5 w-3.5" />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => moveSectionDown(index)}
-                        disabled={index === layoutSchema.sections.length - 1}
-                        className="p-1 rounded text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white disabled:opacity-25 disabled:cursor-not-allowed hover:bg-white dark:hover:bg-slate-700 transition-colors"
-                        title="Przesuń sekcję w dół"
-                      >
-                        <ChevronDown className="h-3.5 w-3.5" />
-                      </button>
+            return (
+              <React.Fragment key={sec.id || index}>
+                <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-xs space-y-4 dark:border-slate-800 dark:bg-slate-900 transition-shadow">
+                  {/* Section Header */}
+                  <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2.5 gap-2">
+                    <div className="flex items-center gap-2 flex-1 min-w-0">
+                      {getSectionIcon(sec.type)}
+                      <input
+                        type="text"
+                        value={sec.title}
+                        onChange={(e) => updateSectionTitle(sec.id, e.target.value)}
+                        className="font-semibold text-sm text-slate-900 dark:text-slate-100 bg-transparent border-b border-transparent hover:border-slate-300 dark:hover:border-slate-700 focus:border-blue-500 focus:outline-none px-1 py-0.5 truncate max-w-[240px] sm:max-w-xs"
+                        title="Kliknij, aby edytować nagłówek sekcji"
+                      />
                     </div>
 
-                    {/* AI Refine button (except for clause) */}
-                    {sec.type !== "clause" && (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => openRefineModal(sec.id)}
-                        className="text-xs h-7 text-indigo-600 border-indigo-200 hover:bg-indigo-50 dark:border-indigo-800 dark:text-indigo-400 dark:hover:bg-slate-800"
-                      >
-                        <Sparkles className="h-3 w-3 mr-1" />
-                        <span className="hidden sm:inline">Udoskonal z AI</span>
-                        <span className="sm:hidden">AI</span>
-                      </Button>
-                    )}
+                    {/* Section Actions: Reorder, AI Refine, Delete */}
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      {/* Reordering Up/Down */}
+                      <div className="flex items-center bg-slate-100 dark:bg-slate-800 rounded-md p-0.5 border border-slate-200 dark:border-slate-700">
+                        <button
+                          type="button"
+                          onClick={() => moveSectionUp(index)}
+                          disabled={index === 0}
+                          className="p-1 rounded text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white disabled:opacity-25 disabled:cursor-not-allowed hover:bg-white dark:hover:bg-slate-700 transition-colors"
+                          title="Przesuń sekcję w górę"
+                        >
+                          <ChevronUp className="h-3.5 w-3.5" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => moveSectionDown(index)}
+                          disabled={index === layoutSchema.sections.length - 1}
+                          className="p-1 rounded text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white disabled:opacity-25 disabled:cursor-not-allowed hover:bg-white dark:hover:bg-slate-700 transition-colors"
+                          title="Przesuń sekcję w dół"
+                        >
+                          <ChevronDown className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
 
-                    {/* Remove button for custom sections */}
-                    {isCustomOrOther && (
-                      <button
-                        type="button"
-                        onClick={() => removeSection(sec.id)}
-                        className="p-1.5 text-slate-400 dark:text-slate-500 hover:text-rose-600 dark:hover:text-rose-400 rounded-md hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors"
-                        title="Usuń sekcję"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
-                    )}
+                      {/* AI Refine button (except for clause) */}
+                      {sec.type !== "clause" && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => openRefineModal(sec.id)}
+                          className="text-xs h-7 text-indigo-600 border-indigo-200 hover:bg-indigo-50 dark:border-indigo-800 dark:text-indigo-400 dark:hover:bg-slate-800"
+                        >
+                          <Sparkles className="h-3 w-3 mr-1" />
+                          <span className="hidden sm:inline">Udoskonal z AI</span>
+                          <span className="sm:hidden">AI</span>
+                        </Button>
+                      )}
+
+                      {/* Remove button for custom sections */}
+                      {isCustomOrOther && (
+                        <button
+                          type="button"
+                          onClick={() => removeSection(sec.id)}
+                          className="p-1.5 text-slate-400 dark:text-slate-500 hover:text-rose-600 dark:hover:text-rose-400 rounded-md hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors"
+                          title="Usuń sekcję"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      )}
+                    </div>
                   </div>
+
+                  {/* Section Content Form based on sec.type */}
+                  {renderSectionForm(sec)}
                 </div>
 
-                {/* Section Content Form based on sec.type */}
-                {renderSectionForm(sec)}
-              </div>
+                {canShowAddPageBreak && (
+                  <div className="flex items-center justify-center py-0.5 group">
+                    <div className="h-px bg-slate-200 dark:bg-slate-800 flex-1 transition-colors group-hover:bg-blue-300 dark:group-hover:bg-blue-700" />
+                    <button
+                      type="button"
+                      onClick={() => addPageBreakAt(index + 1)}
+                      className="mx-3 inline-flex items-center gap-1.5 px-3 py-1 text-[11px] font-medium text-slate-500 hover:text-blue-600 dark:text-slate-400 dark:hover:text-blue-400 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-blue-300 dark:hover:border-blue-700 rounded-full shadow-2xs transition-all hover:scale-105"
+                      title="Wstaw podział na nową stronę w tym miejscu"
+                    >
+                      <Plus className="h-3 w-3" />
+                      <span>Dodaj separator stron</span>
+                    </button>
+                    <div className="h-px bg-slate-200 dark:bg-slate-800 flex-1 transition-colors group-hover:bg-blue-300 dark:group-hover:bg-blue-700" />
+                  </div>
+                )}
+              </React.Fragment>
             );
           })}
 

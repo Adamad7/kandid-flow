@@ -488,10 +488,11 @@ class JobParserWorker:
             )
 
         except Exception as err:
-            logger.warning("Parsing job offer %s failed: %s", job.id, err)
-            job.status = "failed_parsing"
-            job.error_message = str(err)
+            logger.warning("Parsing job offer %s failed: %s", getattr(job, "id", "unknown"), err)
             try:
+                await session.rollback()
+                job.status = "failed_parsing"
+                job.error_message = str(err)
                 await session.commit()
                 await session.refresh(job)
                 await events_broadcaster.broadcast(
@@ -505,9 +506,10 @@ class JobParserWorker:
                     ),
                 )
             except Exception as commit_err:
+                await session.rollback()
                 logger.error(
                     "Failed to commit failed_parsing status for job %s: %s",
-                    job.id,
+                    getattr(job, "id", "unknown"),
                     commit_err,
                 )
 

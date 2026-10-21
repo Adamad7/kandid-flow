@@ -231,6 +231,8 @@
       ]
       #v(0.2em)
     ]
+  ] else if sec_type == "pagebreak" [
+    #pagebreak()
   ] else if sec_type == "clause" [
     #let custom_clause = sec.at("content", default: sec.at("text", default: i18n.clause))
     #v(1.2em)

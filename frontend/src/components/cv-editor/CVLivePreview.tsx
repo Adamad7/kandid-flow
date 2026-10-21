@@ -20,7 +20,10 @@ interface CVLivePreviewProps {
   isExportingPdf?: boolean;
 }
 
-export const CVLivePreview: React.FC<CVLivePreviewProps> = ({
+const A4_WIDTH_PX = 793.7;
+const A4_HEIGHT_PX = 1122.52;
+
+const CVLivePreviewComponent: React.FC<CVLivePreviewProps> = ({
   layoutSchema,
   jobOfferId,
   language = "pl",
@@ -47,7 +50,7 @@ export const CVLivePreview: React.FC<CVLivePreviewProps> = ({
       });
 
       setSvgPages(res.svg_pages || []);
-    } catch (err: unknown) {
+    } catch {
       setCompileError(
         "Błąd kompilacji podglądu Typst. Sprawdź poprawność wprowadzonych danych."
       );
@@ -100,7 +103,7 @@ export const CVLivePreview: React.FC<CVLivePreviewProps> = ({
           <div className="flex items-center bg-slate-100 dark:bg-slate-800 rounded-lg p-0.5 border border-slate-200 dark:border-slate-700">
             <button
               type="button"
-              onClick={() => setZoomScale((s) => Math.max(0.5, s - 0.1))}
+              onClick={() => setZoomScale((s) => Math.max(0.5, Math.round((s - 0.1) * 10) / 10))}
               className="p-1 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white rounded"
               title="Oddal"
             >
@@ -111,7 +114,7 @@ export const CVLivePreview: React.FC<CVLivePreviewProps> = ({
             </span>
             <button
               type="button"
-              onClick={() => setZoomScale((s) => Math.min(1.5, s + 0.1))}
+              onClick={() => setZoomScale((s) => Math.min(1.5, Math.round((s + 0.1) * 10) / 10))}
               className="p-1 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white rounded"
               title="Przybliż"
             >
@@ -119,9 +122,9 @@ export const CVLivePreview: React.FC<CVLivePreviewProps> = ({
             </button>
             <button
               type="button"
-              onClick={() => setZoomScale(0.9)}
+              onClick={() => setZoomScale(1.0)}
               className="p-1 text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 rounded border-l border-slate-200 dark:border-slate-700 ml-0.5"
-              title="Resetuj zoom"
+              title="Resetuj zoom (100%)"
             >
               <RotateCcw className="h-3 w-3" />
             </button>
@@ -159,26 +162,45 @@ export const CVLivePreview: React.FC<CVLivePreviewProps> = ({
             Brak stron do wyświetlenia. Upewnij się, że wybrano aktywne sekcje.
           </div>
         ) : (
-          svgPages.map((pageSvg, idx) => (
-            <div
-              key={idx}
-              className="relative bg-white shadow-2xl rounded-sm transition-transform duration-200"
-              style={{
-                transform: `scale(${zoomScale})`,
-                transformOrigin: "top center",
-              }}
-            >
+          svgPages.map((pageSvg, idx) => {
+            const scaledWidth = Math.round(A4_WIDTH_PX * zoomScale);
+            const scaledHeight = Math.round(A4_HEIGHT_PX * zoomScale);
+
+            return (
               <div
-                className="typst-page-svg select-text"
-                dangerouslySetInnerHTML={{ __html: pageSvg }}
-              />
-              <div className="absolute -bottom-6 right-2 text-[10px] text-slate-400 dark:text-slate-500 font-mono">
-                Strona {idx + 1} z {svgPages.length}
+                key={idx}
+                className="relative shrink-0 flex flex-col items-center select-text"
+                style={{
+                  width: `${scaledWidth}px`,
+                  height: `${scaledHeight}px`,
+                }}
+              >
+                <div
+                  className="bg-white shadow-xl rounded-xs overflow-hidden"
+                  style={{
+                    width: `${A4_WIDTH_PX}px`,
+                    height: `${A4_HEIGHT_PX}px`,
+                    transform: `scale(${zoomScale}) translateZ(0)`,
+                    transformOrigin: "top left",
+                    willChange: "transform",
+                    contain: "paint",
+                  }}
+                >
+                  <div
+                    className="typst-page-svg select-text"
+                    dangerouslySetInnerHTML={{ __html: pageSvg }}
+                  />
+                </div>
+                <div className="absolute -bottom-5 right-2 text-[10px] text-slate-400 dark:text-slate-500 font-mono select-none">
+                  Strona {idx + 1} z {svgPages.length}
+                </div>
               </div>
-            </div>
-          ))
+            );
+          })
         )}
       </div>
     </div>
   );
 };
+
+export const CVLivePreview = React.memo(CVLivePreviewComponent);
