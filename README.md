@@ -118,18 +118,7 @@ KandidFlow was designed and built utilizing **Agentic Software Engineering** pri
   - `extension-specialist`: Chromium Manifest v3 extractors, DOM sanitation, and extension UI.
 - **Strict Quality Gates:** Every code modification is automatically validated through isolated Docker container checks (`ruff`, `pytest`, `npm run build`) before release.
 
----
-
-## ⚠️ Inviolable Development Rules
-
-- **Docker-Only Execution (NEVER Run on Host):**  
-  Do **NOT** run dev servers, package managers, or linters directly on the host machine (`npm`, `pip`, `ruff`, `tsc`, `alembic` on host are forbidden). All commands, tests, and builds must execute inside Docker containers via `docker compose exec` or `docker compose run --rm`.
-- **Schema-First & Zero Raw Dicts for JSONB:**  
-  All PostgreSQL JSONB columns (`raw_payload`, `structured_data`, `contact_info`, `sections`, `layout_schema`) require strict, nested Pydantic v2 schemas mirrored 1:1 in TypeScript (raw `dict` or `any` are forbidden).
-- **English Codebase & Polish UI:**  
-  All code, comments, documentation, and database schemas are in English. User-facing web UI labels, extension screens, and default CV templates are in Polish.
-- **Zero Secrets in Repository:**  
-  API keys (`GEMINI_API_KEY`, `OPENAI_API_KEY`) and tokens (`EXTENSION_API_TOKEN`) are injected strictly through `.env` and loaded via Pydantic `BaseSettings`.
+> For comprehensive development guidelines, multi-agent operational rules, and architecture standards, refer to [AGENTS.md](AGENTS.md).
 
 ---
 
