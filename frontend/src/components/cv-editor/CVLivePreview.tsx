@@ -114,7 +114,7 @@ const CVLivePreviewComponent: React.FC<CVLivePreviewProps> = ({
             </span>
             <button
               type="button"
-              onClick={() => setZoomScale((s) => Math.min(1.5, Math.round((s + 0.1) * 10) / 10))}
+              onClick={() => setZoomScale((s) => Math.min(2.0, Math.round((s + 0.1) * 10) / 10))}
               className="p-1 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white rounded"
               title="Przybliż"
             >
@@ -145,59 +145,53 @@ const CVLivePreviewComponent: React.FC<CVLivePreviewProps> = ({
       </div>
 
       {/* Pages Canvas */}
-      <div className="flex-1 overflow-auto p-6 flex flex-col items-center gap-8">
-        {compileError && (
-          <div className="w-full max-w-xl rounded-lg bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/50 p-3 text-xs text-rose-700 dark:text-rose-400 flex items-center gap-2">
-            <AlertCircle className="h-4 w-4 shrink-0 text-rose-600 dark:text-rose-400" />
-            <span>{compileError}</span>
-          </div>
-        )}
+      <div className="flex-1 overflow-auto p-6">
+        <div className="min-w-full w-fit flex flex-col items-center gap-8 pb-8">
+          {compileError && (
+            <div className="w-full max-w-xl rounded-lg bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/50 p-3 text-xs text-rose-700 dark:text-rose-400 flex items-center gap-2">
+              <AlertCircle className="h-4 w-4 shrink-0 text-rose-600 dark:text-rose-400" />
+              <span>{compileError}</span>
+            </div>
+          )}
 
-        {svgPages.length === 0 && isCompiling ? (
-          <div className="py-24 text-center text-sm text-slate-400 dark:text-slate-500 animate-pulse">
-            Inicjalizacja i kompilacja wektorowa Typst...
-          </div>
-        ) : svgPages.length === 0 ? (
-          <div className="py-24 text-center text-sm text-slate-400 dark:text-slate-500">
-            Brak stron do wyświetlenia. Upewnij się, że wybrano aktywne sekcje.
-          </div>
-        ) : (
-          svgPages.map((pageSvg, idx) => {
-            const scaledWidth = Math.round(A4_WIDTH_PX * zoomScale);
-            const scaledHeight = Math.round(A4_HEIGHT_PX * zoomScale);
+          {svgPages.length === 0 && isCompiling ? (
+            <div className="py-24 text-center text-sm text-slate-400 dark:text-slate-500 animate-pulse">
+              Inicjalizacja i kompilacja wektorowa Typst...
+            </div>
+          ) : svgPages.length === 0 ? (
+            <div className="py-24 text-center text-sm text-slate-400 dark:text-slate-500">
+              Brak stron do wyświetlenia. Upewnij się, że wybrano aktywne sekcje.
+            </div>
+          ) : (
+            svgPages.map((pageSvg, idx) => {
+              const scaledWidth = Math.round(A4_WIDTH_PX * zoomScale);
+              const scaledHeight = Math.round(A4_HEIGHT_PX * zoomScale);
 
-            return (
-              <div
-                key={idx}
-                className="relative shrink-0 flex flex-col items-center select-text"
-                style={{
-                  width: `${scaledWidth}px`,
-                  height: `${scaledHeight}px`,
-                }}
-              >
+              return (
                 <div
-                  className="bg-white shadow-xl rounded-xs overflow-hidden"
-                  style={{
-                    width: `${A4_WIDTH_PX}px`,
-                    height: `${A4_HEIGHT_PX}px`,
-                    transform: `scale(${zoomScale}) translateZ(0)`,
-                    transformOrigin: "top left",
-                    willChange: "transform",
-                    contain: "paint",
-                  }}
+                  key={idx}
+                  className="relative shrink-0 flex flex-col items-center select-text"
                 >
                   <div
-                    className="typst-page-svg select-text"
-                    dangerouslySetInnerHTML={{ __html: pageSvg }}
-                  />
+                    className="bg-white shadow-xl rounded-xs overflow-hidden"
+                    style={{
+                      width: `${scaledWidth}px`,
+                      height: `${scaledHeight}px`,
+                    }}
+                  >
+                    <div
+                      className="cv-preview-page typst-page-svg w-full h-full select-text [&>svg]:w-full [&>svg]:h-full [&>svg]:block"
+                      dangerouslySetInnerHTML={{ __html: pageSvg }}
+                    />
+                  </div>
+                  <div className="absolute -bottom-5 right-2 text-[10px] text-slate-400 dark:text-slate-500 font-mono select-none">
+                    Strona {idx + 1} z {svgPages.length}
+                  </div>
                 </div>
-                <div className="absolute -bottom-5 right-2 text-[10px] text-slate-400 dark:text-slate-500 font-mono select-none">
-                  Strona {idx + 1} z {svgPages.length}
-                </div>
-              </div>
-            );
-          })
-        )}
+              );
+            })
+          )}
+        </div>
       </div>
     </div>
   );
