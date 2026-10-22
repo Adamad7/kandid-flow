@@ -4,6 +4,7 @@ from typing import Any
 import httpx
 import pytest
 
+from app.models.job import JobOffer
 from app.services.job_parser import canonicalize_url
 
 
@@ -23,16 +24,11 @@ def test_url_canonicalization():
 
 
 @pytest.mark.asyncio
-async def test_events_crud_lifecycle(async_client: httpx.AsyncClient):
+async def test_events_crud_lifecycle(async_client: httpx.AsyncClient, sample_job_offer: JobOffer):
     """Verify full CRUD lifecycle for recruitment events."""
-    # 1. Fetch available job offer
-    jobs_res = await async_client.get("/api/v1/jobs")
-    assert jobs_res.status_code == 200
-    jobs = jobs_res.json()
-    assert len(jobs) > 0
-    job_id = jobs[0]["id"]
+    job_id = str(sample_job_offer.id)
 
-    # 2. Create event
+    # 1. Create event
     event_payload = {
         "job_offer_id": job_id,
         "event_type": "technical_interview",
@@ -51,13 +47,13 @@ async def test_events_crud_lifecycle(async_client: httpx.AsyncClient):
     assert created_event["title"] == "Rozmowa techniczna - live coding"
     assert created_event["duration_minutes"] == 90
 
-    # 3. List events for this job
+    # 2. List events for this job
     list_res = await async_client.get(f"/api/v1/events?job_offer_id={job_id}")
     assert list_res.status_code == 200
     events_list = list_res.json()
     assert any(e["id"] == event_id for e in events_list)
 
-    # 4. Update event (mark completed)
+    # 3. Update event (mark completed)
     update_res = await async_client.patch(
         f"/api/v1/events/{event_id}",
         json={"is_completed": True, "notes": "Zadanie zrobione perfekcyjnie."},
@@ -67,11 +63,11 @@ async def test_events_crud_lifecycle(async_client: httpx.AsyncClient):
     assert updated_event["is_completed"] is True
     assert updated_event["notes"] == "Zadanie zrobione perfekcyjnie."
 
-    # 5. Delete event
+    # 4. Delete event
     delete_res = await async_client.delete(f"/api/v1/events/{event_id}")
     assert delete_res.status_code == 204
 
-    # 6. Verify 404 after deletion
+    # 5. Verify 404 after deletion
     get_deleted = await async_client.get(f"/api/v1/events/{event_id}")
     assert get_deleted.status_code == 404
 
@@ -108,13 +104,9 @@ async def test_settings_read_and_update(async_client: httpx.AsyncClient):
 
 
 @pytest.mark.asyncio
-async def test_reparse_job_endpoint(async_client: httpx.AsyncClient):
+async def test_reparse_job_endpoint(async_client: httpx.AsyncClient, sample_job_offer: JobOffer):
     """Verify manual reparse trigger on job offer."""
-    jobs_res = await async_client.get("/api/v1/jobs")
-    assert jobs_res.status_code == 200
-    jobs = jobs_res.json()
-    assert len(jobs) > 0
-    job_id = jobs[0]["id"]
+    job_id = str(sample_job_offer.id)
 
     reparse_res = await async_client.post(f"/api/v1/jobs/{job_id}/reparse")
     assert reparse_res.status_code == 200
@@ -124,19 +116,20 @@ async def test_reparse_job_endpoint(async_client: httpx.AsyncClient):
 
 
 @pytest.mark.asyncio
-async def test_cv_refine_block_endpoint(async_client: httpx.AsyncClient):
+async def test_cv_refine_block_endpoint(
+    async_client: httpx.AsyncClient, sample_job_offer: JobOffer
+):
     """Verify inline AI refinement of a single CV section block."""
-    # 1. Fetch available preset and job
+    # 1. Fetch available preset
     presets_res = await async_client.get("/api/v1/presets")
     preset = presets_res.json()[0]
-    jobs_res = await async_client.get("/api/v1/jobs")
-    job = jobs_res.json()[0]
+    job_id = str(sample_job_offer.id)
 
     # 2. Generate a CV version
     gen_res = await async_client.post(
         "/api/v1/cv/generate",
         json={
-            "job_offer_id": job["id"],
+            "job_offer_id": job_id,
             "preset_id": preset["id"],
             "tailoring_mode": "targeted_summary_keywords",
             "language": "pl",
@@ -162,17 +155,18 @@ async def test_cv_refine_block_endpoint(async_client: httpx.AsyncClient):
 
 
 @pytest.mark.asyncio
-async def test_cv_generate_with_provider_and_model(async_client: httpx.AsyncClient):
+async def test_cv_generate_with_provider_and_model(
+    async_client: httpx.AsyncClient, sample_job_offer: JobOffer
+):
     """Verify that CV generation accepts explicit llm_provider and llm_model parameters."""
     presets_res = await async_client.get("/api/v1/presets")
     preset = presets_res.json()[0]
-    jobs_res = await async_client.get("/api/v1/jobs")
-    job = jobs_res.json()[0]
+    job_id = str(sample_job_offer.id)
 
     gen_res = await async_client.post(
         "/api/v1/cv/generate",
         json={
-            "job_offer_id": job["id"],
+            "job_offer_id": job_id,
             "preset_id": preset["id"],
             "tailoring_mode": "targeted_summary_keywords",
             "language": "pl",
@@ -183,12 +177,14 @@ async def test_cv_generate_with_provider_and_model(async_client: httpx.AsyncClie
     assert gen_res.status_code == 201
     cv_version = gen_res.json()
     assert cv_version["id"] is not None
-    assert cv_version["version_number"] >= 1
+    assert cv_version["version_number"] == 1
 
 
 @pytest.mark.asyncio
 async def test_cv_refine_block_with_provider_and_grounding(
-    async_client: httpx.AsyncClient, monkeypatch: pytest.MonkeyPatch
+    async_client: httpx.AsyncClient,
+    sample_job_offer: JobOffer,
+    monkeypatch: pytest.MonkeyPatch,
 ):
     """Verify refine-block passes LLM provider, reasoning flag, and grounds with context."""
     from app.services.llm_client import llm_client
@@ -206,17 +202,16 @@ async def test_cv_refine_block_with_provider_and_grounding(
 
     monkeypatch.setattr(llm_client, "generate_json", mock_generate_json)
 
-    # 1. Fetch available preset and job
+    # 1. Fetch available preset
     presets_res = await async_client.get("/api/v1/presets")
     preset = presets_res.json()[0]
-    jobs_res = await async_client.get("/api/v1/jobs")
-    job = jobs_res.json()[0]
+    job_id = str(sample_job_offer.id)
 
     # 2. Generate a CV version
     gen_res = await async_client.post(
         "/api/v1/cv/generate",
         json={
-            "job_offer_id": job["id"],
+            "job_offer_id": job_id,
             "preset_id": preset["id"],
             "tailoring_mode": "targeted_summary_keywords",
             "language": "pl",

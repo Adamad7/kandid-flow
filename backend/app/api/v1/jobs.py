@@ -214,12 +214,12 @@ async def reparse_job(
     """Manually invoke LLM or traditional heuristic parsing on an offer."""
     try:
         job = await reparse_job_by_id(job_id, db, mode=mode)
-        return JobOfferRead.model_validate(job)
     except ValueError as err:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=str(err),
         ) from err
+    return JobOfferRead.model_validate(job)
 
 
 @router.delete(

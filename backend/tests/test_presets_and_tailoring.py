@@ -3,6 +3,8 @@
 import httpx
 import pytest
 
+from app.models.job import JobOffer
+
 
 @pytest.mark.asyncio
 async def test_presets_crud_lifecycle(async_client: httpx.AsyncClient):
@@ -59,7 +61,9 @@ async def test_presets_crud_lifecycle(async_client: httpx.AsyncClient):
 
 
 @pytest.mark.asyncio
-async def test_tailored_cv_generation_from_preset(async_client: httpx.AsyncClient):
+async def test_tailored_cv_generation_from_preset(
+    async_client: httpx.AsyncClient, sample_job_offer: JobOffer
+):
     """Verify CV tailoring using an existing preset and targeted_summary_keywords mode."""
     # 1. Fetch available preset
     presets_res = await async_client.get("/api/v1/presets")
@@ -68,16 +72,10 @@ async def test_tailored_cv_generation_from_preset(async_client: httpx.AsyncClien
     assert len(presets) > 0
     preset = presets[0]
 
-    # 2. Fetch available job
-    jobs_res = await async_client.get("/api/v1/jobs")
-    assert jobs_res.status_code == 200
-    jobs = jobs_res.json()
-    assert len(jobs) > 0
-    job = jobs[0]
-
-    # 3. Generate tailored CV
+    # 2. Generate tailored CV using isolated sample job offer
+    job_id = str(sample_job_offer.id)
     generate_payload = {
-        "job_offer_id": job["id"],
+        "job_offer_id": job_id,
         "preset_id": preset["id"],
         "tailoring_mode": "targeted_summary_keywords",
         "language": "pl",
@@ -85,10 +83,10 @@ async def test_tailored_cv_generation_from_preset(async_client: httpx.AsyncClien
     gen_res = await async_client.post("/api/v1/cv/generate", json=generate_payload)
     assert gen_res.status_code == 201
     cv_version = gen_res.json()
-    assert cv_version["job_offer_id"] == job["id"]
+    assert cv_version["job_offer_id"] == job_id
     assert cv_version["parent_preset_id"] == preset["id"]
     assert cv_version["is_active"] is True
-    assert cv_version["version_number"] >= 1
+    assert cv_version["version_number"] == 1
 
     # Verify customized clause and summary
     schema = cv_version["layout_schema"]
@@ -97,17 +95,18 @@ async def test_tailored_cv_generation_from_preset(async_client: httpx.AsyncClien
     assert "summary" in section_types
     assert "clause" in section_types
 
-    # 4. Check versions list endpoint
-    versions_res = await async_client.get(f"/api/v1/cv/versions/{job['id']}")
+    # 3. Check versions list endpoint
+    versions_res = await async_client.get(f"/api/v1/cv/versions/{job_id}")
     assert versions_res.status_code == 200
     versions = versions_res.json()
-    assert len(versions) >= 1
+    assert len(versions) == 1
     assert any(v["id"] == cv_version["id"] for v in versions)
 
 
 @pytest.mark.asyncio
 async def test_cv_generation_with_section_modes_and_candidate_profile(
     async_client: httpx.AsyncClient,
+    sample_job_offer: JobOffer,
 ):
     """Verify CV generation respecting section modes ('off', 'raw', 'ai') and profile defaults."""
     # 1. Update candidate profile with new default_sections structure
@@ -130,16 +129,10 @@ async def test_cv_generation_with_section_modes_and_candidate_profile(
     assert len(updated_profile["default_sections"]) == 5
     assert updated_profile["default_sections"][0]["mode"] == "ai"
 
-    # 2. Fetch job offer
-    jobs_res = await async_client.get("/api/v1/jobs")
-    assert jobs_res.status_code == 200
-    jobs = jobs_res.json()
-    assert len(jobs) > 0
-    job = jobs[0]
-
-    # 3. Generate CV with explicit section modes (projects off, experience raw)
+    # 2. Generate CV with explicit section modes (projects off, experience raw)
+    job_id = str(sample_job_offer.id)
     gen_payload = {
-        "job_offer_id": job["id"],
+        "job_offer_id": job_id,
         "preset_id": None,
         "language": "pl",
         "llm_provider": "api",
