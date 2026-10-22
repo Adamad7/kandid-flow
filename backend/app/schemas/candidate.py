@@ -321,6 +321,12 @@ class CandidateAIFillRequest(BaseModel):
         default=True,
         description="Włącz tryb namysłu (reasoning / thinking)",
     )
+    context_window: int = Field(
+        default=32768,
+        ge=2048,
+        le=262144,
+        description="Rozmiar okna kontekstowego (num_ctx dla Ollama / limit kontekstu)",
+    )
     mode: Literal["merge", "replace"] = Field(
         default="merge",
         description="Tryb: 'merge' (scalenie) lub 'replace' (zastąpienie)",

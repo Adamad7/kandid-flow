@@ -739,6 +739,7 @@ class CandidateParser:
             model=request.llm_model,
             api_key=request.api_key,
             enable_thinking=request.enable_thinking,
+            context_window=request.context_window,
         )
 
         if not isinstance(parsed_data, dict):

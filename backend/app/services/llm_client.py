@@ -12,8 +12,108 @@ from app.config import settings
 logger = logging.getLogger(__name__)
 
 
+def _compute_bracket_stack(s: str) -> list[str]:
+    """Track unclosed opening brackets ({ and [) while ignoring string contents."""
+    stack: list[str] = []
+    in_str = False
+    esc = False
+    for char in s:
+        if in_str:
+            if esc:
+                esc = False
+            elif char == "\\":
+                esc = True
+            elif char == '"':
+                in_str = False
+        else:
+            if char == '"':
+                in_str = True
+            elif char in ("{", "["):
+                stack.append(char)
+            elif char in ("}", "]"):
+                if stack:
+                    if (char == "}" and stack[-1] == "{") or (char == "]" and stack[-1] == "["):
+                        stack.pop()
+    return stack
+
+
+def repair_truncated_json(text: str) -> str:
+    """Attempt to repair incomplete or truncated JSON string from LLM output."""
+    if not text:
+        return text
+
+    cleaned = text.strip()
+    if cleaned.startswith("```"):
+        cleaned = re.sub(r"^```(?:json)?\s*", "", cleaned)
+        cleaned = re.sub(r"\s*```$", "", cleaned)
+
+    # Strip any leading text before first '{' or '['
+    start_brace = cleaned.find("{")
+    start_bracket = cleaned.find("[")
+    if start_brace != -1 and start_bracket != -1:
+        start_idx = min(start_brace, start_bracket)
+    elif start_brace != -1:
+        start_idx = start_brace
+    elif start_bracket != -1:
+        start_idx = start_bracket
+    else:
+        start_idx = -1
+
+    if start_idx > 0:
+        cleaned = cleaned[start_idx:]
+
+    # 1. Close open string if odd unescaped quote count
+    in_str = False
+    esc = False
+    for char in cleaned:
+        if in_str:
+            if esc:
+                esc = False
+            elif char == "\\":
+                esc = True
+            elif char == '"':
+                in_str = False
+        else:
+            if char == '"':
+                in_str = True
+
+    if in_str:
+        if esc:
+            cleaned = cleaned[:-1]
+        cleaned = cleaned + '"'
+
+    # Compute bracket stack
+    stack = _compute_bracket_stack(cleaned)
+
+    # 2. Remove hanging key or comma
+    # If top of stack is '{', a trailing key without value, or key with colon but no value,
+    # is invalid in JSON.
+    if stack and stack[-1] == "{":
+        # Key with colon and incomplete value or whitespace (e.g. , "key": or "key":)
+        cleaned = re.sub(r",\s*\"[^\"]*\"\s*:\s*$", "", cleaned)
+        cleaned = re.sub(r"(?<=\{)\s*\"[^\"]*\"\s*:\s*$", "", cleaned)
+        # Dangling key without colon inside an object (e.g. , "key" or "key")
+        cleaned = re.sub(r",\s*\"[^\"]*\"\s*$", "", cleaned)
+        cleaned = re.sub(r"(?<=\{)\s*\"[^\"]*\"\s*$", "", cleaned)
+
+    # Strip any trailing comma or dangling colon
+    cleaned = re.sub(r",\s*$", "", cleaned)
+    cleaned = re.sub(r":\s*$", "", cleaned)
+    cleaned = re.sub(r",\s*$", "", cleaned)
+
+    # Recompute stack after removals
+    stack = _compute_bracket_stack(cleaned)
+
+    # 3. Close open brackets in reverse order
+    closing_map = {"{": "}", "[": "]"}
+    for open_bracket in reversed(stack):
+        cleaned += closing_map[open_bracket]
+
+    return cleaned
+
+
 def _extract_json_data(text: str) -> Any:
-    """Safely extract and parse JSON object or array from LLM output."""
+    """Safely extract and parse JSON object or array from LLM output, with truncation repair."""
     if not text:
         raise ValueError("Pusta odpowiedź z modelu")
     cleaned = text.strip()
@@ -23,7 +123,20 @@ def _extract_json_data(text: str) -> Any:
     try:
         return json.loads(cleaned)
     except json.JSONDecodeError:
-        match = re.search(r"(\{.*\}|\[.*\])", cleaned, re.DOTALL)
+        pass
+
+    match = re.search(r"(\{.*\}|\[.*\])", cleaned, re.DOTALL)
+    if match:
+        try:
+            return json.loads(match.group(1))
+        except json.JSONDecodeError:
+            pass
+
+    try:
+        repaired = repair_truncated_json(cleaned)
+        return json.loads(repaired)
+    except Exception as e:
+        logger.warning("Truncated JSON repair failed: %s (input: %.200s)", e, cleaned)
         if match:
             return json.loads(match.group(1))
         raise
@@ -84,6 +197,8 @@ class LLMClient:
         enable_thinking: bool = False,
         timeout: float | None = None,
         api_key: str | None = None,
+        context_window: int | None = None,
+        max_tokens: int | None = None,
     ) -> Any:
         """Attempt local Ollama or specified provider; fall back to cloud API or fallback data."""
         runtime_cfg = await self._resolve_runtime_config()
@@ -126,6 +241,8 @@ class LLMClient:
             ollama_timeout = (
                 timeout if timeout is not None else (300.0 if enable_thinking else 120.0)
             )
+            eff_context_window = context_window or 32768
+            eff_max_tokens = max_tokens or min(eff_context_window, 16384)
             try:
                 async with httpx.AsyncClient(timeout=ollama_timeout) as client:
                     resp = await client.post(
@@ -138,8 +255,8 @@ class LLMClient:
                             "format": "json",
                             "think": enable_thinking,
                             "options": {
-                                "num_ctx": 16384,
-                                "num_predict": 8192,
+                                "num_ctx": eff_context_window,
+                                "num_predict": eff_max_tokens,
                                 "temperature": 0.2,
                             },
                         },
@@ -234,6 +351,7 @@ class LLMClient:
                         if target_api_model.startswith("gemini/")
                         else f"gemini/{target_api_model}"
                     )
+                    eff_cloud_max_tokens = max_tokens or 16384
                     response = await litellm.acompletion(
                         model=litellm_model,
                         api_key=gemini_key,
@@ -242,6 +360,7 @@ class LLMClient:
                             {"role": "user", "content": user_prompt},
                         ],
                         response_format={"type": "json_object"},
+                        max_tokens=eff_cloud_max_tokens,
                         timeout=cloud_timeout,
                     )
                     content = response.choices[0].message.content
@@ -263,6 +382,7 @@ class LLMClient:
                     ):
                         extra_kwargs["reasoning_effort"] = "medium"
 
+                    eff_cloud_max_tokens = max_tokens or 16384
                     response = await litellm.acompletion(
                         model=target_api_model,
                         api_key=openai_key,
@@ -271,6 +391,7 @@ class LLMClient:
                             {"role": "user", "content": user_prompt},
                         ],
                         response_format={"type": "json_object"},
+                        max_tokens=eff_cloud_max_tokens,
                         timeout=cloud_timeout,
                         **extra_kwargs,
                     )

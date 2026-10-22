@@ -6,6 +6,7 @@ import {
   AlertCircle,
   GitMerge,
   Replace,
+  Sliders,
 } from "lucide-react";
 import { api } from "../../lib/api";
 import type {
@@ -18,6 +19,13 @@ import { Input } from "../ui/Input";
 import { Select } from "../ui/Select";
 import { Textarea } from "../ui/Textarea";
 import { Modal } from "../ui/Modal";
+
+const CONTEXT_WINDOW_PRESETS = [
+  { label: "16 384 (16k)", value: 16384 },
+  { label: "32 768 (32k - domyślne)", value: 32768 },
+  { label: "65 536 (64k)", value: 65536 },
+  { label: "131 072 (128k)", value: 131072 },
+];
 
 interface KnowledgeBaseAIModalProps {
   isOpen: boolean;
@@ -36,6 +44,7 @@ export const KnowledgeBaseAIModal: React.FC<KnowledgeBaseAIModalProps> = ({
   const [customApiKey, setCustomApiKey] = useState("");
   const [customModel, setCustomModel] = useState("");
   const [enableThinking, setEnableThinking] = useState(true);
+  const [contextWindow, setContextWindow] = useState<number>(32768);
   const [mode, setMode] = useState<"merge" | "replace">("merge");
 
   const [activeSettings, setActiveSettings] = useState<{
@@ -102,6 +111,7 @@ export const KnowledgeBaseAIModal: React.FC<KnowledgeBaseAIModalProps> = ({
             ? customApiKey.trim()
             : null,
         enable_thinking: enableThinking,
+        context_window: contextWindow > 0 ? contextWindow : 32768,
         mode: mode,
       };
 
@@ -125,7 +135,7 @@ export const KnowledgeBaseAIModal: React.FC<KnowledgeBaseAIModalProps> = ({
       onClose={handleClose}
       title="Inteligentne uzupełnianie Bazy Wiedzy przez AI"
       description="Wklej swoje CV, profil z LinkedIn, opis doświadczeń lub notatki — model AI automatycznie wyodrębni informacje i zorganizuje strukturę bazy wiedzy."
-      maxWidth="2xl"
+      maxWidth="4xl"
     >
       {isAnalyzing ? (
         /* Analyzing / Loading View */
@@ -172,7 +182,8 @@ export const KnowledgeBaseAIModal: React.FC<KnowledgeBaseAIModalProps> = ({
             <Textarea
               label="1. Treść źródłowa (CV, LinkedIn, projekty, notatki):"
               placeholder="Wklej tutaj całą treść swojego CV, profil z LinkedIn, listę projektów, osiągnięć lub surowe notatki o Twoim doświadczeniu..."
-              rows={8}
+              rows={16}
+              className="min-h-[320px] font-mono text-sm leading-relaxed"
               value={text}
               onChange={(e) => setText(e.target.value)}
               helperText="Im więcej szczegółów podasz (daty, technologie, odpowiedzialności), tym dokładniej model wypełni poszczególne sekcje."
@@ -277,6 +288,61 @@ export const KnowledgeBaseAIModal: React.FC<KnowledgeBaseAIModalProps> = ({
                   Natychmiastowa odpowiedź
                 </button>
               </div>
+            </div>
+
+            {/* Context Window Configuration */}
+            <div className="p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/60 space-y-3">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="flex items-center gap-2">
+                  <Sliders className="h-4 w-4 text-blue-600 dark:text-blue-400 shrink-0" />
+                  <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                    Rozmiar okna kontekstowego (tokeny):
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-32">
+                    <Input
+                      type="number"
+                      min={2048}
+                      max={262144}
+                      step={1024}
+                      value={contextWindow || ""}
+                      onChange={(e) => {
+                        const val = parseInt(e.target.value, 10);
+                        setContextWindow(isNaN(val) ? 0 : val);
+                      }}
+                      className="text-right font-mono text-xs h-8"
+                      placeholder="32768"
+                    />
+                  </div>
+                  <span className="text-xs text-slate-500 dark:text-slate-400">tok.</span>
+                </div>
+              </div>
+
+              {/* Preset pill buttons */}
+              <div className="flex flex-wrap gap-2">
+                {CONTEXT_WINDOW_PRESETS.map((preset) => {
+                  const isSelected = contextWindow === preset.value;
+                  return (
+                    <button
+                      key={preset.value}
+                      type="button"
+                      onClick={() => setContextWindow(preset.value)}
+                      className={`px-3 py-1.5 text-xs rounded-lg border font-medium transition-all duration-150 select-none ${
+                        isSelected
+                          ? "bg-blue-600 border-blue-600 text-white shadow-xs"
+                          : "border-slate-200 bg-white hover:bg-slate-100 text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700/80"
+                      }`}
+                    >
+                      {preset.label}
+                    </button>
+                  );
+                })}
+              </div>
+
+              <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                Domyślnie 32 768 tokenów (32k). Wyższa wartość zapobiega ucinaniu długich odpowiedzi i pozwala na swobodne generowanie toku rozumowania (thinking) przez model.
+              </p>
             </div>
           </div>
 

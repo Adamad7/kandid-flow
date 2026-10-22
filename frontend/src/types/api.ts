@@ -257,6 +257,7 @@ export interface CandidateAIFillRequest {
   llm_model?: string | null;
   api_key?: string | null;
   enable_thinking?: boolean;
+  context_window?: number;
   mode?: "merge" | "replace";
 }
 
