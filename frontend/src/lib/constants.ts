@@ -20,14 +20,14 @@ export const STATUS_COLORS: Record<
   JobStatusType,
   { bg: string; text: string; border: string }
 > = {
-  inbox: { bg: "bg-slate-100", text: "text-slate-700", border: "border-slate-300" },
-  parsing: { bg: "bg-blue-50", text: "text-blue-700", border: "border-blue-300" },
-  failed_parsing: { bg: "bg-rose-50", text: "text-rose-700", border: "border-rose-300" },
-  ready: { bg: "bg-indigo-50", text: "text-indigo-700", border: "border-indigo-300" },
-  applied: { bg: "bg-amber-50", text: "text-amber-700", border: "border-amber-300" },
-  interview: { bg: "bg-purple-50", text: "text-purple-700", border: "border-purple-300" },
-  offer: { bg: "bg-emerald-50", text: "text-emerald-700", border: "border-emerald-300" },
-  rejected: { bg: "bg-zinc-100", text: "text-zinc-600", border: "border-zinc-300" },
+  inbox: { bg: "bg-slate-100 dark:bg-slate-800/80", text: "text-slate-700 dark:text-slate-300", border: "border-slate-300 dark:border-slate-700" },
+  parsing: { bg: "bg-blue-50 dark:bg-blue-950/60", text: "text-blue-700 dark:text-blue-300", border: "border-blue-300 dark:border-blue-800" },
+  failed_parsing: { bg: "bg-rose-50 dark:bg-rose-950/60", text: "text-rose-700 dark:text-rose-300", border: "border-rose-300 dark:border-rose-800" },
+  ready: { bg: "bg-indigo-50 dark:bg-indigo-950/60", text: "text-indigo-700 dark:text-indigo-300", border: "border-indigo-300 dark:border-indigo-800" },
+  applied: { bg: "bg-amber-50 dark:bg-amber-950/60", text: "text-amber-700 dark:text-amber-300", border: "border-amber-300 dark:border-amber-800" },
+  interview: { bg: "bg-purple-50 dark:bg-purple-950/60", text: "text-purple-700 dark:text-purple-300", border: "border-purple-300 dark:border-purple-800" },
+  offer: { bg: "bg-emerald-50 dark:bg-emerald-950/60", text: "text-emerald-700 dark:text-emerald-300", border: "border-emerald-300 dark:border-emerald-800" },
+  rejected: { bg: "bg-zinc-100 dark:bg-zinc-800/80", text: "text-zinc-600 dark:text-zinc-400", border: "border-zinc-300 dark:border-zinc-700" },
 };
 
 export const WORK_MODEL_LABELS: Record<WorkModelType, string> = {

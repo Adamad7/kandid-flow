@@ -795,11 +795,12 @@ export const JobListView: React.FC<JobListViewProps> = ({
                           </span>
                         ) : (
                           <span
-                            className={`inline-flex items-center text-[11px] font-semibold px-2.5 py-0.5 rounded-full border ${
-                              STATUS_COLORS[job.status]?.bg || "bg-slate-100 dark:bg-slate-800"
-                            } ${STATUS_COLORS[job.status]?.text || "text-slate-700 dark:text-slate-200"} ${
+                            className={cn(
+                              "inline-flex items-center text-[11px] font-semibold px-2.5 py-0.5 rounded-full border",
+                              STATUS_COLORS[job.status]?.bg || "bg-slate-100 dark:bg-slate-800",
+                              STATUS_COLORS[job.status]?.text || "text-slate-700 dark:text-slate-200",
                               STATUS_COLORS[job.status]?.border || "border-slate-300 dark:border-slate-700"
-                            }`}
+                            )}
                           >
                             {STATUS_LABELS[job.status] || job.status}
                           </span>
