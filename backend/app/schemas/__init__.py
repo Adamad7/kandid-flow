@@ -1,5 +1,17 @@
-"""Public export of all KandidFlow Pydantic v2 schemas."""
-
+from app.schemas.analytics import (
+    AnalyticsOverviewResponse,
+    PortalPerformanceMetric,
+    RecruitmentFunnelStage,
+    StaleApplicationAlert,
+    WorkModelMetric,
+)
+from app.schemas.attachment import (
+    JobAttachmentBase,
+    JobAttachmentCategory,
+    JobAttachmentCreate,
+    JobAttachmentRead,
+    JobAttachmentUpdate,
+)
 from app.schemas.candidate import (
     CandidateAIFillRequest,
     CandidateContactInfo,
@@ -41,6 +53,12 @@ from app.schemas.event import (
     RecruitmentEventCreate,
     RecruitmentEventRead,
     RecruitmentEventUpdate,
+)
+from app.schemas.followup import (
+    FollowUpGenerateRequest,
+    FollowUpGenerateResponse,
+    FollowUpPlatform,
+    FollowUpTone,
 )
 from app.schemas.inbox import (
     ExtractedJobPayload,
@@ -146,6 +164,23 @@ __all__ = [
     "ProjectItem",
     "EducationItem",
     "CertificateItem",
+    # Attachments
+    "JobAttachmentCategory",
+    "JobAttachmentBase",
+    "JobAttachmentCreate",
+    "JobAttachmentUpdate",
+    "JobAttachmentRead",
+    # Analytics
+    "RecruitmentFunnelStage",
+    "PortalPerformanceMetric",
+    "WorkModelMetric",
+    "StaleApplicationAlert",
+    "AnalyticsOverviewResponse",
+    # Follow-up
+    "FollowUpTone",
+    "FollowUpPlatform",
+    "FollowUpGenerateRequest",
+    "FollowUpGenerateResponse",
     # Settings
     "ApiProviderType",
     "AppSettingsBase",

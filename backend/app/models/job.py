@@ -11,6 +11,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.models.base import Base
 
 if TYPE_CHECKING:
+    from app.models.attachment import JobAttachment
     from app.models.cv import CVVersion
     from app.models.event import RecruitmentEvent
 
@@ -47,8 +48,17 @@ class JobOffer(Base):
         default=list,
         server_default=text("'{}'::text[]"),
     )
+    tags: Mapped[list[str]] = mapped_column(
+        ARRAY(Text),
+        nullable=False,
+        default=list,
+        server_default=text("'{}'::text[]"),
+    )
     location_raw: Mapped[str | None] = mapped_column(Text, nullable=True)
     application_deadline: Mapped[date | None] = mapped_column(Date, nullable=True)
+    applied_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
     salary_min: Mapped[int | None] = mapped_column(Integer, nullable=True)
     salary_max: Mapped[int | None] = mapped_column(Integer, nullable=True)
     salary_currency: Mapped[str | None] = mapped_column(
@@ -87,4 +97,10 @@ class JobOffer(Base):
         back_populates="job_offer",
         cascade="all, delete-orphan",
         order_by="CVVersion.version_number.desc()",
+    )
+    attachments: Mapped[list["JobAttachment"]] = relationship(
+        "JobAttachment",
+        back_populates="job_offer",
+        cascade="all, delete-orphan",
+        order_by="JobAttachment.created_at.desc()",
     )

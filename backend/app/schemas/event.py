@@ -6,11 +6,15 @@ from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from app.schemas.attachment import JobAttachmentRead
+
 EventType = Literal[
+    "application_submitted",
     "hr_screening",
     "technical_interview",
     "task_deadline",
     "manager_interview",
+    "offer_received",
     "other",
 ]
 
@@ -64,5 +68,8 @@ class RecruitmentEventRead(RecruitmentEventBase):
     id: UUID = Field(..., description="Unique event identifier")
     created_at: datetime = Field(..., description="Creation timestamp")
     updated_at: datetime = Field(..., description="Last modification timestamp")
+    attachments: list[JobAttachmentRead] = Field(
+        default_factory=list, description="Associated file attachments"
+    )
 
     model_config = ConfigDict(from_attributes=True)

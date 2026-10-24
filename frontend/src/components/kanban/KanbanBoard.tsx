@@ -18,6 +18,8 @@ import type {
 import { KanbanCard } from "./KanbanCard";
 import { Button } from "../ui/Button";
 import { Input } from "../ui/Input";
+import { StatusTransitionModal } from "../modals/StatusTransitionModal";
+import { FollowUpModal } from "../modals/FollowUpModal";
 
 interface KanbanBoardProps {
   onSelectJob: (job: JobOfferRead) => void;
@@ -95,6 +97,10 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
   const [minSalaryFilter, setMinSalaryFilter] = useState<string>("");
   const [showFilters, setShowFilters] = useState(false);
 
+  // Status transition & Follow-up modal states
+  const [statusTransitionJob, setStatusTransitionJob] = useState<JobOfferRead | null>(null);
+  const [followUpJob, setFollowUpJob] = useState<JobOfferRead | null>(null);
+
   const fetchJobs = async () => {
     try {
       setIsLoading(true);
@@ -117,6 +123,10 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
     job: JobOfferRead,
     newStatus: JobStatusType
   ) => {
+    if (newStatus === "applied" && !job.applied_at) {
+      setStatusTransitionJob(job);
+      return;
+    }
     try {
       const updated = await api.jobs.update(job.id, { status: newStatus });
       setJobs((prev) => prev.map((j) => (j.id === updated.id ? updated : j)));
@@ -368,6 +378,8 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                       onStatusChange={handleStatusChange}
                       onReparse={handleReparse}
                       onDelete={handleDelete}
+                      onOpenFollowUp={(j) => setFollowUpJob(j)}
+                      onOpenApplicationDetails={(j) => setStatusTransitionJob(j)}
                       isReparsing={reparsingIds.has(job.id)}
                     />
                   ))
@@ -377,6 +389,28 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
           );
         })}
       </div>
+
+      {/* Status Transition Modal */}
+      {statusTransitionJob && (
+        <StatusTransitionModal
+          job={statusTransitionJob}
+          isOpen={!!statusTransitionJob}
+          onClose={() => setStatusTransitionJob(null)}
+          onSuccess={(updated) => {
+            setStatusTransitionJob(null);
+            setJobs((prev) => prev.map((j) => (j.id === updated.id ? updated : j)));
+          }}
+        />
+      )}
+
+      {/* Follow-up Generator Modal */}
+      {followUpJob && (
+        <FollowUpModal
+          job={followUpJob}
+          isOpen={!!followUpJob}
+          onClose={() => setFollowUpJob(null)}
+        />
+      )}
     </div>
   );
 };

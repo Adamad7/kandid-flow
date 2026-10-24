@@ -11,6 +11,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.models.base import Base
 
 if TYPE_CHECKING:
+    from app.models.attachment import JobAttachment
     from app.models.job import JobOffer
 
 
@@ -64,5 +65,8 @@ class RecruitmentEvent(Base):
         onupdate=func.now(),
     )
 
-    # Relationship
+    # Relationships
     job_offer: Mapped["JobOffer"] = relationship("JobOffer", back_populates="events")
+    attachments: Mapped[list["JobAttachment"]] = relationship(
+        "JobAttachment", back_populates="event"
+    )

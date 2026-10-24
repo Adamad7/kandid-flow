@@ -1,6 +1,7 @@
 """Job Offers API endpoints for Pipeline and Kanban tracking."""
 
 import logging
+from datetime import UTC, datetime
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
@@ -8,7 +9,12 @@ from sqlalchemy import delete, func, or_, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db_session
+from app.models.event import RecruitmentEvent
 from app.models.job import JobOffer
+from app.schemas.followup import (
+    FollowUpGenerateRequest,
+    FollowUpGenerateResponse,
+)
 from app.schemas.job import (
     JobBatchDelete,
     JobBatchResult,
@@ -23,6 +29,7 @@ from app.schemas.job import (
 from app.schemas.realtime import RealtimeEventPayload
 from app.services.events_broadcaster import events_broadcaster
 from app.services.job_parser import reparse_job_by_id
+from app.services.llm_client import llm_client
 
 logger = logging.getLogger(__name__)
 
@@ -41,6 +48,7 @@ async def list_jobs(
     language: JobLanguageType | None = Query(default=None),
     salary_min: int | None = Query(default=None),
     salary_max: int | None = Query(default=None),
+    tag: str | None = Query(default=None, description="Filter offers containing specific tag"),
     search: str | None = Query(default=None, description="Search term for company or role title"),
     limit: int = Query(default=50, ge=1, le=200),
     offset: int = Query(default=0, ge=0),
@@ -61,6 +69,8 @@ async def list_jobs(
         stmt = stmt.where(JobOffer.salary_min >= salary_min)
     if salary_max is not None:
         stmt = stmt.where(JobOffer.salary_max <= salary_max)
+    if tag:
+        stmt = stmt.where(JobOffer.tags.contains([tag]))
     if search:
         search_pattern = f"%{search}%"
         stmt = stmt.where(
@@ -74,6 +84,21 @@ async def list_jobs(
     result = await db.execute(stmt)
     records = result.scalars().all()
     return [JobOfferRead.model_validate(rec) for rec in records]
+
+
+@router.get(
+    "/tags",
+    response_model=list[str],
+    summary="Get all unique tags used across job offers",
+)
+async def list_job_tags(
+    db: AsyncSession = Depends(get_db_session),
+) -> list[str]:
+    """Return distinct list of all tags currently in use."""
+    stmt = select(func.unnest(JobOffer.tags)).distinct()
+    result = await db.execute(stmt)
+    tags = result.scalars().all()
+    return sorted([t for t in tags if t])
 
 
 @router.post(
@@ -181,8 +206,47 @@ async def update_job_by_id(
         )
 
     update_dict = update_data.model_dump(exclude_unset=True)
+
+    # Automatically set applied_at if transitioned to 'applied' and not previously set
+    if (
+        update_dict.get("status") == "applied"
+        and not job.applied_at
+        and "applied_at" not in update_dict
+    ):
+        job.applied_at = datetime.now(UTC)
+
     for field, value in update_dict.items():
         setattr(job, field, value)
+
+    # Synchronize application_submitted event on timeline if applied_at is present
+    if "applied_at" in update_dict or update_dict.get("status") == "applied":
+        target_applied_at = job.applied_at
+        if target_applied_at is not None:
+            stmt_ev = select(RecruitmentEvent).where(
+                RecruitmentEvent.job_offer_id == job.id,
+                RecruitmentEvent.event_type == "application_submitted",
+            )
+            res_ev = await db.execute(stmt_ev)
+            app_event = res_ev.scalar_one_or_none()
+            if app_event:
+                app_event.scheduled_at = target_applied_at
+            else:
+                new_event = RecruitmentEvent(
+                    job_offer_id=job.id,
+                    event_type="application_submitted",
+                    title="Wysłano aplikację",
+                    scheduled_at=target_applied_at,
+                    duration_minutes=0,
+                    is_completed=True,
+                )
+                db.add(new_event)
+        elif "applied_at" in update_dict and update_dict["applied_at"] is None:
+            # If applied_at explicitly set to None, remove application_submitted event
+            stmt_del = delete(RecruitmentEvent).where(
+                RecruitmentEvent.job_offer_id == job.id,
+                RecruitmentEvent.event_type == "application_submitted",
+            )
+            await db.execute(stmt_del)
 
     await db.commit()
     await db.refresh(job)
@@ -197,6 +261,44 @@ async def update_job_by_id(
         ),
     )
     return JobOfferRead.model_validate(job)
+
+
+@router.post(
+    "/{job_id}/follow-up",
+    response_model=FollowUpGenerateResponse,
+    summary="Generate AI follow-up message for this offer",
+)
+async def generate_follow_up_message(
+    job_id: UUID,
+    payload: FollowUpGenerateRequest,
+    db: AsyncSession = Depends(get_db_session),
+) -> FollowUpGenerateResponse:
+    """Generate a tailored follow-up reminder message for recruiter or hiring manager."""
+    stmt = select(JobOffer).where(JobOffer.id == job_id)
+    result = await db.execute(stmt)
+    job = result.scalar_one_or_none()
+
+    if not job:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Job offer with ID '{job_id}' not found",
+        )
+
+    applied_date_str = (
+        job.applied_at.strftime("%d.%m.%Y")
+        if job.applied_at
+        else (job.created_at.strftime("%d.%m.%Y") if job.created_at else None)
+    )
+
+    result_dict = await llm_client.generate_follow_up(
+        role_title=job.role_title or "Specjalista IT",
+        company_name=job.company_name or "Pracodawca",
+        applied_at_str=applied_date_str,
+        tone=payload.tone,
+        platform=payload.platform,
+        custom_notes=payload.custom_notes,
+    )
+    return FollowUpGenerateResponse(**result_dict)
 
 
 @router.post(

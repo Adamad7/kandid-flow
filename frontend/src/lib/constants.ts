@@ -45,11 +45,21 @@ export const PORTAL_LABELS: Record<JobPortalType, string> = {
 };
 
 export const EVENT_TYPE_LABELS: Record<EventType, string> = {
+  application_submitted: "Wysłanie aplikacji",
   hr_screening: "HR Screening",
   technical_interview: "Rozmowa techniczna",
   task_deadline: "Zadanie rekrutacyjne",
   manager_interview: "Rozmowa z managerem",
+  offer_received: "Otrzymanie oferty",
   other: "Inne spotkanie",
+};
+
+export const ATTACHMENT_CATEGORY_LABELS: Record<string, string> = {
+  cv_external: "Zewnętrzne CV",
+  cover_letter: "List motywacyjny",
+  recruitment_task: "Zadanie rekrutacyjne",
+  offer_letter: "Oferta pracy (Offer Letter)",
+  other: "Inny dokument",
 };
 
 export const SECTION_NAMES: Record<string, string> = {

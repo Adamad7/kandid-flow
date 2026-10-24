@@ -11,8 +11,16 @@ import {
   Calendar,
   Layers,
   Edit3,
+  Edit2,
   Cpu,
   X,
+  Paperclip,
+  Tag as TagIcon,
+  Plus,
+  MessageSquare,
+  Send,
+  Users,
+  Award,
 } from "lucide-react";
 import { api } from "../../lib/api";
 import type {
@@ -23,14 +31,20 @@ import type {
 import {
   PORTAL_LABELS,
   WORK_MODEL_LABELS,
+  STATUS_COLORS,
+  STATUS_LABELS,
 } from "../../lib/constants";
 import { formatDeadline, formatSalary, normalizeJobOfferUrl } from "../../lib/formatters";
+import { cn } from "../../lib/utils";
 import { RecruitmentTimeline } from "../events/RecruitmentTimeline";
 import { Button } from "../ui/Button";
 import { Badge } from "../ui/Badge";
 import { Modal } from "../ui/Modal";
 import { Textarea } from "../ui/Textarea";
 import { JobOfferDescription } from "../jobs/JobOfferDescription";
+import { JobAttachmentsTab } from "../jobs/JobAttachmentsTab";
+import { StatusTransitionModal } from "../modals/StatusTransitionModal";
+import { FollowUpModal } from "../modals/FollowUpModal";
 
 interface JobDetailsModalProps {
   job: JobOfferRead | null;
@@ -50,13 +64,19 @@ export const JobDetailsModal: React.FC<JobDetailsModalProps> = ({
   onJobUpdated,
 }) => {
   const [activeTab, setActiveTab] = useState<
-    "structured" | "timeline" | "notes" | "raw" | "versions"
+    "structured" | "timeline" | "attachments" | "notes" | "raw" | "versions"
   >("structured");
   const [notes, setNotes] = useState("");
   const [isSavingNotes, setIsSavingNotes] = useState(false);
   const [isReparsing, setIsReparsing] = useState(false);
   const [cvVersions, setCvVersions] = useState<CVVersionRead[]>([]);
   const [isLoadingVersions, setIsLoadingVersions] = useState(false);
+
+  // Tags & Modals state
+  const [newTagInput, setNewTagInput] = useState("");
+  const [isAddingTag, setIsAddingTag] = useState(false);
+  const [isStatusModalOpen, setIsStatusModalOpen] = useState(false);
+  const [isFollowUpModalOpen, setIsFollowUpModalOpen] = useState(false);
 
   useEffect(() => {
     if (job) {
@@ -101,11 +121,47 @@ export const JobDetailsModal: React.FC<JobDetailsModalProps> = ({
   };
 
   const handleStatusChange = async (newStatus: JobStatusType) => {
+    if (newStatus === "applied" && !job.applied_at) {
+      setIsStatusModalOpen(true);
+      return;
+    }
     try {
       const updated = await api.jobs.update(job.id, { status: newStatus });
       onJobUpdated(updated);
     } catch {
       alert("Nie udało się zaktualizować statusu oferty.");
+    }
+  };
+
+  const handleAddTag = async () => {
+    const trimmed = newTagInput.trim().toLowerCase();
+    if (!trimmed) return;
+    const currentTags = job.tags || [];
+    if (currentTags.includes(trimmed)) {
+      setNewTagInput("");
+      return;
+    }
+    const updatedTags = [...currentTags, trimmed];
+    try {
+      setIsAddingTag(true);
+      const updated = await api.jobs.update(job.id, { tags: updatedTags });
+      onJobUpdated(updated);
+      setNewTagInput("");
+    } catch {
+      alert("Nie udało się dodać tagu.");
+    } finally {
+      setIsAddingTag(false);
+    }
+  };
+
+  const handleRemoveTag = async (tagToRemove: string) => {
+    const currentTags = job.tags || [];
+    const updatedTags = currentTags.filter((t) => t !== tagToRemove);
+    try {
+      const updated = await api.jobs.update(job.id, { tags: updatedTags });
+      onJobUpdated(updated);
+    } catch {
+      alert("Nie udało się usunąć tagu.");
     }
   };
 
@@ -180,36 +236,194 @@ export const JobDetailsModal: React.FC<JobDetailsModalProps> = ({
                 </span>
               )}
             </div>
+
+            {/* Tags row */}
+            <div className="flex flex-wrap items-center gap-1.5 mt-3">
+              {(job.tags || []).map((tag) => (
+                <span
+                  key={tag}
+                  className="inline-flex items-center gap-1 rounded-md bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-700 border border-blue-200 dark:bg-blue-950/50 dark:text-blue-300 dark:border-blue-800"
+                >
+                  <TagIcon className="h-3 w-3" />
+                  {tag}
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveTag(tag)}
+                    className="ml-0.5 text-blue-400 hover:text-rose-600 dark:hover:text-rose-400 transition-colors"
+                    title="Usuń tag"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </span>
+              ))}
+
+              <div className="inline-flex items-center gap-1">
+                <input
+                  type="text"
+                  value={newTagInput}
+                  onChange={(e) => setNewTagInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      handleAddTag();
+                    }
+                  }}
+                  placeholder="+ Dodaj tag..."
+                  disabled={isAddingTag}
+                  className="h-6 w-24 text-xs rounded border border-slate-300 bg-white px-2 text-slate-800 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 focus:w-36 focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all"
+                />
+                {newTagInput.trim() && (
+                  <button
+                    type="button"
+                    onClick={handleAddTag}
+                    disabled={isAddingTag}
+                    className="p-1 rounded text-blue-600 hover:bg-blue-100 dark:text-blue-400 dark:hover:bg-slate-800"
+                    title="Dodaj tag"
+                  >
+                    <Plus className="h-3.5 w-3.5" />
+                  </button>
+                )}
+              </div>
+            </div>
           </div>
 
-          <div className="flex flex-col items-end gap-2 shrink-0">
+          <div className="flex flex-col items-end gap-2.5 shrink-0">
             <div className="flex items-center gap-3">
-              <div className="flex items-center gap-2">
-                <label className="text-xs text-slate-500 dark:text-slate-400 font-medium">Status:</label>
-                <select
-                  value={job.status}
-                  onChange={(e) =>
-                    handleStatusChange(e.target.value as JobStatusType)
-                  }
-                  className="text-xs font-medium rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-slate-800 shadow-xs focus:ring-2 focus:ring-blue-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
+              {/* Current Status Badge */}
+              <span
+                className={cn(
+                  "inline-flex items-center text-xs font-semibold px-2.5 py-1 rounded-full border",
+                  STATUS_COLORS[job.status]?.bg || "bg-slate-100 dark:bg-slate-800",
+                  STATUS_COLORS[job.status]?.text || "text-slate-700 dark:text-slate-200",
+                  STATUS_COLORS[job.status]?.border || "border-slate-300 dark:border-slate-700"
+                )}
+              >
+                {STATUS_LABELS[job.status] || job.status}
+              </span>
+
+              <button
+                type="button"
+                onClick={onClose}
+                className="rounded-lg p-1 text-slate-400 hover:bg-slate-200/70 hover:text-slate-700 dark:text-slate-400 dark:hover:bg-slate-700 dark:hover:text-slate-200 transition-colors focus:outline-none"
+                aria-label="Zamknij"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            {/* Dedicated Primary Stage Transition Button */}
+            <div className="flex flex-wrap items-center justify-end gap-2 mt-1">
+              {(job.status === "inbox" || job.status === "failed_parsing") && (
+                <>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => handleStatusChange("ready")}
+                    className="text-xs"
+                  >
+                    <CheckCircle className="h-3.5 w-3.5 mr-1 text-indigo-600 dark:text-indigo-400" />
+                    Do aplikacji
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="primary"
+                    onClick={() => setIsStatusModalOpen(true)}
+                    className="text-xs shadow-xs"
+                  >
+                    <Send className="h-3.5 w-3.5 mr-1.5" />
+                    Zaaplikowano
+                  </Button>
+                </>
+              )}
+
+              {job.status === "ready" && (
+                <Button
+                  size="sm"
+                  variant="primary"
+                  onClick={() => setIsStatusModalOpen(true)}
+                  className="text-xs font-semibold shadow-xs bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white"
                 >
+                  <Send className="h-3.5 w-3.5 mr-1.5" />
+                  Aplikowałem na tę ofertę
+                </Button>
+              )}
+
+              {job.status === "applied" && (
+                <>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setIsStatusModalOpen(true)}
+                    className="text-xs text-slate-700 border-slate-200 hover:bg-slate-50 dark:text-slate-300 dark:border-slate-800 dark:hover:bg-slate-800"
+                    title="Edytuj datę wysłania, notatki lub dokumenty powiązane z aplikacją"
+                  >
+                    <Edit2 className="h-3.5 w-3.5 mr-1 text-slate-500" />
+                    Szczegóły aplikacji
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setIsFollowUpModalOpen(true)}
+                    className="text-xs text-blue-700 border-blue-200 hover:bg-blue-50 dark:text-blue-400 dark:border-blue-900 dark:hover:bg-slate-800"
+                  >
+                    <MessageSquare className="h-3.5 w-3.5 mr-1.5 text-blue-600 dark:text-blue-400" />
+                    Generuj follow-up
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="primary"
+                    onClick={() => handleStatusChange("interview")}
+                    className="text-xs bg-purple-600 hover:bg-purple-700 text-white border-purple-600"
+                  >
+                    <Users className="h-3.5 w-3.5 mr-1.5" />
+                    Zaproszenie na rozmowę
+                  </Button>
+                </>
+              )}
+
+              {job.status === "interview" && (
+                <Button
+                  size="sm"
+                  variant="primary"
+                  onClick={() => handleStatusChange("offer")}
+                  className="text-xs bg-emerald-600 hover:bg-emerald-700 text-white border-emerald-600"
+                >
+                  <Award className="h-3.5 w-3.5 mr-1.5" />
+                  Otrzymano ofertę
+                </Button>
+              )}
+            </div>
+
+            {/* Subdued / Secondary Manual Status Switcher */}
+            <div className="flex items-center gap-2 text-[11px] text-slate-400 dark:text-slate-500">
+              {job.applied_at && (
+                <button
+                  type="button"
+                  onClick={() => setIsStatusModalOpen(true)}
+                  className="text-amber-700 dark:text-amber-400 font-medium mr-1 hover:underline cursor-pointer inline-flex items-center gap-1"
+                  title="Kliknij, aby edytować szczegóły aplikacji"
+                >
+                  <Send className="h-3 w-3" />
+                  Zaaplikowano: {new Date(job.applied_at).toLocaleDateString("pl-PL")}
+                </button>
+              )}
+              <span className="text-slate-400">•</span>
+              <label className="text-slate-500 dark:text-slate-400">Zmień status ręcznie:</label>
+              <select
+                value={job.status}
+                onChange={(e) =>
+                  handleStatusChange(e.target.value as JobStatusType)
+                }
+                className="text-[11px] rounded border border-slate-200 bg-white px-1.5 py-0.5 text-slate-600 shadow-2xs dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 cursor-pointer focus:outline-none"
+              >
                 <option value="inbox">Do przetworzenia</option>
                 <option value="ready">Gotowe do aplikacji</option>
                 <option value="applied">Zaaplikowano</option>
-                <option value="interview">Rozmowy rekrutacyjne</option>
+                <option value="interview">Rozmowy</option>
                 <option value="offer">Oferta</option>
                 <option value="rejected">Odrzucone</option>
               </select>
             </div>
-            <button
-              type="button"
-              onClick={onClose}
-              className="rounded-lg p-1 text-slate-400 hover:bg-slate-200/70 hover:text-slate-700 dark:text-slate-400 dark:hover:bg-slate-700 dark:hover:text-slate-200 transition-colors focus:outline-none"
-              aria-label="Zamknij"
-            >
-              <X className="h-5 w-5" />
-            </button>
-          </div>
 
             {job.source_url && (
               <a
@@ -305,6 +519,18 @@ export const JobDetailsModal: React.FC<JobDetailsModalProps> = ({
           >
             <Calendar className="h-4 w-4" />
             Oś czasu rekrutacji
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab("attachments")}
+            className={`py-3.5 border-b-2 transition-colors flex items-center gap-1.5 ${
+              activeTab === "attachments"
+                ? "border-blue-600 text-blue-600 dark:border-blue-400 dark:text-blue-400"
+                : "border-transparent text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200"
+            }`}
+          >
+            <Paperclip className="h-4 w-4" />
+            Załączniki
           </button>
           <button
             type="button"
@@ -472,7 +698,15 @@ export const JobDetailsModal: React.FC<JobDetailsModalProps> = ({
         )}
 
         {activeTab === "timeline" && (
-          <RecruitmentTimeline jobOfferId={job.id} />
+          <RecruitmentTimeline
+            jobOfferId={job.id}
+            job={job}
+            onJobUpdated={onJobUpdated}
+          />
+        )}
+
+        {activeTab === "attachments" && (
+          <JobAttachmentsTab jobOfferId={job.id} />
         )}
 
         {activeTab === "versions" && (
@@ -590,26 +824,42 @@ export const JobDetailsModal: React.FC<JobDetailsModalProps> = ({
       {/* Footer */}
       <div className="border-t border-slate-200 bg-slate-50 px-6 py-4 flex items-center justify-between shrink-0 dark:border-slate-800 dark:bg-slate-800/80">
         <div className="flex items-center gap-2">
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => handleReparse("ai")}
-            isLoading={isReparsing}
-            className="text-xs"
-          >
-            <Sparkles className="h-3.5 w-3.5 mr-1.5 text-blue-600 dark:text-blue-400" />
-            Parsuj przez AI
-          </Button>
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => handleReparse("traditional")}
-            isLoading={isReparsing}
-            className="text-xs"
-          >
-            <Cpu className="h-3.5 w-3.5 mr-1.5 text-slate-600 dark:text-slate-400" />
-            Auto-parsuj tradycyjne
-          </Button>
+          {(job.status === "inbox" || job.status === "failed_parsing") && (
+            <>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => handleReparse("ai")}
+                isLoading={isReparsing}
+                className="text-xs"
+              >
+                <Sparkles className="h-3.5 w-3.5 mr-1.5 text-blue-600 dark:text-blue-400" />
+                Parsuj przez AI
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => handleReparse("traditional")}
+                isLoading={isReparsing}
+                className="text-xs"
+              >
+                <Cpu className="h-3.5 w-3.5 mr-1.5 text-slate-600 dark:text-slate-400" />
+                Auto-parsuj tradycyjne
+              </Button>
+            </>
+          )}
+
+          {job.status === "applied" && (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setIsFollowUpModalOpen(true)}
+              className="text-xs bg-white text-blue-700 border-blue-200 hover:bg-blue-50 dark:bg-slate-900 dark:border-blue-800 dark:text-blue-400"
+            >
+              <MessageSquare className="h-3.5 w-3.5 mr-1.5 text-blue-600 dark:text-blue-400" />
+              Generuj follow-up
+            </Button>
+          )}
         </div>
 
         <div className="flex items-center gap-2">
@@ -626,6 +876,24 @@ export const JobDetailsModal: React.FC<JobDetailsModalProps> = ({
           </Button>
         </div>
       </div>
+
+      {/* Status Transition Modal */}
+      <StatusTransitionModal
+        job={job}
+        isOpen={isStatusModalOpen}
+        onClose={() => setIsStatusModalOpen(false)}
+        onSuccess={(updated) => {
+          setIsStatusModalOpen(false);
+          onJobUpdated(updated);
+        }}
+      />
+
+      {/* Follow Up Modal */}
+      <FollowUpModal
+        job={job}
+        isOpen={isFollowUpModalOpen}
+        onClose={() => setIsFollowUpModalOpen(false)}
+      />
     </Modal>
   );
 };

@@ -7,6 +7,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from app.database import get_db_session
 from app.models.event import RecruitmentEvent
@@ -44,7 +45,11 @@ async def list_events(
     db: AsyncSession = Depends(get_db_session),
 ) -> list[RecruitmentEventRead]:
     """Retrieve recruitment pipeline events (interviews, tests, deadlines)."""
-    stmt = select(RecruitmentEvent).order_by(RecruitmentEvent.scheduled_at.asc())
+    stmt = (
+        select(RecruitmentEvent)
+        .options(selectinload(RecruitmentEvent.attachments))
+        .order_by(RecruitmentEvent.scheduled_at.asc())
+    )
 
     if job_offer_id:
         stmt = stmt.where(RecruitmentEvent.job_offer_id == job_offer_id)
@@ -76,7 +81,8 @@ async def create_event(
     # Verify that the parent job offer exists
     stmt_job = select(JobOffer).where(JobOffer.id == payload.job_offer_id)
     res_job = await db.execute(stmt_job)
-    if not res_job.scalar_one_or_none():
+    job = res_job.scalar_one_or_none()
+    if not job:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Associated job offer '{payload.job_offer_id}' not found",
@@ -95,24 +101,39 @@ async def create_event(
     )
 
     db.add(event)
+
+    # Sync with job.applied_at if application_submitted
+    if payload.event_type == "application_submitted":
+        job.applied_at = payload.scheduled_at
+        if job.status in ("inbox", "ready"):
+            job.status = "applied"
+
     await db.commit()
-    await db.refresh(event)
+
+    # Re-fetch event with attachments eagerly loaded
+    stmt_ev = (
+        select(RecruitmentEvent)
+        .options(selectinload(RecruitmentEvent.attachments))
+        .where(RecruitmentEvent.id == event.id)
+    )
+    res_ev = await db.execute(stmt_ev)
+    loaded_event = res_ev.scalar_one()
 
     logger.info(
         "Created recruitment event '%s' (%s) for job %s",
-        event.title,
-        event.id,
-        event.job_offer_id,
+        loaded_event.title,
+        loaded_event.id,
+        loaded_event.job_offer_id,
     )
     await events_broadcaster.broadcast(
         "recruitment_event_created",
         RealtimeEventPayload(
-            event_id=event.id,
-            job_id=event.job_offer_id,
-            message=f"Zaplanowano zdarzenie: {event.title}",
+            event_id=loaded_event.id,
+            job_id=loaded_event.job_offer_id,
+            message=f"Zaplanowano zdarzenie: {loaded_event.title}",
         ),
     )
-    return RecruitmentEventRead.model_validate(event)
+    return RecruitmentEventRead.model_validate(loaded_event)
 
 
 @router.get(
@@ -125,7 +146,11 @@ async def get_event_by_id(
     db: AsyncSession = Depends(get_db_session),
 ) -> RecruitmentEventRead:
     """Fetch details of a specific recruitment event."""
-    stmt = select(RecruitmentEvent).where(RecruitmentEvent.id == event_id)
+    stmt = (
+        select(RecruitmentEvent)
+        .options(selectinload(RecruitmentEvent.attachments))
+        .where(RecruitmentEvent.id == event_id)
+    )
     result = await db.execute(stmt)
     event = result.scalar_one_or_none()
 
@@ -149,7 +174,11 @@ async def update_event(
     db: AsyncSession = Depends(get_db_session),
 ) -> RecruitmentEventRead:
     """Update details or completion flag of a scheduled recruitment event."""
-    stmt = select(RecruitmentEvent).where(RecruitmentEvent.id == event_id)
+    stmt = (
+        select(RecruitmentEvent)
+        .options(selectinload(RecruitmentEvent.attachments))
+        .where(RecruitmentEvent.id == event_id)
+    )
     result = await db.execute(stmt)
     event = result.scalar_one_or_none()
 
@@ -163,17 +192,34 @@ async def update_event(
     for field, value in update_dict.items():
         setattr(event, field, value)
 
+    # If this is an application_submitted event and scheduled_at changed, synchronize job.applied_at
+    if event.event_type == "application_submitted" and "scheduled_at" in update_dict:
+        stmt_job = select(JobOffer).where(JobOffer.id == event.job_offer_id)
+        res_job = await db.execute(stmt_job)
+        job = res_job.scalar_one_or_none()
+        if job:
+            job.applied_at = event.scheduled_at
+
     await db.commit()
-    await db.refresh(event)
+
+    # Re-fetch event with attachments
+    stmt_ref = (
+        select(RecruitmentEvent)
+        .options(selectinload(RecruitmentEvent.attachments))
+        .where(RecruitmentEvent.id == event.id)
+    )
+    res_ref = await db.execute(stmt_ref)
+    loaded_event = res_ref.scalar_one()
+
     await events_broadcaster.broadcast(
         "recruitment_event_updated",
         RealtimeEventPayload(
-            event_id=event.id,
-            job_id=event.job_offer_id,
-            message=f"Zaktualizowano zdarzenie: {event.title}",
+            event_id=loaded_event.id,
+            job_id=loaded_event.job_offer_id,
+            message=f"Zaktualizowano zdarzenie: {loaded_event.title}",
         ),
     )
-    return RecruitmentEventRead.model_validate(event)
+    return RecruitmentEventRead.model_validate(loaded_event)
 
 
 @router.delete(
@@ -198,8 +244,30 @@ async def delete_event(
 
     deleted_event_id = event.id
     deleted_job_id = event.job_offer_id
+    was_application_event = event.event_type == "application_submitted"
 
     await db.delete(event)
+
+    if was_application_event:
+        # Check if another application event exists for this job
+        stmt_other = (
+            select(RecruitmentEvent)
+            .where(
+                RecruitmentEvent.job_offer_id == deleted_job_id,
+                RecruitmentEvent.id != deleted_event_id,
+                RecruitmentEvent.event_type == "application_submitted",
+            )
+            .order_by(RecruitmentEvent.scheduled_at.desc())
+        )
+        res_other = await db.execute(stmt_other)
+        other_event = res_other.scalar_one_or_none()
+
+        stmt_job = select(JobOffer).where(JobOffer.id == deleted_job_id)
+        res_job = await db.execute(stmt_job)
+        job = res_job.scalar_one_or_none()
+        if job:
+            job.applied_at = other_event.scheduled_at if other_event else None
+
     await db.commit()
     logger.info("Deleted recruitment event %s", event_id)
     await events_broadcaster.broadcast(

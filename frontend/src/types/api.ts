@@ -32,10 +32,12 @@ export type JobStatusType =
 export type JobLanguageType = "pl" | "en";
 
 export type EventType =
+  | "application_submitted"
   | "hr_screening"
   | "technical_interview"
   | "task_deadline"
   | "manager_interview"
+  | "offer_received"
   | "other";
 
 export type TailoringModeType = "targeted_summary_keywords" | "full";
@@ -285,8 +287,10 @@ export interface JobOfferBase {
   work_model?: WorkModelType | null;
   work_model_details?: string | null;
   locations: string[];
+  tags: string[];
   location_raw?: string | null;
   application_deadline?: string | null; // YYYY-MM-DD
+  applied_at?: string | null; // ISO 8601
   salary_min?: number | null;
   salary_max?: number | null;
   salary_currency?: string | null;
@@ -310,8 +314,10 @@ export interface JobOfferUpdate {
   work_model?: WorkModelType | null;
   work_model_details?: string | null;
   locations?: string[];
+  tags?: string[];
   location_raw?: string | null;
   application_deadline?: string | null;
+  applied_at?: string | null;
   salary_min?: number | null;
   salary_max?: number | null;
   salary_currency?: string | null;
@@ -374,6 +380,7 @@ export interface RecruitmentEventRead extends RecruitmentEventBase {
   id: string; // UUID
   created_at: string; // ISO 8601
   updated_at: string; // ISO 8601
+  attachments?: JobAttachmentRead[];
 }
 
 // ============================================================================
@@ -533,4 +540,107 @@ export interface RealtimeEvent {
   event: RealtimeEventType;
   payload: RealtimeEventPayload;
   timestamp: string;
+}
+
+// ============================================================================
+// Attachment Schemas
+// ============================================================================
+
+export type JobAttachmentCategory =
+  | "cv_external"
+  | "cover_letter"
+  | "recruitment_task"
+  | "offer_letter"
+  | "other";
+
+export interface JobAttachmentRead {
+  id: string; // UUID
+  job_offer_id: string; // UUID
+  event_id?: string | null;
+  file_name: string;
+  mime_type: string;
+  file_size_bytes: number;
+  category: JobAttachmentCategory;
+  notes?: string | null;
+  created_at: string; // ISO 8601
+  download_url: string;
+}
+
+export interface JobAttachmentUpdate {
+  category?: JobAttachmentCategory;
+  event_id?: string | null;
+  notes?: string | null;
+}
+
+// ============================================================================
+// Analytics & Funnel Schemas
+// ============================================================================
+
+export interface RecruitmentFunnelStage {
+  stage: string;
+  label: string;
+  count: number;
+  percentage: number;
+}
+
+export interface PortalPerformanceMetric {
+  portal: string;
+  label: string;
+  total_offers: number;
+  applied_count: number;
+  interview_count: number;
+  offer_count: number;
+  response_rate: number;
+}
+
+export interface WorkModelMetric {
+  work_model: string;
+  label: string;
+  count: number;
+  percentage: number;
+}
+
+export interface StaleApplicationAlert {
+  job_id: string;
+  role_title: string;
+  company_name: string;
+  applied_at: string;
+  days_waiting: number;
+  is_ghosting_risk: boolean;
+}
+
+export interface AnalyticsOverviewResponse {
+  total_offers: number;
+  inbox_count: number;
+  ready_count: number;
+  applied_count: number;
+  interview_count: number;
+  offer_count: number;
+  rejected_count: number;
+  overall_response_rate: number;
+  average_response_days: number | null;
+  ghosting_alert_count: number;
+  funnel: RecruitmentFunnelStage[];
+  portals: PortalPerformanceMetric[];
+  work_models: WorkModelMetric[];
+  stale_applications: StaleApplicationAlert[];
+}
+
+// ============================================================================
+// AI Follow-up Generation Schemas
+// ============================================================================
+
+export type FollowUpTone = "polite_inquiry" | "enthusiastic" | "short_checkin";
+export type FollowUpPlatform = "email" | "linkedin";
+
+export interface FollowUpGenerateRequest {
+  tone: FollowUpTone;
+  platform: FollowUpPlatform;
+  custom_notes?: string | null;
+}
+
+export interface FollowUpGenerateResponse {
+  subject?: string | null;
+  content: string;
+  generated_at: string; // ISO 8601
 }

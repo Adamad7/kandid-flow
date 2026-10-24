@@ -86,11 +86,17 @@ class JobOfferBase(BaseModel):
     locations: list[str] = Field(
         default_factory=list, description="List of normalized locations / office cities"
     )
+    tags: list[str] = Field(
+        default_factory=list, description="Custom tags assigned by user to this offer"
+    )
     location_raw: str | None = Field(
         default=None, description="Raw location string from the source posting"
     )
     application_deadline: date | None = Field(
         default=None, description="Application submission deadline date"
+    )
+    applied_at: datetime | None = Field(
+        default=None, description="Exact timestamp when application was submitted"
     )
     salary_min: int | None = Field(
         default=None, description="Minimum compensation in specified currency"
@@ -136,8 +142,10 @@ class JobOfferUpdate(BaseModel):
     work_model: WorkModelType | None = None
     work_model_details: str | None = None
     locations: list[str] | None = None
+    tags: list[str] | None = None
     location_raw: str | None = None
     application_deadline: date | None = None
+    applied_at: datetime | None = None
     salary_min: int | None = None
     salary_max: int | None = None
     salary_currency: str | None = None

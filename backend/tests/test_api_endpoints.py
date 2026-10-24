@@ -238,3 +238,86 @@ async def test_batch_job_operations(async_client: httpx.AsyncClient):
                 "/api/v1/jobs/batch/delete",
                 json={"job_ids": created_job_ids},
             )
+
+
+@pytest.mark.asyncio
+async def test_application_timeline_two_way_sync(async_client: httpx.AsyncClient):
+    """Verify bidirectional sync between application_submitted event and job.applied_at."""
+    token = settings.EXTENSION_API_TOKEN
+    headers = {"Authorization": f"Bearer {token}"}
+    job_url = f"https://justjoin.it/offers/pytest-sync-{uuid.uuid4()}"
+
+    res = await async_client.post(
+        "/api/v1/inbox",
+        headers=headers,
+        json={
+            "source_url": job_url,
+            "source_portal": "justjoin",
+            "title": "Backend Sync Engineer",
+            "company": "SyncCorp",
+        },
+    )
+    assert res.status_code == 201
+    job_id = res.json()["id"]
+
+    try:
+        # Verify initial job state
+        job_res = await async_client.get(f"/api/v1/jobs/{job_id}")
+        assert job_res.status_code == 200
+        assert job_res.json()["applied_at"] is None
+
+        # 1. Create application_submitted event -> should set job.applied_at and status = applied
+        app_date = "2026-10-24T12:00:00Z"
+        event_payload = {
+            "job_offer_id": job_id,
+            "event_type": "application_submitted",
+            "title": "Wysłano aplikację",
+            "scheduled_at": app_date,
+            "duration_minutes": 0,
+            "notes": "Test submission notes",
+            "is_completed": True,
+        }
+        create_ev_res = await async_client.post("/api/v1/events", json=event_payload)
+        assert create_ev_res.status_code == 201
+        event_id = create_ev_res.json()["id"]
+
+        # Check job is updated
+        job_check = await async_client.get(f"/api/v1/jobs/{job_id}")
+        assert job_check.status_code == 200
+        assert job_check.json()["status"] == "applied"
+        assert job_check.json()["applied_at"] is not None
+
+        # 2. Update event scheduled_at -> should update job.applied_at
+        new_app_date = "2026-10-25T15:30:00Z"
+        up_ev_res = await async_client.patch(
+            f"/api/v1/events/{event_id}",
+            json={"scheduled_at": new_app_date},
+        )
+        assert up_ev_res.status_code == 200
+
+        job_check2 = await async_client.get(f"/api/v1/jobs/{job_id}")
+        assert job_check2.status_code == 200
+        assert "2026-10-25" in job_check2.json()["applied_at"]
+
+        # 3. Update job.applied_at directly via PATCH /jobs/{id} -> should update event scheduled_at
+        job_patch_date = "2026-10-26T09:00:00Z"
+        patch_job_res = await async_client.patch(
+            f"/api/v1/jobs/{job_id}",
+            json={"applied_at": job_patch_date},
+        )
+        assert patch_job_res.status_code == 200
+
+        ev_check = await async_client.get(f"/api/v1/events/{event_id}")
+        assert ev_check.status_code == 200
+        assert "2026-10-26" in ev_check.json()["scheduled_at"]
+
+        # 4. Delete application event -> should clear job.applied_at to None
+        del_ev_res = await async_client.delete(f"/api/v1/events/{event_id}")
+        assert del_ev_res.status_code == 204
+
+        job_check3 = await async_client.get(f"/api/v1/jobs/{job_id}")
+        assert job_check3.status_code == 200
+        assert job_check3.json()["applied_at"] is None
+    finally:
+        await async_client.delete(f"/api/v1/jobs/{job_id}")
+

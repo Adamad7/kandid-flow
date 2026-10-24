@@ -6,6 +6,7 @@ import {
   Settings,
   Briefcase,
   List,
+  BarChart3,
 } from "lucide-react";
 import type {
   CVVersionRead,
@@ -20,11 +21,12 @@ import { KnowledgeBaseEditor } from "./components/profile/KnowledgeBaseEditor";
 import { PresetsManager } from "./components/presets/PresetsManager";
 import { SettingsView } from "./components/settings/SettingsView";
 import { JobListView } from "./components/jobs/JobListView";
+import { AnalyticsDashboard } from "./components/analytics/AnalyticsDashboard";
 import { ThemeToggle } from "./components/ui/ThemeToggle";
 import { api } from "./lib/api";
 import { useRealtime } from "./hooks/useRealtime";
 
-type ActiveTab =  "list" | "kanban" | "profile" | "presets" | "settings";
+type ActiveTab = "list" | "kanban" | "analytics" | "profile" | "presets" | "settings";
 
 export const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState<ActiveTab>("list");
@@ -237,6 +239,19 @@ export const App: React.FC = () => {
                 <LayoutDashboard className="h-4 w-4" />
                 <span className="hidden sm:inline">Tablica ofert</span>
               </button>
+
+              <button
+                type="button"
+                onClick={() => setActiveTab("analytics")}
+                className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold transition-colors ${
+                  activeTab === "analytics"
+                    ? "bg-slate-900 text-white shadow-xs dark:bg-slate-100 dark:text-slate-900"
+                    : "text-slate-600 hover:text-slate-900 hover:bg-slate-100 dark:text-slate-300 dark:hover:text-white dark:hover:bg-slate-800"
+                }`}
+              >
+                <BarChart3 className="h-4 w-4" />
+                <span className="hidden sm:inline">Statystyki</span>
+              </button>
               
               <button
                 type="button"
@@ -317,6 +332,10 @@ export const App: React.FC = () => {
             refreshTrigger={refreshTrigger}
             onSwitchView={(v) => setActiveTab(v)}
           />
+        </div>
+
+        <div className={activeTab === "analytics" ? "block" : "hidden"}>
+          <AnalyticsDashboard onSelectJob={handleSelectJob} />
         </div>
 
         <div className={activeTab === "profile" ? "block" : "hidden"}>

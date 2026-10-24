@@ -3,6 +3,7 @@
 import json
 import logging
 import re
+from datetime import UTC
 from typing import Any
 
 import httpx
@@ -419,6 +420,102 @@ class LLMClient:
             f"Upewnij się, że lokalna Ollama działa poprawnie ('ollama run {target_name}') "
             "lub uzupełnij klucz GEMINI_API_KEY / OPENAI_API_KEY w pliku .env."
         )
+
+    async def generate_follow_up(
+        self,
+        role_title: str,
+        company_name: str,
+        applied_at_str: str | None,
+        tone: str = "polite_inquiry",
+        platform: str = "linkedin",
+        custom_notes: str | None = None,
+    ) -> dict[str, Any]:
+        """Generate a tailored recruitment follow-up message using LLM with fallback template."""
+        from datetime import datetime
+
+        tones_desc = {
+            "polite_inquiry": "uprzejmy, wyważony i profesjonalny",
+            "enthusiastic": "entuzjastyczny, zmotywowany i podkreślający dopasowanie do roli",
+            "short_checkin": "bardzo zwięzły, konkretny check-in (2-3 zdania)",
+        }
+        tone_instruction = tones_desc.get(tone, "uprzejmy i profesjonalny")
+
+        system_prompt = (
+            "Jesteś profesjonalnym asystentem kariery IT w aplikacji KandidFlow. "
+            "Twoim celem jest przygotowanie naturalnie brzmiącej wiadomości follow-up "
+            "(przypomnienia o wysłanej aplikacji) do rekrutera lub hiring managera. "
+            "Wiadomość musi brzmieć autentycznie, szanować czas odbiorcy i nie być nachalna.\n\n"
+            "Zwróć odpowiedź WYŁĄCZNIE jako poprawny obiekt JSON o schemacie:\n"
+            "{\n"
+            '  "subject": "Temat wiadomości (dla e-mail; null jeśli platforma to linkedin)",\n'
+            '  "content": "Pełna treść wiadomości gotowa do wysłania"\n'
+            "}"
+        )
+
+        contact_channel = "Wiadomość LinkedIn" if platform == "linkedin" else "Wiadomość e-mail"
+        user_prompt = (
+            f"Stanowisko: {role_title}\n"
+            f"Firma: {company_name}\n"
+            f"Data aplikacji: {applied_at_str or 'kilka dni temu'}\n"
+            f"Platforma kontaktu: {contact_channel}\n"
+            f"Styl/Ton: {tone_instruction}\n"
+        )
+        if custom_notes:
+            user_prompt += f"Dodatkowe wskazówki od kandydata: {custom_notes}\n"
+
+        # Fallback template in case LLM is unavailable
+        fallback_subject = (
+            f"Pytanie o status aplikacji – {role_title}" if platform == "email" else None
+        )
+        if platform == "linkedin":
+            if tone == "short_checkin":
+                fallback_content = (
+                    f"Dzień dobry, nawiązując krótko do mojej aplikacji na stanowisko {role_title} "
+                    f"w firmie {company_name} – chciałem zapytać, czy rekrutacja jest w toku. "
+                    "Pozdrawiam serdecznie!"
+                )
+            else:
+                fallback_content = (
+                    f"Dzień dobry! Zwracam się z uprzejmym zapytaniem o status mojej aplikacji "
+                    f"na stanowisko {role_title} w firmie {company_name}. Nadal jestem bardzo "
+                    "zainteresowany współpracą i z chęcią odpowiem na wszelkie dodatkowe pytania. "
+                    "Pozdrawiam serdecznie!"
+                )
+        else:
+            fallback_content = (
+                f"Szanowni Państwo,\n\n"
+                f"Zwracam się z uprzejmym pytaniem o status procesu rekrutacyjnego na stanowisko "
+                f"{role_title} w firmie {company_name}, na które aplikowałem "
+                f"{applied_at_str or 'w ostatnim czasie'}.\n\n"
+                "Nadal jestem bardzo zainteresowany dołączeniem do Państwa zespołu i realizacją "
+                "projektów w Państwa strukturach. Będę wdzięczny za krótką informację o "
+                "kolejnych krokach w procesie rekrutacji.\n\n"
+                "Z poważaniem,\n[Twoje Imię i Nazwisko]"
+            )
+
+        fallback_data = {
+            "subject": fallback_subject,
+            "content": fallback_content,
+        }
+
+        try:
+            res = await self.generate_json(
+                system_prompt=system_prompt,
+                user_prompt=user_prompt,
+                fallback_data=fallback_data,
+                timeout=45.0,
+            )
+            return {
+                "subject": res.get("subject") if platform == "email" else None,
+                "content": res.get("content") or fallback_content,
+                "generated_at": datetime.now(UTC),
+            }
+        except Exception:
+            return {
+                "subject": fallback_subject,
+                "content": fallback_content,
+                "generated_at": datetime.now(UTC),
+            }
 
 
 llm_client = LLMClient()

@@ -4,6 +4,7 @@
  */
 
 import type {
+  AnalyticsOverviewResponse,
   AppSettingsRead,
   AppSettingsUpdate,
   BaseCVPresetCreate,
@@ -21,8 +22,12 @@ import type {
   CVVersionUpdate,
   EventType,
   ExtractedJobPayload,
+  FollowUpGenerateRequest,
+  FollowUpGenerateResponse,
   InboxCheckResponse,
   InboxResponse,
+  JobAttachmentCategory,
+  JobAttachmentRead,
   JobBatchResult,
   JobLanguageType,
   JobOfferRead,
@@ -96,6 +101,7 @@ export const api = {
       language?: JobLanguageType;
       salary_min?: number;
       salary_max?: number;
+      tag?: string;
       search?: string;
       limit?: number;
       offset?: number;
@@ -107,12 +113,17 @@ export const api = {
       if (params?.language) query.set("language", params.language);
       if (params?.salary_min !== undefined) query.set("salary_min", String(params.salary_min));
       if (params?.salary_max !== undefined) query.set("salary_max", String(params.salary_max));
+      if (params?.tag) query.set("tag", params.tag);
       if (params?.search) query.set("search", params.search);
       if (params?.limit !== undefined) query.set("limit", String(params.limit));
       if (params?.offset !== undefined) query.set("offset", String(params.offset));
 
       const qs = query.toString();
       return request<JobOfferRead[]>(`/api/v1/jobs${qs ? `?${qs}` : ""}`);
+    },
+
+    listTags: (): Promise<string[]> => {
+      return request<string[]>("/api/v1/jobs/tags");
     },
 
     get: (jobId: string): Promise<JobOfferRead> => {
@@ -123,6 +134,16 @@ export const api = {
       return request<JobOfferRead>(`/api/v1/jobs/${jobId}`, {
         method: "PATCH",
         body: JSON.stringify(data),
+      });
+    },
+
+    generateFollowUp: (
+      jobId: string,
+      payload: FollowUpGenerateRequest
+    ): Promise<FollowUpGenerateResponse> => {
+      return request<FollowUpGenerateResponse>(`/api/v1/jobs/${jobId}/follow-up`, {
+        method: "POST",
+        body: JSON.stringify(payload),
       });
     },
 
@@ -344,6 +365,47 @@ export const api = {
         method: "POST",
         body: JSON.stringify(data),
       });
+    },
+  },
+
+  attachments: {
+    list: (jobId: string): Promise<JobAttachmentRead[]> => {
+      return request<JobAttachmentRead[]>(`/api/v1/jobs/${jobId}/attachments`);
+    },
+
+    upload: (
+      jobId: string,
+      file: File,
+      category: JobAttachmentCategory = "other",
+      eventId?: string | null,
+      notes?: string | null
+    ): Promise<JobAttachmentRead> => {
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("category", category);
+      if (eventId) formData.append("event_id", eventId);
+      if (notes) formData.append("notes", notes);
+
+      return request<JobAttachmentRead>(`/api/v1/jobs/${jobId}/attachments`, {
+        method: "POST",
+        body: formData,
+      });
+    },
+
+    delete: (jobId: string, attachmentId: string): Promise<void> => {
+      return request<void>(`/api/v1/jobs/${jobId}/attachments/${attachmentId}`, {
+        method: "DELETE",
+      });
+    },
+
+    getDownloadUrl: (jobId: string, attachmentId: string): string => {
+      return `${API_BASE}/api/v1/jobs/${jobId}/attachments/${attachmentId}/download`;
+    },
+  },
+
+  analytics: {
+    getOverview: (): Promise<AnalyticsOverviewResponse> => {
+      return request<AnalyticsOverviewResponse>("/api/v1/analytics/overview");
     },
   },
 };

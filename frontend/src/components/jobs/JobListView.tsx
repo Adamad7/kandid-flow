@@ -14,12 +14,15 @@ import {
   ArrowDown,
   ArrowUpDown,
   Cpu,
+  MessageSquare,
+  AlertTriangle,
 } from "lucide-react";
 import { api } from "../../lib/api";
 import type {
   JobOfferRead,
   JobStatusType,
 } from "../../types";
+import { FollowUpModal } from "../modals/FollowUpModal";
 import {
   PORTAL_LABELS,
   STATUS_COLORS,
@@ -67,6 +70,8 @@ export const JobListView: React.FC<JobListViewProps> = ({
   const [searchTerm, setSearchTerm] = useState("");
   const [workModelFilter, setWorkModelFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [tagFilter, setTagFilter] = useState<string>("all");
+  const [availableTags, setAvailableTags] = useState<string[]>([]);
   const [showFilters, setShowFilters] = useState(false);
 
   // Sorting states
@@ -78,6 +83,9 @@ export const JobListView: React.FC<JobListViewProps> = ({
   const [isBatchProcessing, setIsBatchProcessing] = useState(false);
   const [bulkStatus, setBulkStatus] = useState<JobStatusType>("ready");
   const masterCheckboxRef = useRef<HTMLInputElement>(null);
+
+  // Follow-up modal state
+  const [followUpJob, setFollowUpJob] = useState<JobOfferRead | null>(null);
 
   // Context menu portal state
   const [activeMenu, setActiveMenu] = useState<{
@@ -118,10 +126,12 @@ export const JobListView: React.FC<JobListViewProps> = ({
   const fetchJobs = async () => {
     try {
       setIsLoading(true);
-      const data = await api.jobs.list({
-        limit: 150,
-      });
-      setJobs(data);
+      const [jobsData, tagsData] = await Promise.all([
+        api.jobs.list({ limit: 150 }),
+        api.jobs.listTags().catch(() => []),
+      ]);
+      setJobs(jobsData);
+      setAvailableTags(tagsData);
     } catch {
       // ignore
     } finally {
@@ -133,17 +143,6 @@ export const JobListView: React.FC<JobListViewProps> = ({
     fetchJobs();
   }, [refreshTrigger]);
 
-  const handleStatusChange = async (
-    job: JobOfferRead,
-    newStatus: JobStatusType
-  ) => {
-    try {
-      const updated = await api.jobs.update(job.id, { status: newStatus });
-      setJobs((prev) => prev.map((j) => (j.id === updated.id ? updated : j)));
-    } catch {
-      alert("Nie udało się zaktualizować statusu oferty.");
-    }
-  };
 
   const handleReparse = async (
     job: JobOfferRead,
@@ -303,6 +302,11 @@ export const JobListView: React.FC<JobListViewProps> = ({
           return false;
         }
 
+        // Tag filter
+        if (tagFilter !== "all" && !(job.tags || []).includes(tagFilter)) {
+          return false;
+        }
+
         return true;
       })
       .sort((a, b) => {
@@ -370,7 +374,7 @@ export const JobListView: React.FC<JobListViewProps> = ({
 
         return sortDirection === "asc" ? result : -result;
       });
-  }, [jobs, searchTerm, workModelFilter, statusFilter, sortField, sortDirection]);
+  }, [jobs, searchTerm, workModelFilter, statusFilter, tagFilter, sortField, sortDirection]);
 
   const visibleJobIds = useMemo(
     () => filteredAndSortedJobs.map((j) => j.id),
@@ -451,7 +455,7 @@ export const JobListView: React.FC<JobListViewProps> = ({
             >
               <Filter className="h-3.5 w-3.5 mr-1.5" />
               Filtry
-              {(workModelFilter !== "all" || statusFilter !== "all") && (
+              {(workModelFilter !== "all" || statusFilter !== "all" || tagFilter !== "all") && (
                 <span className="ml-1.5 rounded-full bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300 px-1.5 py-0.2 text-[10px] font-bold">
                   !
                 </span>
@@ -473,7 +477,7 @@ export const JobListView: React.FC<JobListViewProps> = ({
 
         {/* Collapsible Filters */}
         {showFilters && (
-          <div className="mt-3 pt-3 border-t border-slate-100 dark:border-slate-800 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+          <div className="mt-3 pt-3 border-t border-slate-100 dark:border-slate-800 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
             <div>
               <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
                 Tryb pracy:
@@ -509,6 +513,24 @@ export const JobListView: React.FC<JobListViewProps> = ({
               </select>
             </div>
 
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                Tag:
+              </label>
+              <select
+                value={tagFilter}
+                onChange={(e) => setTagFilter(e.target.value)}
+                className="w-full text-xs rounded-md border border-slate-300 bg-white px-2.5 py-1.5 text-slate-800 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
+              >
+                <option value="all">Wszystkie tagi</option>
+                {availableTags.map((t) => (
+                  <option key={t} value={t}>
+                    #{t}
+                  </option>
+                ))}
+              </select>
+            </div>
+
             <div className="flex items-end">
               <Button
                 size="sm"
@@ -517,6 +539,7 @@ export const JobListView: React.FC<JobListViewProps> = ({
                   setSearchTerm("");
                   setWorkModelFilter("all");
                   setStatusFilter("all");
+                  setTagFilter("all");
                 }}
                 className="text-xs w-full"
               >
@@ -771,6 +794,20 @@ export const JobListView: React.FC<JobListViewProps> = ({
                           )}
                         </div>
 
+                        {/* Tags */}
+                        {job.tags && job.tags.length > 0 && (
+                          <div className="flex flex-wrap gap-1 mt-1">
+                            {job.tags.map((t) => (
+                              <span
+                                key={t}
+                                className="inline-flex items-center text-[10px] px-1.5 py-0.2 rounded bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300 font-mono"
+                              >
+                                #{t}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+
                         {/* Mobile-only company view */}
                         <div className="md:hidden flex items-center gap-1.5 mt-1 text-xs text-slate-500 dark:text-slate-400 font-medium">
                           <Building className="h-3.5 w-3.5 text-slate-400 dark:text-slate-500 shrink-0" />
@@ -787,7 +824,7 @@ export const JobListView: React.FC<JobListViewProps> = ({
                       </div>
 
                       {/* Status */}
-                      <div className="flex items-center">
+                      <div className="flex flex-col items-start gap-1">
                         {isReparsing ? (
                           <span className="flex items-center gap-1 text-[11px] text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/60 px-2.5 py-0.5 rounded-full border border-blue-200 dark:border-blue-800 animate-pulse font-medium">
                             <RefreshCw className="h-3 w-3 animate-spin" />
@@ -805,6 +842,31 @@ export const JobListView: React.FC<JobListViewProps> = ({
                             {STATUS_LABELS[job.status] || job.status}
                           </span>
                         )}
+
+                        {job.status === "applied" && job.applied_at && (() => {
+                          const days = Math.floor(
+                            (Date.now() - new Date(job.applied_at).getTime()) / (1000 * 60 * 60 * 24)
+                          );
+                          const isGhosting = days >= 14;
+                          return (
+                            <span
+                              className={cn(
+                                "inline-flex items-center gap-1 text-[10px] font-medium px-1.5 py-0.5 rounded",
+                                isGhosting
+                                  ? "text-amber-700 bg-amber-50 dark:text-amber-400 dark:bg-amber-950/60 font-semibold border border-amber-200 dark:border-amber-800"
+                                  : "text-slate-500 dark:text-slate-400"
+                              )}
+                              title={
+                                isGhosting
+                                  ? `Brak odpowiedzi od ${days} dni. Zalecane wysłanie wiadomości follow-up!`
+                                  : `Aplikacja wysłana: ${new Date(job.applied_at).toLocaleDateString("pl-PL")}`
+                              }
+                            >
+                              {isGhosting && <AlertTriangle className="h-3 w-3 text-amber-600 dark:text-amber-400 shrink-0" />}
+                              <span>{days === 0 ? "Dzisiaj" : `${days} d. temu`}</span>
+                            </span>
+                          );
+                        })()}
                       </div>
 
                       {/* Tryb pracy */}
@@ -859,7 +921,7 @@ export const JobListView: React.FC<JobListViewProps> = ({
 
                         {/* Actions Menu Trigger */}
                         <div
-                          className="relative shrink-0"
+                          className="flex items-center gap-1.5 shrink-0"
                           onClick={(e) => e.stopPropagation()}
                         >
                           <button
@@ -933,28 +995,6 @@ export const JobListView: React.FC<JobListViewProps> = ({
               Szczegóły oferty
             </button>
 
-            <div className="px-3.5 py-1 text-[10px] font-semibold uppercase text-slate-400 dark:text-slate-500">
-              Zmień status
-            </div>
-            <div className="px-3.5 pb-2">
-              <select
-                value={activeMenu.job.status}
-                onChange={(e) => {
-                  const currentJob = activeMenu.job;
-                  const newStatus = e.target.value as JobStatusType;
-                  setActiveMenu(null);
-                  handleStatusChange(currentJob, newStatus);
-                }}
-                className="w-full text-xs rounded border border-slate-200 bg-white p-1 text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 cursor-pointer"
-              >
-                <option value="inbox">Do przetworzenia</option>
-                <option value="ready">Gotowe do aplikacji</option>
-                <option value="applied">Zaaplikowano</option>
-                <option value="interview">Rozmowy</option>
-                <option value="offer">Oferta</option>
-                <option value="rejected">Odrzucone</option>
-              </select>
-            </div>
 
             <button
               type="button"
@@ -963,37 +1003,56 @@ export const JobListView: React.FC<JobListViewProps> = ({
                 setActiveMenu(null);
                 onGenerateCV(currentJob);
               }}
-              className="w-full px-3.5 py-2 text-left text-xs text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-slate-700 flex items-center gap-2 font-medium cursor-pointer"
-            >
-              <Sparkles className="h-3.5 w-3.5" />
-              Generuj CV
-            </button>
-
-            <button
-              type="button"
-              onClick={() => {
-                const currentJob = activeMenu.job;
-                setActiveMenu(null);
-                handleReparse(currentJob, "ai");
-              }}
               className="w-full px-3.5 py-2 text-left text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 flex items-center gap-2 cursor-pointer"
             >
               <Sparkles className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400" />
-              Parsuj przez AI
+              Generuj CV
             </button>
 
-            <button
-              type="button"
-              onClick={() => {
-                const currentJob = activeMenu.job;
-                setActiveMenu(null);
-                handleReparse(currentJob, "traditional");
-              }}
-              className="w-full px-3.5 py-2 text-left text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 flex items-center gap-2 cursor-pointer"
-            >
-              <Cpu className="h-3.5 w-3.5 text-slate-600 dark:text-slate-400" />
-              Auto-parsuj tradycyjne
-            </button>
+            {activeMenu.job.status === "applied" && (
+              <button
+                type="button"
+                onClick={() => {
+                  const currentJob = activeMenu.job;
+                  setActiveMenu(null);
+                  setFollowUpJob(currentJob);
+                }}
+                className="w-full px-3.5 py-2 text-left text-xs text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-slate-700 flex items-center gap-2 font-medium cursor-pointer"
+              >
+                <MessageSquare className="h-3.5 w-3.5" />
+                Generuj follow-up
+              </button>
+            )}
+
+            {(activeMenu.job.status === "inbox" || activeMenu.job.status === "failed_parsing") && (
+              <>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const currentJob = activeMenu.job;
+                    setActiveMenu(null);
+                    handleReparse(currentJob, "ai");
+                  }}
+                  className="w-full px-3.5 py-2 text-left text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 flex items-center gap-2 cursor-pointer"
+                >
+                  <Sparkles className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400" />
+                  Parsuj przez AI
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    const currentJob = activeMenu.job;
+                    setActiveMenu(null);
+                    handleReparse(currentJob, "traditional");
+                  }}
+                  className="w-full px-3.5 py-2 text-left text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 flex items-center gap-2 cursor-pointer"
+                >
+                  <Cpu className="h-3.5 w-3.5 text-slate-600 dark:text-slate-400" />
+                  Auto-parsuj tradycyjne
+                </button>
+              </>
+            )}
 
             {activeMenu.job.source_url && (
               <a
@@ -1025,6 +1084,15 @@ export const JobListView: React.FC<JobListViewProps> = ({
           </div>,
           document.body
         )}
+
+      {/* Follow-up Generator Modal */}
+      {followUpJob && (
+        <FollowUpModal
+          job={followUpJob}
+          isOpen={!!followUpJob}
+          onClose={() => setFollowUpJob(null)}
+        />
+      )}
     </div>
   );
 };

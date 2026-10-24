@@ -9,6 +9,12 @@ import {
   Clock,
   MoreVertical,
   Cpu,
+  MessageSquare,
+  AlertTriangle,
+  Send,
+  Users,
+  Award,
+  CheckCircle,
 } from "lucide-react";
 import type { JobOfferRead, JobStatusType } from "../../types";
 import {
@@ -31,6 +37,8 @@ interface KanbanCardProps {
   onStatusChange: (job: JobOfferRead, newStatus: JobStatusType) => void;
   onReparse: (job: JobOfferRead, mode: "ai" | "traditional") => void;
   onDelete: (job: JobOfferRead) => void;
+  onOpenFollowUp?: (job: JobOfferRead) => void;
+  onOpenApplicationDetails?: (job: JobOfferRead) => void;
   isReparsing?: boolean;
 }
 
@@ -41,6 +49,8 @@ export const KanbanCard: React.FC<KanbanCardProps> = ({
   onStatusChange,
   onReparse,
   onDelete,
+  onOpenFollowUp,
+  onOpenApplicationDetails,
   isReparsing = false,
 }) => {
   const [showMenu, setShowMenu] = useState(false);
@@ -130,28 +140,80 @@ export const KanbanCard: React.FC<KanbanCardProps> = ({
                 <Sparkles className="h-3.5 w-3.5" />
                 Generuj CV
               </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setShowMenu(false);
-                  onReparse(job, "ai");
-                }}
-                className="w-full px-3 py-1.5 text-left text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 flex items-center gap-2"
-              >
-                <Sparkles className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400" />
-                Parsuj przez AI
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setShowMenu(false);
-                  onReparse(job, "traditional");
-                }}
-                className="w-full px-3 py-1.5 text-left text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 flex items-center gap-2"
-              >
-                <Cpu className="h-3.5 w-3.5 text-slate-600 dark:text-slate-400" />
-                Auto-parsuj tradycyjne
-              </button>
+
+              {job.status === "applied" && onOpenApplicationDetails && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowMenu(false);
+                    onOpenApplicationDetails(job);
+                  }}
+                  className="w-full px-3 py-1.5 text-left text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-750 flex items-center gap-2 font-medium"
+                >
+                  <Send className="h-3.5 w-3.5 text-blue-600" />
+                  Szczegóły aplikacji
+                </button>
+              )}
+
+              {job.status === "applied" && onOpenFollowUp && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowMenu(false);
+                    onOpenFollowUp(job);
+                  }}
+                  className="w-full px-3 py-1.5 text-left text-xs text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-slate-750 flex items-center gap-2 font-medium"
+                >
+                  <MessageSquare className="h-3.5 w-3.5" />
+                  Generuj follow-up
+                </button>
+              )}
+
+              {(job.status === "inbox" || job.status === "failed_parsing") && (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowMenu(false);
+                      onReparse(job, "ai");
+                    }}
+                    className="w-full px-3 py-1.5 text-left text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 flex items-center gap-2"
+                  >
+                    <Sparkles className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400" />
+                    Parsuj przez AI
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowMenu(false);
+                      onReparse(job, "traditional");
+                    }}
+                    className="w-full px-3 py-1.5 text-left text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 flex items-center gap-2"
+                  >
+                    <Cpu className="h-3.5 w-3.5 text-slate-600 dark:text-slate-400" />
+                    Auto-parsuj tradycyjne
+                  </button>
+                </>
+              )}
+              <div className="my-1 border-t border-slate-100 dark:border-slate-700" />
+              <div className="px-3 py-1 text-[10px] text-slate-400 dark:text-slate-500 font-medium">Zmień status ręcznie:</div>
+              <div className="px-3 pb-1">
+                <select
+                  value={job.status}
+                  onChange={(e) => {
+                    setShowMenu(false);
+                    onStatusChange(job, e.target.value as JobStatusType);
+                  }}
+                  className="w-full text-xs rounded border border-slate-200 bg-white py-1 px-1 text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 cursor-pointer"
+                >
+                  <option value="inbox">Do przetworzenia</option>
+                  <option value="ready">Gotowe</option>
+                  <option value="applied">Zaaplikowano</option>
+                  <option value="interview">Rozmowy</option>
+                  <option value="offer">Oferta</option>
+                  <option value="rejected">Odrzucone</option>
+                </select>
+              </div>
               <div className="my-1 border-t border-slate-100 dark:border-slate-700" />
               <button
                 type="button"
@@ -178,7 +240,54 @@ export const KanbanCard: React.FC<KanbanCardProps> = ({
           <Building className="h-3.5 w-3.5 text-slate-400 dark:text-slate-500 shrink-0" />
           <span className="truncate">{job.company_name || "Nieznana firma"}</span>
         </div>
+
+        {/* Tags */}
+        {job.tags && job.tags.length > 0 && (
+          <div className="flex flex-wrap gap-1 mt-1.5">
+            {job.tags.map((t) => (
+              <span
+                key={t}
+                className="inline-flex items-center text-[10px] px-1.5 py-0.2 rounded bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300 font-mono"
+              >
+                #{t}
+              </span>
+            ))}
+          </div>
+        )}
       </div>
+
+      {/* Applied Date Banner */}
+      {job.status === "applied" && job.applied_at && (() => {
+        const days = Math.floor(
+          (Date.now() - new Date(job.applied_at).getTime()) / (1000 * 60 * 60 * 24)
+        );
+        const isGhosting = days >= 14;
+        return (
+          <div className="mb-2.5">
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                if (onOpenApplicationDetails) onOpenApplicationDetails(job);
+              }}
+              className={cn(
+                "inline-flex items-center gap-1.5 text-[11px] font-medium px-2 py-0.5 rounded cursor-pointer hover:underline transition-colors",
+                isGhosting
+                  ? "text-amber-800 bg-amber-50 border border-amber-200 dark:text-amber-300 dark:bg-amber-950/60 dark:border-amber-800 font-semibold"
+                  : "text-slate-600 bg-slate-50 border border-slate-200 hover:text-blue-600 dark:text-slate-400 dark:bg-slate-800 dark:border-slate-700 dark:hover:text-blue-400"
+              )}
+              title={
+                isGhosting
+                  ? `Brak odpowiedzi od ${days} dni. Kliknij, aby edytować szczegóły aplikacji.`
+                  : `Aplikacja wysłana: ${new Date(job.applied_at).toLocaleDateString("pl-PL")}. Kliknij, aby edytować.`
+              }
+            >
+              {isGhosting && <AlertTriangle className="h-3.5 w-3.5 text-amber-600 dark:text-amber-400 shrink-0" />}
+              <span>{days === 0 ? "Zaaplikowano dzisiaj" : `Zaaplikowano ${days} d. temu`}</span>
+            </button>
+          </div>
+        );
+      })()}
 
       {/* Salary & Locations */}
       <div className="space-y-1 text-xs mb-3">
@@ -278,36 +387,97 @@ export const KanbanCard: React.FC<KanbanCardProps> = ({
         </div>
       )}
 
-      {/* Card Footer: Quick Status Switcher & CV Action */}
+      {/* Card Footer: Next Stage Progression & CV Action */}
       <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-2">
-        <select
-          value={job.status}
-          onChange={(e) => {
-            e.stopPropagation();
-            onStatusChange(job, e.target.value as JobStatusType);
-          }}
-          onClick={(e) => e.stopPropagation()}
-          className="text-xs rounded border border-slate-200 bg-slate-50 py-1 px-1.5 text-slate-700 font-medium focus:outline-none focus:ring-1 focus:ring-blue-500 max-w-[130px] truncate dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
-        >
-          <option value="inbox">Do przetworzenia</option>
-          <option value="ready">Gotowe</option>
-          <option value="applied">Zaaplikowano</option>
-          <option value="interview">Rozmowy</option>
-          <option value="offer">Oferta</option>
-          <option value="rejected">Odrzucone</option>
-        </select>
+        <div className="flex items-center gap-1.5 min-w-0">
+          {(job.status === "inbox" || job.status === "failed_parsing") && (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={(e) => {
+                e.stopPropagation();
+                onStatusChange(job, "ready");
+              }}
+              className="text-xs h-7 px-2"
+              title="Przenieś do gotowych do aplikacji"
+            >
+              <CheckCircle className="h-3 w-3 mr-1 text-indigo-600 dark:text-indigo-400" />
+              Do aplikacji
+            </Button>
+          )}
+
+          {job.status === "ready" && (
+            <Button
+              size="sm"
+              variant="primary"
+              onClick={(e) => {
+                e.stopPropagation();
+                onStatusChange(job, "applied");
+              }}
+              className="text-xs h-7 px-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-medium shadow-2xs"
+              title="Oznacz, że wysłałeś aplikację na tę ofertę"
+            >
+              <Send className="h-3 w-3 mr-1" />
+              Zaaplikowano
+            </Button>
+          )}
+
+          {job.status === "applied" && (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={(e) => {
+                e.stopPropagation();
+                onStatusChange(job, "interview");
+              }}
+              className="text-xs h-7 px-2 border-purple-200 text-purple-700 hover:bg-purple-50 dark:border-purple-800 dark:text-purple-300"
+              title="Zaproszenie na rozmowę rekrutacyjną"
+            >
+              <Users className="h-3 w-3 mr-1 text-purple-600 dark:text-purple-400" />
+              Rozmowa
+            </Button>
+          )}
+
+          {job.status === "interview" && (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={(e) => {
+                e.stopPropagation();
+                onStatusChange(job, "offer");
+              }}
+              className="text-xs h-7 px-2 border-emerald-200 text-emerald-700 hover:bg-emerald-50 dark:border-emerald-800 dark:text-emerald-300"
+              title="Otrzymano ofertę pracy"
+            >
+              <Award className="h-3 w-3 mr-1 text-emerald-600 dark:text-emerald-400" />
+              Oferta
+            </Button>
+          )}
+
+          {job.status === "offer" && (
+            <span className="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400">
+              🎉 Oferta
+            </span>
+          )}
+
+          {job.status === "rejected" && (
+            <span className="text-[11px] text-slate-400 dark:text-slate-500 italic">
+              Zakończono
+            </span>
+          )}
+        </div>
 
         <Button
           size="sm"
-          variant="primary"
+          variant="outline"
           onClick={(e) => {
             e.stopPropagation();
             onGenerateCV(job);
           }}
-          className="text-xs h-7 px-2.5"
+          className="text-xs h-7 px-2.5 shrink-0"
           title="Generuj dopasowane CV"
         >
-          <Sparkles className="h-3.5 w-3.5 mr-1" />
+          <Sparkles className="h-3.5 w-3.5 mr-1 text-blue-600 dark:text-blue-400" />
           CV
         </Button>
       </div>
