@@ -13,7 +13,7 @@ from app.models.job import JobOffer
 from app.schemas.inbox import ExtractedJobPayload, InboxCheckResponse, InboxResponse
 from app.schemas.realtime import RealtimeEventPayload
 from app.services.events_broadcaster import events_broadcaster
-from app.services.job_parser import canonicalize_url
+from app.services.job_parser import canonicalize_url, sanitize_work_model_details
 
 logger = logging.getLogger(__name__)
 
@@ -131,7 +131,7 @@ async def ingest_job_offer(
         if payload.work_model:
             existing.work_model = payload.work_model
         if payload.work_model_details:
-            existing.work_model_details = payload.work_model_details
+            existing.work_model_details = sanitize_work_model_details(payload.work_model_details)
         if payload.company and not existing.company_name:
             existing.company_name = payload.company
         if payload.title and not existing.role_title:
@@ -166,7 +166,7 @@ async def ingest_job_offer(
         status="inbox",
         language="pl",  # Default pipeline language
         work_model=payload.work_model,
-        work_model_details=payload.work_model_details,
+        work_model_details=sanitize_work_model_details(payload.work_model_details),
         locations=payload.locations,
         location_raw=payload.location_raw,
         application_deadline=payload.application_deadline,

@@ -136,9 +136,7 @@ class AnalyticsService:
             else 0.0
         )
         avg_response_days = (
-            round(sum(diff_days_list) / len(diff_days_list), 1)
-            if diff_days_list
-            else None
+            round(sum(diff_days_list) / len(diff_days_list), 1) if diff_days_list else None
         )
 
         # Funnel
@@ -195,9 +193,7 @@ class AnalyticsService:
             app_cnt = stats["applied"]
             int_cnt = stats["interview"]
             off_cnt = stats["offer"]
-            resp_rate = (
-                round(((int_cnt + off_cnt) / app_cnt) * 100, 1) if app_cnt > 0 else 0.0
-            )
+            resp_rate = round(((int_cnt + off_cnt) / app_cnt) * 100, 1) if app_cnt > 0 else 0.0
             portals_list.append(
                 PortalPerformanceMetric(
                     portal=p,

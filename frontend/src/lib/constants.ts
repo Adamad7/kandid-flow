@@ -33,7 +33,7 @@ export const STATUS_COLORS: Record<
 export const WORK_MODEL_LABELS: Record<WorkModelType, string> = {
   remote: "Zdalnie",
   hybrid: "Hybryda",
-  onsite: "W biurze",
+  onsite: "Biuro",
 };
 
 export const PORTAL_LABELS: Record<JobPortalType, string> = {

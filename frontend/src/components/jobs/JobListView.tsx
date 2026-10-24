@@ -16,6 +16,7 @@ import {
   Cpu,
   MessageSquare,
   AlertTriangle,
+  HelpCircle,
 } from "lucide-react";
 import { api } from "../../lib/api";
 import type {
@@ -49,6 +50,24 @@ export type SortField =
   | "salary"
   | "deadline";
 export type SortDirection = "asc" | "desc";
+
+const GENERIC_DETAILS_REGEX =
+  /^(?:(?:w\s+)?100%|pełna|w\s+pełni|fully)?\s*(?:praca\s+)?(?:zdalna|zdalnie|remote)(?:\s+praca)?$|^(?:w\s+pełni\s+)?(?:praca\s+)?(?:stacjonarna|stacjonarnie|onsite|on-site|biuro|w\s+biurze)(?:\s+praca)?$|^(?:praca\s+)?(?:hybryda|hybrydowo|hybrid)$|^home\s+office(?:\s+work)?$/i;
+
+function hasMeaningfulWorkModelDetails(
+  workModel?: string | null,
+  details?: string | null
+): boolean {
+  if (!details || !details.trim()) return false;
+  const clean = details.trim();
+  if (GENERIC_DETAILS_REGEX.test(clean)) return false;
+  if (workModel) {
+    const label = WORK_MODEL_LABELS[workModel as keyof typeof WORK_MODEL_LABELS];
+    if (label && clean.toLowerCase() === label.toLowerCase()) return false;
+    if (clean.toLowerCase() === workModel.toLowerCase()) return false;
+  }
+  return true;
+}
 
 interface JobListViewProps {
   onSelectJob: (job: JobOfferRead) => void;
@@ -94,16 +113,24 @@ export const JobListView: React.FC<JobListViewProps> = ({
   } | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
 
-  // Close context menu on scroll, resize, or outside click
+  // Work model tooltip portal state
+  const [workModelTooltip, setWorkModelTooltip] = useState<{
+    text: string;
+    rect: DOMRect;
+  } | null>(null);
+
+  // Close context menu & work model tooltip on scroll, resize, or outside click
   useEffect(() => {
-    if (!activeMenu) return;
+    if (!activeMenu && !workModelTooltip) return;
 
     const handleDismiss = () => {
-      setActiveMenu(null);
+      if (activeMenu) setActiveMenu(null);
+      if (workModelTooltip) setWorkModelTooltip(null);
     };
 
     const handlePointerDown = (e: MouseEvent) => {
       if (
+        activeMenu &&
         menuRef.current &&
         !menuRef.current.contains(e.target as Node) &&
         !(e.target as HTMLElement).closest(`[data-menu-trigger="${activeMenu.job.id}"]`)
@@ -121,7 +148,7 @@ export const JobListView: React.FC<JobListViewProps> = ({
       window.removeEventListener("resize", handleDismiss);
       document.removeEventListener("mousedown", handlePointerDown);
     };
-  }, [activeMenu]);
+  }, [activeMenu, workModelTooltip]);
 
   const fetchJobs = async () => {
     try {
@@ -490,7 +517,7 @@ export const JobListView: React.FC<JobListViewProps> = ({
                 <option value="all">Wszystkie tryby</option>
                 <option value="remote">Tylko zdalnie</option>
                 <option value="hybrid">Hybrydowo</option>
-                <option value="onsite">W biurze</option>
+                <option value="onsite">Biuro</option>
               </select>
             </div>
 
@@ -872,18 +899,35 @@ export const JobListView: React.FC<JobListViewProps> = ({
                       {/* Tryb pracy */}
                       <div className="flex items-center">
                         {job.work_model ? (
-                          <Badge
-                            variant="outline"
-                            className="text-xs"
-                            title={job.work_model_details || undefined}
-                          >
-                            {WORK_MODEL_LABELS[job.work_model] || job.work_model}
-                            {job.work_model_details && (
-                              <span className="text-[10px] text-slate-400 dark:text-slate-500 ml-1">
-                                ({job.work_model_details})
-                              </span>
-                            )}
-                          </Badge>
+                          (() => {
+                            const hasDetails = hasMeaningfulWorkModelDetails(
+                              job.work_model,
+                              job.work_model_details
+                            );
+                            if (!hasDetails) {
+                              return (
+                                <Badge variant="outline" className="text-xs">
+                                  <span>{WORK_MODEL_LABELS[job.work_model] || job.work_model}</span>
+                                </Badge>
+                              );
+                            }
+                            return (
+                              <Badge
+                                variant="outline"
+                                className="text-xs cursor-help"
+                                onMouseEnter={(e) =>
+                                  setWorkModelTooltip({
+                                    text: job.work_model_details!,
+                                    rect: e.currentTarget.getBoundingClientRect(),
+                                  })
+                                }
+                                onMouseLeave={() => setWorkModelTooltip(null)}
+                              >
+                                <span>{WORK_MODEL_LABELS[job.work_model] || job.work_model}</span>
+                                <HelpCircle className="h-3 w-3 inline-block shrink-0 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors" />
+                              </Badge>
+                            );
+                          })()
                         ) : (
                           <span className="text-xs text-slate-400 dark:text-slate-500 italic">Brak danych</span>
                         )}
@@ -1082,6 +1126,47 @@ export const JobListView: React.FC<JobListViewProps> = ({
               Usuń ofertę
             </button>
           </div>,
+          document.body
+        )}
+
+      {/* Work Model Details Tooltip Portal */}
+      {workModelTooltip &&
+        createPortal(
+          (() => {
+            const rect = workModelTooltip.rect;
+            const tooltipWidth = 260;
+            const badgeCenter = rect.left + rect.width / 2;
+            let left = badgeCenter - tooltipWidth / 2;
+            if (left < 12) left = 12;
+            if (left + tooltipWidth > window.innerWidth - 12) {
+              left = Math.max(12, window.innerWidth - tooltipWidth - 12);
+            }
+
+            const fitsAbove = rect.top >= 90;
+
+            return (
+              <div
+                style={{
+                  position: "fixed",
+                  left: `${left}px`,
+                  width: `${tooltipWidth}px`,
+                  zIndex: 9999,
+                  ...(fitsAbove
+                    ? { bottom: `${window.innerHeight - rect.top + 6}px` }
+                    : { top: `${rect.bottom + 6}px` }),
+                }}
+                className="pointer-events-none rounded-lg border border-slate-200 bg-white p-2.5 text-xs shadow-xl dark:border-slate-700 dark:bg-slate-800 animate-in fade-in zoom-in-95 duration-100"
+              >
+                <div className="flex items-center gap-1.5 font-semibold text-slate-800 dark:text-slate-200 mb-1">
+                  <HelpCircle className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400 shrink-0" />
+                  <span>Szczegóły trybu pracy</span>
+                </div>
+                <p className="text-slate-600 dark:text-slate-300 leading-relaxed break-words whitespace-pre-wrap">
+                  {workModelTooltip.text}
+                </p>
+              </div>
+            );
+          })(),
           document.body
         )}
 

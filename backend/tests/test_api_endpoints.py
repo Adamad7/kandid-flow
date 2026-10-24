@@ -321,3 +321,52 @@ async def test_application_timeline_two_way_sync(async_client: httpx.AsyncClient
     finally:
         await async_client.delete(f"/api/v1/jobs/{job_id}")
 
+
+@pytest.mark.asyncio
+async def test_inbox_work_model_details_sanitization(async_client: httpx.AsyncClient):
+    """Verify generic work_model_details are sanitized to None during creation and update."""
+    test_url = f"https://justjoin.it/offers/sanitize-test-{uuid.uuid4()}"
+    headers = {"Authorization": f"Bearer {settings.EXTENSION_API_TOKEN}"}
+
+    payload = {
+        "source_url": test_url,
+        "source_portal": "justjoin",
+        "title": "Python Specialist",
+        "company": "SanitizeCorp",
+        "work_model": "remote",
+        "work_model_details": "Zdalnie",
+        "description_text": "Python developer role.",
+    }
+
+    # 1. Create with generic label 'Zdalnie' -> should sanitize to None
+    create_res = await async_client.post("/api/v1/inbox", headers=headers, json=payload)
+    assert create_res.status_code == 201
+    job_id = create_res.json()["id"]
+
+    try:
+        job_check = await async_client.get(f"/api/v1/jobs/{job_id}")
+        assert job_check.status_code == 200
+        assert job_check.json()["work_model"] == "remote"
+        assert job_check.json()["work_model_details"] is None
+
+        # 2. Update with concise schedule -> should be preserved
+        payload["work_model"] = "hybrid"
+        payload["work_model_details"] = "Hybrydowo: 1-2 dni w biurze"
+        update_res = await async_client.post("/api/v1/inbox", headers=headers, json=payload)
+        assert update_res.status_code == 201
+
+        job_check2 = await async_client.get(f"/api/v1/jobs/{job_id}")
+        assert job_check2.status_code == 200
+        assert job_check2.json()["work_model"] == "hybrid"
+        assert job_check2.json()["work_model_details"] == "Hybrydowo: 1-2 dni w biurze"
+
+        # 3. Update with generic label 'Stacjonarnie' -> should sanitize to None
+        payload["work_model_details"] = "Stacjonarnie"
+        update_res2 = await async_client.post("/api/v1/inbox", headers=headers, json=payload)
+        assert update_res2.status_code == 201
+
+        job_check3 = await async_client.get(f"/api/v1/jobs/{job_id}")
+        assert job_check3.status_code == 200
+        assert job_check3.json()["work_model_details"] is None
+    finally:
+        await async_client.delete(f"/api/v1/jobs/{job_id}")

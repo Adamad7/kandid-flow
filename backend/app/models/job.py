@@ -56,9 +56,7 @@ class JobOffer(Base):
     )
     location_raw: Mapped[str | None] = mapped_column(Text, nullable=True)
     application_deadline: Mapped[date | None] = mapped_column(Date, nullable=True)
-    applied_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True), nullable=True
-    )
+    applied_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     salary_min: Mapped[int | None] = mapped_column(Integer, nullable=True)
     salary_max: Mapped[int | None] = mapped_column(Integer, nullable=True)
     salary_currency: Mapped[str | None] = mapped_column(

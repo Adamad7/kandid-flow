@@ -14,7 +14,7 @@
 })(typeof self !== "undefined" ? self : this, function () {
   "use strict";
 
-  const VERSION = "1.2.0";
+  const VERSION = "1.2.1";
 
   function extractPracuj() {
     const utils = (window.KandidFlow && window.KandidFlow.utils) || {};
@@ -200,9 +200,18 @@
         const fullBadgeText = descText ? `${mainBadgeText}, ${descText}` : mainBadgeText;
 
         const detected = utils.detectWorkModel ? utils.detectWorkModel(fullBadgeText) : null;
-        if (detected && !workModel) {
-          workModel = detected;
-          workModelDetails = mainBadgeText;
+        if (detected) {
+          if (!workModel) {
+            workModel = detected;
+          }
+          const hasDetailsFn = utils.hasWorkModelDetails || ((t) => !/^(praca\s+)?(zdaln[a-ząćęłńóśźż]*|remote|hybryd[a-ząćęłńóśźż]*|hybrid|stacjonarn[a-ząćęłńóśźż]*|onsite|on-site)$/i.test(t.trim()));
+          const candidateDetails = (descText && hasDetailsFn(descText))
+            ? fullBadgeText
+            : (hasDetailsFn(fullBadgeText) ? fullBadgeText : null);
+
+          if (candidateDetails && !workModelDetails) {
+            workModelDetails = candidateDetails;
+          }
         }
 
         // Location badge detection (contains province description or matches location pattern)
@@ -230,10 +239,14 @@
       if (!workModel && nextOfferData.attributes.employment) {
         const modes = nextOfferData.attributes.employment.workModes || [];
         for (const m of modes) {
-          const detected = utils.detectWorkModel ? utils.detectWorkModel(m.name || m.code) : null;
+          const modeText = m.name || m.code || "";
+          const detected = utils.detectWorkModel ? utils.detectWorkModel(modeText) : null;
           if (detected) {
             workModel = detected;
-            workModelDetails = m.name || m.code;
+            const hasDetailsFn = utils.hasWorkModelDetails || ((t) => !/^(praca\s+)?(zdaln[a-ząćęłńóśźż]*|remote|hybryd[a-ząćęłńóśźż]*|hybrid|stacjonarn[a-ząćęłńóśźż]*|onsite|on-site)$/i.test(t.trim()));
+            if (hasDetailsFn(modeText) && !workModelDetails) {
+              workModelDetails = modeText;
+            }
             break;
           }
         }

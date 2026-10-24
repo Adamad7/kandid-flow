@@ -270,6 +270,50 @@
     return null;
   }
 
+  const GENERIC_WORK_MODEL_REGEX =
+    /^(praca\s+)?(w\s+trybie\s+|tryb\s+)?(w\s+pełni\s+|fully\s+|full\s+|100%\s+|w\s+100%\s+|częściowo\s+)?(zdaln[a-ząćęłńóśźż]*|remote|home[\s-]*office|hybryd[a-ząćęłńóśźż]*|hybrid|stacjonarn[a-ząćęłńóśźż]*|onsite|on-site|in-office|w\s+biurze|na\s+miejscu|office)(\s+(work|praca|z\s+domu|biura))?$/i;
+
+  const GENERIC_WORK_MODEL_PHRASES = [
+    /^(praca\s+)?hybrydowa[,\s]*(w\s+tym\s+)?(\()?częściowo\s+z\s+domu(\))?$/i,
+    /^(praca\s+)?zdalna[,\s]*(w\s+tym\s+)?(\()?100%\s*z\s+domu(\))?$/i,
+    /^(praca\s+)?stacjonarna[,\s]*(w\s+tym\s+)?(\()?w\s+biurze(\))?$/i,
+    /^częściowo\s+z\s+domu$/i,
+  ];
+
+  /**
+   * Checks whether the given text represents only a generic work model name without extra details.
+   *
+   * @param {string} text - Candidate work model text
+   * @returns {boolean} True if text is purely generic
+   */
+  function isGenericWorkModel(text) {
+    if (!text || typeof text !== "string") return true;
+    const clean = text
+      .trim()
+      .replace(/^[\s(\[{"'„”«]+|[\s)\]}"'„”».,;:]+$/g, "")
+      .trim();
+    if (!clean) return true;
+    if (GENERIC_WORK_MODEL_REGEX.test(clean)) return true;
+    for (const phraseRegex of GENERIC_WORK_MODEL_PHRASES) {
+      if (phraseRegex.test(clean)) return true;
+    }
+    return false;
+  }
+
+  /**
+   * Determines whether the given work model text contains specific, non-generic details
+   * (e.g. days per week, percentage, hours, location constraints).
+   *
+   * @param {string} text - Candidate work model text
+   * @returns {boolean} True if the text contains specific details
+   */
+  function hasWorkModelDetails(text) {
+    if (!text || typeof text !== "string") return false;
+    const clean = text.trim();
+    if (!clean) return false;
+    return !isGenericWorkModel(clean);
+  }
+
   /**
    * Parses compensation text into structured min/max/currency values.
    * Supports Polish and international currency notations (e.g. 15 000 - 22 000 PLN, 5 000 – 7 000 zł, €4,000 - €6,000).
@@ -719,6 +763,8 @@
     decodeHtmlEntities,
     cleanText,
     detectWorkModel,
+    isGenericWorkModel,
+    hasWorkModelDetails,
     parseSalary,
     parseBaseSalary,
     cleanLocationText,

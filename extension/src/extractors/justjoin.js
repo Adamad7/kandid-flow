@@ -14,7 +14,7 @@
 })(typeof self !== "undefined" ? self : this, function () {
   "use strict";
 
-  const VERSION = "1.3.2";
+  const VERSION = "1.3.3";
 
   const COMPANY_BLACKLIST_REGEX =
     /^(o nas|kariera|o nas i kariera|about us|career|zobacz profil firmy|opis|opis stanowiska|o firmie|tech stack|lokalizacja|wymagania|just join it|justjoin)$/i;
@@ -169,7 +169,6 @@
     // Check JSON-LD for telecommute
     if (ldData && ldData.jobLocationType === "TELECOMMUTE") {
       workModel = "remote";
-      workModelDetails = "Zdalnie";
     }
 
     // Scan badges / chips in header
@@ -179,9 +178,16 @@
     chipElements.forEach((badge) => {
       const txt = utils.cleanText(badge.textContent);
       const detected = utils.detectWorkModel ? utils.detectWorkModel(txt) : null;
-      if (detected && !workModel) {
-        workModel = detected;
-        workModelDetails = txt;
+      if (detected) {
+        if (!workModel) {
+          workModel = detected;
+        }
+        const hasDetails = utils.hasWorkModelDetails
+          ? utils.hasWorkModelDetails(txt)
+          : !/^(praca\s+)?(zdaln[a-ząćęłńóśźż]*|remote|hybryd[a-ząćęłńóśźż]*|hybrid|stacjonarn[a-ząćęłńóśźż]*|onsite|on-site)$/i.test(txt.trim());
+        if (hasDetails && !workModelDetails) {
+          workModelDetails = txt;
+        }
         matchedSelectors.push('div[class*="mui-jikuwi"]');
       }
     });

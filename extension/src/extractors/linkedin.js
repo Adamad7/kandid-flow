@@ -14,7 +14,7 @@
 })(typeof self !== "undefined" ? self : this, function () {
   "use strict";
 
-  const VERSION = "1.1.0";
+  const VERSION = "1.1.1";
 
   function extractLinkedIn() {
     const utils = (window.KandidFlow && window.KandidFlow.utils) || {};
@@ -77,9 +77,16 @@
     metaBadges.forEach((b) => {
       const txt = utils.cleanText(b.textContent);
       const detected = utils.detectWorkModel ? utils.detectWorkModel(txt) : null;
-      if (detected && !workModel) {
-        workModel = detected;
-        workModelDetails = txt;
+      if (detected) {
+        if (!workModel) {
+          workModel = detected;
+        }
+        const hasDetails = utils.hasWorkModelDetails
+          ? utils.hasWorkModelDetails(txt)
+          : !/^(praca\s+)?(zdaln[a-ząćęłńóśźż]*|remote|hybryd[a-ząćęłńóśźż]*|hybrid|stacjonarn[a-ząćęłńóśźż]*|onsite|on-site)$/i.test(txt.trim());
+        if (hasDetails && !workModelDetails) {
+          workModelDetails = txt;
+        }
       } else if (txt && !txt.includes("applicant") && !txt.includes("aplikuj") && !locationRaw) {
         // May be a location string like "Warsaw, Masovian, Poland"
         if (/poland|warsaw|krakow|wroclaw|gdansk|remote|hybrid|europe|united states/i.test(txt) || txt.includes(",")) {

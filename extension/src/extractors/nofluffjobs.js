@@ -14,7 +14,7 @@
 })(typeof self !== "undefined" ? self : this, function () {
   "use strict";
 
-  const VERSION = "1.1.0";
+  const VERSION = "1.1.1";
 
   function extractNoFluffJobs() {
     const utils = (window.KandidFlow && window.KandidFlow.utils) || {};
@@ -99,9 +99,16 @@
     badges.forEach((b) => {
       const txt = b.textContent.trim();
       const detected = utils.detectWorkModel ? utils.detectWorkModel(txt) : null;
-      if (detected && !workModel) {
-        workModel = detected;
-        workModelDetails = txt;
+      if (detected) {
+        if (!workModel) {
+          workModel = detected;
+        }
+        const hasDetails = utils.hasWorkModelDetails
+          ? utils.hasWorkModelDetails(txt)
+          : !/^(praca\s+)?(zdaln[a-ząćęłńóśźż]*|remote|hybryd[a-ząćęłńóśźż]*|hybrid|stacjonarn[a-ząćęłńóśźż]*|onsite|on-site)$/i.test(txt.trim());
+        if (hasDetails && !workModelDetails) {
+          workModelDetails = txt;
+        }
       }
     });
 
