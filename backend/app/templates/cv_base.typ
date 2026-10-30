@@ -14,6 +14,14 @@
 #let styling_raw = cv_data.at("styling", default: (:))
 #let styling = if type(styling_raw) == dictionary { styling_raw } else { (:) }
 
+// Accent Color Configuration
+#let accent_color_hex = styling.at("accent_color", default: "#2563eb")
+#let accent_color = if accent_color_hex != none and accent_color_hex != "" {
+  rgb(accent_color_hex)
+} else {
+  rgb("#2563eb")
+}
+
 // Style helper routines
 #let get-elem-style(styling_map, key) = {
   let val = styling_map.at(key, default: (:))
@@ -152,11 +160,11 @@
       font: heading_font,
       size: heading_size,
       weight: heading_weight,
-      fill: rgb("#111827"),
+      fill: accent_color,
     )[#upper(title)]
   ]
   #v(-0.4em)
-  #line(length: 100%, stroke: 0.5pt + rgb("#d1d5db"))
+  #line(length: 100%, stroke: 0.75pt + accent_color)
   #v(0.2em)
 ]
 
@@ -213,7 +221,7 @@
       font: job_title_font,
       size: job_title_size,
       weight: job_title_weight,
-      fill: rgb("#2563eb"),
+      fill: accent_color,
     )[#job_title]\
   ]
   #if contact_items.len() > 0 [

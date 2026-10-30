@@ -449,6 +449,7 @@ export interface CVElementStyle {
 }
 
 export interface CVStyling {
+  accent_color: string;
   document_font_family: string;
   full_name: CVElementStyle;
   job_title: CVElementStyle;

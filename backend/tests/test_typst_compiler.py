@@ -164,8 +164,14 @@ def test_compile_with_job_title():
     # Typst renders the job_title with dedicated accent fill (#2563eb)
     assert "#2563eb" in svg_pages[0]
 
-    # Without job_title, the accent fill is absent
-    sample_without_title = {**sample_data, "job_title": None}
+    # Without job_title or sections, the accent fill is absent
+    sample_without_title = {
+        "full_name": "Anna Nowak",
+        "job_title": None,
+        "language": "pl",
+        "contact_info": sample_data["contact_info"],
+        "sections": [],
+    }
     svg_without = typst_compiler.compile_to_svg(sample_without_title)
     assert "#2563eb" not in svg_without[0]
 
@@ -295,3 +301,75 @@ def test_cv_layout_schema_styling_serialization():
     pdf = typst_compiler.compile_to_pdf(layout_custom)
     assert isinstance(pdf, bytes)
     assert pdf.startswith(b"%PDF")
+
+
+def test_compile_with_custom_accent_color():
+    """Verify clean Typst compilation to SVG and PDF with custom accent color (#059669)."""
+    emerald_accent = "#059669"
+    sample_data = {
+        "full_name": "Katarzyna Zielińska",
+        "job_title": "Lead Software Engineer",
+        "language": "pl",
+        "styling": {
+            "accent_color": emerald_accent,
+        },
+        "contact_info": {
+            "email": "katarzyna.zielinska@example.com",
+            "phone": "+48 501 234 567",
+            "location": "Wrocław, Polska",
+        },
+        "sections": [
+            {
+                "id": "summary",
+                "type": "summary",
+                "title": "Podsumowanie",
+                "content": "Architekt systemów chmurowych.",
+            },
+            {
+                "id": "skills",
+                "type": "skills",
+                "title": "Umiejętności",
+                "items": [
+                    {"category": "Backend", "skills": ["Python", "FastAPI", "PostgreSQL"]},
+                ],
+            },
+        ],
+    }
+
+    svg_pages = typst_compiler.compile_to_svg(sample_data)
+    assert isinstance(svg_pages, list)
+    assert len(svg_pages) >= 1
+    assert "<svg" in svg_pages[0]
+    assert "</svg>" in svg_pages[0]
+    # Check that custom accent color is present in vector SVG markup
+    assert emerald_accent in svg_pages[0]
+
+    pdf = typst_compiler.compile_to_pdf(sample_data)
+    assert isinstance(pdf, bytes)
+    assert pdf.startswith(b"%PDF")
+    assert len(pdf) > 1000
+
+
+def test_cv_styling_accent_color_validation():
+    """Verify CVStyling accent_color validation and fallback logic."""
+    from app.schemas.cv import CVStyling
+
+    # Default accent color
+    default_style = CVStyling()
+    assert default_style.accent_color == "#2563eb"
+
+    # Valid hex colors
+    assert CVStyling(accent_color="#059669").accent_color == "#059669"
+    assert CVStyling(accent_color="#fff").accent_color == "#fff"
+    assert CVStyling(accent_color="#123456").accent_color == "#123456"
+    assert CVStyling(accent_color="#AABBCC").accent_color == "#AABBCC"
+    assert CVStyling(accent_color="#05966980").accent_color == "#05966980"
+
+    # Fallbacks for empty, None, or invalid values
+    assert CVStyling.model_validate({"accent_color": None}).accent_color == "#2563eb"
+    assert CVStyling.model_validate({"accent_color": ""}).accent_color == "#2563eb"
+    assert CVStyling.model_validate({"accent_color": "   "}).accent_color == "#2563eb"
+    assert CVStyling.model_validate({"accent_color": "invalid"}).accent_color == "#2563eb"
+    assert CVStyling.model_validate({"accent_color": "#12"}).accent_color == "#2563eb"
+    assert CVStyling.model_validate({"accent_color": "#12345"}).accent_color == "#2563eb"
+    assert CVStyling.model_validate({"accent_color": 12345}).accent_color == "#2563eb"

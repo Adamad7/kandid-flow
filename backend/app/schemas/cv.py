@@ -1,5 +1,6 @@
 """Pydantic schemas for CV generation, versioning, live preview, and inline refinement."""
 
+import re
 from datetime import datetime
 from typing import Any, Literal
 from uuid import UUID
@@ -9,6 +10,8 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator, model_valida
 from app.schemas.candidate import CandidateContactInfo, CandidateSectionBlock
 
 TailoringModeType = Literal["targeted_summary_keywords", "full"]
+
+HEX_COLOR_REGEX = re.compile(r"^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$")
 
 
 class CVElementStyle(BaseModel):
@@ -26,6 +29,10 @@ class CVElementStyle(BaseModel):
 class CVStyling(BaseModel):
     """Global styling and typography configuration for CV compilation."""
 
+    accent_color: str = Field(
+        default="#2563eb",
+        description="Hex accent color applied to section headings, dividers, and job title",
+    )
     document_font_family: str = Field(
         default="Liberation Sans", description="Global document font family"
     )
@@ -76,6 +83,16 @@ class CVStyling(BaseModel):
     section_spacing_em: float = Field(default=0.6, description="Spacing between sections in em")
 
     model_config = ConfigDict(extra="ignore")
+
+    @field_validator("accent_color", mode="before")
+    @classmethod
+    def validate_accent_color(cls, v: Any) -> str:
+        if not v or not isinstance(v, str):
+            return "#2563eb"
+        val = v.strip()
+        if not HEX_COLOR_REGEX.fullmatch(val):
+            return "#2563eb"
+        return val
 
     @field_validator(
         "full_name",

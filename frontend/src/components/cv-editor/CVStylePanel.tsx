@@ -6,14 +6,48 @@ import {
   Maximize2,
   Sliders,
   Sparkles,
+  Palette,
+  Check,
 } from "lucide-react";
 import type { CVStyling, CVElementStyle, FontWeight } from "../../types";
 import { Button } from "../ui/Button";
+import { cn } from "../../lib/utils";
 
 export interface CVStylePanelProps {
   styling: CVStyling;
   onChange: (styling: CVStyling) => void;
 }
+
+export const ACCENT_COLOR_PRESETS = [
+  { name: "Niebieski (domyślny)", label: "Niebieski", hex: "#2563eb" },
+  { name: "Indygo", label: "Indygo", hex: "#4f46e5" },
+  { name: "Szmaragdowy", label: "Szmaragdowy", hex: "#059669" },
+  { name: "Morski / Teal", label: "Morski", hex: "#0d9488" },
+  { name: "Karminowy / Czerwony", label: "Karminowy", hex: "#dc2626" },
+  { name: "Bursztynowy", label: "Bursztynowy", hex: "#d97706" },
+  { name: "Grafitowy", label: "Grafitowy", hex: "#334155" },
+  { name: "Ciemny / Czarny", label: "Ciemny", hex: "#111827" },
+];
+
+const HEX_COLOR_REGEX = /^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/;
+
+const isValidHex = (hex?: string): boolean => {
+  return typeof hex === "string" && HEX_COLOR_REGEX.test(hex);
+};
+
+const getValidPickerHex = (hex?: string): string => {
+  if (!hex || typeof hex !== "string") return "#2563eb";
+  if (/^#[0-9a-fA-F]{6}$/i.test(hex)) {
+    return hex;
+  }
+  if (/^#[0-9a-fA-F]{3}$/i.test(hex)) {
+    const r = hex[1];
+    const g = hex[2];
+    const b = hex[3];
+    return `#${r}${r}${g}${g}${b}${b}`;
+  }
+  return "#2563eb";
+};
 
 export const AVAILABLE_FONTS = [
   { value: "Liberation Sans", label: "Liberation Sans (Bezszeryfowa)" },
@@ -37,6 +71,7 @@ export const FONT_WEIGHTS: { value: FontWeight; label: string }[] = [
 ];
 
 export const DEFAULT_CV_STYLING: CVStyling = {
+  accent_color: "#2563eb",
   document_font_family: "Liberation Sans",
   full_name: { font_family: "Liberation Sans", font_size_pt: 18.0, font_weight: "bold" },
   job_title: { font_family: "Liberation Sans", font_size_pt: 11.0, font_weight: "semibold" },
@@ -122,12 +157,20 @@ export const CVStylePanel: React.FC<CVStylePanelProps> = ({
   const currentStyling: CVStyling = {
     ...DEFAULT_CV_STYLING,
     ...styling,
+    accent_color: styling?.accent_color || DEFAULT_CV_STYLING.accent_color,
     full_name: { ...DEFAULT_CV_STYLING.full_name, ...(styling?.full_name || {}) },
     job_title: { ...DEFAULT_CV_STYLING.job_title, ...(styling?.job_title || {}) },
     contact_info: { ...DEFAULT_CV_STYLING.contact_info, ...(styling?.contact_info || {}) },
     section_headings: { ...DEFAULT_CV_STYLING.section_headings, ...(styling?.section_headings || {}) },
     section_text: { ...DEFAULT_CV_STYLING.section_text, ...(styling?.section_text || {}) },
     clause: { ...DEFAULT_CV_STYLING.clause, ...(styling?.clause || {}) },
+  };
+
+  const handleAccentColorChange = (newColor: string) => {
+    onChange({
+      ...currentStyling,
+      accent_color: newColor,
+    });
   };
 
   // Handler for global document font change: updates all 6 elements
@@ -191,7 +234,119 @@ export const CVStylePanel: React.FC<CVStylePanelProps> = ({
         </Button>
       </div>
 
-      {/* 1. Global Document Font Family */}
+      {/* 1. Kolor akcentu CV */}
+      <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-xs space-y-4 dark:border-slate-800 dark:bg-slate-900">
+        <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2.5">
+          <div className="flex items-center gap-2">
+            <Palette className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+            <span className="font-semibold text-sm text-slate-900 dark:text-slate-100">
+              Kolor akcentu CV
+            </span>
+          </div>
+          <span className="text-[11px] font-mono font-medium text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded border border-slate-200 dark:border-slate-700 flex items-center gap-1.5">
+            <span
+              className="inline-block h-2.5 w-2.5 rounded-full border border-black/10 dark:border-white/10"
+              style={{
+                backgroundColor: isValidHex(currentStyling.accent_color)
+                  ? currentStyling.accent_color
+                  : "#2563eb",
+              }}
+            />
+            <span>{currentStyling.accent_color}</span>
+          </span>
+        </div>
+
+        {/* Paleta gotowych próbek kolorów */}
+        <div className="space-y-1.5">
+          <label className="block text-xs font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+            Paleta gotowych próbek
+          </label>
+          <div className="grid grid-cols-4 sm:grid-cols-8 gap-2">
+            {ACCENT_COLOR_PRESETS.map((swatch) => {
+              const isSelected =
+                currentStyling.accent_color.toLowerCase() === swatch.hex.toLowerCase();
+              return (
+                <button
+                  key={swatch.hex}
+                  type="button"
+                  onClick={() => handleAccentColorChange(swatch.hex)}
+                  title={`${swatch.name} (${swatch.hex})`}
+                  aria-label={`${swatch.name} (${swatch.hex})`}
+                  className={cn(
+                    "group relative flex flex-col items-center justify-center p-2 rounded-lg border transition-all text-center",
+                    isSelected
+                      ? "border-blue-500 ring-2 ring-blue-500/20 bg-blue-50/60 dark:bg-blue-950/40 dark:border-blue-400"
+                      : "border-slate-200 hover:border-slate-300 bg-white hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-950 dark:hover:bg-slate-800/60"
+                  )}
+                >
+                  <span
+                    className="h-6 w-6 rounded-full shadow-xs flex items-center justify-center transition-transform group-hover:scale-110 border border-black/10 dark:border-white/10"
+                    style={{ backgroundColor: swatch.hex }}
+                  >
+                    {isSelected && (
+                      <Check className="h-3.5 w-3.5 text-white drop-shadow-sm" />
+                    )}
+                  </span>
+                  <span className="mt-1 text-[10px] font-medium text-slate-700 dark:text-slate-300 truncate max-w-full">
+                    {swatch.label}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Próbnik koloru HTML + pole tekstowe HEX */}
+        <div className="space-y-1.5">
+          <label
+            htmlFor="accent-color-hex"
+            className="block text-xs font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-300"
+          >
+            Własny kolor akcentu (HEX)
+          </label>
+          <div className="flex items-center gap-3">
+            <div className="relative flex items-center">
+              <input
+                type="color"
+                id="cv-accent-color-picker"
+                aria-label="Próbnik koloru akcentu"
+                value={getValidPickerHex(currentStyling.accent_color)}
+                onChange={(e) =>
+                  handleAccentColorChange(e.target.value.toLowerCase())
+                }
+                className="h-9 w-12 cursor-pointer rounded-md border border-slate-300 bg-white p-0.5 shadow-xs transition-colors dark:border-slate-700 dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <div className="relative flex-1">
+              <input
+                type="text"
+                id="accent-color-hex"
+                value={currentStyling.accent_color}
+                onChange={(e) => {
+                  let val = e.target.value.trim();
+                  if (val.length > 0 && !val.startsWith("#")) {
+                    val = `#${val}`;
+                  }
+                  handleAccentColorChange(val);
+                }}
+                placeholder="#2563eb"
+                maxLength={9}
+                className="block w-full rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm font-mono text-slate-900 shadow-xs placeholder-slate-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:placeholder-slate-500"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Pomocniczy opis */}
+        <p className="text-[11px] text-slate-500 dark:text-slate-400 flex items-start gap-1.5 pt-0.5">
+          <Sparkles className="h-3.5 w-3.5 text-amber-500 shrink-0 mt-0.5" />
+          <span>
+            Wybrany kolor akcentu zostanie zastosowany do nazwy stanowiska, nagłówków sekcji oraz linii oddzielających sekcje.
+          </span>
+        </p>
+      </div>
+
+      {/* 2. Global Document Font Family */}
       <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-xs space-y-3 dark:border-slate-800 dark:bg-slate-900">
         <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2.5">
           <div className="flex items-center gap-2">
@@ -233,7 +388,7 @@ export const CVStylePanel: React.FC<CVStylePanelProps> = ({
         </div>
       </div>
 
-      {/* 2. Individual Typography Elements */}
+      {/* 3. Individual Typography Elements */}
       <div className="space-y-4">
         <div className="flex items-center gap-2 px-1">
           <AlignLeft className="h-4 w-4 text-blue-600 dark:text-blue-400" />
@@ -353,7 +508,7 @@ export const CVStylePanel: React.FC<CVStylePanelProps> = ({
         </div>
       </div>
 
-      {/* 3. Line Height & Section Spacing */}
+      {/* 4. Line Height & Section Spacing */}
       <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-xs space-y-4 dark:border-slate-800 dark:bg-slate-900">
         <div className="flex items-center gap-2 border-b border-slate-100 dark:border-slate-800 pb-2.5">
           <AlignLeft className="h-4 w-4 text-blue-600 dark:text-blue-400" />
@@ -502,7 +657,7 @@ export const CVStylePanel: React.FC<CVStylePanelProps> = ({
         </div>
       </div>
 
-      {/* 4. Document Margins */}
+      {/* 5. Document Margins */}
       <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-xs space-y-4 dark:border-slate-800 dark:bg-slate-900">
         <div className="flex items-center gap-2 border-b border-slate-100 dark:border-slate-800 pb-2.5">
           <Maximize2 className="h-4 w-4 text-blue-600 dark:text-blue-400" />
