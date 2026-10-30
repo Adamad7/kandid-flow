@@ -239,9 +239,11 @@ class LLMClient:
         local_error_detail: str | None = None
         if should_use_ollama:
             ollama_target_model = model or effective_ollama_model
-            ollama_timeout = (
-                timeout if timeout is not None else (300.0 if enable_thinking else 120.0)
+            is_reasoning_model = any(
+                m in ollama_target_model.lower() for m in ("deepseek-r1", "r1", "qwq", "reasoning")
             )
+            ollama_think = bool(enable_thinking and is_reasoning_model)
+            ollama_timeout = timeout if timeout is not None else (300.0 if ollama_think else 120.0)
             eff_context_window = context_window or 32768
             eff_max_tokens = max_tokens or min(eff_context_window, 16384)
             try:
@@ -254,11 +256,12 @@ class LLMClient:
                             "prompt": user_prompt,
                             "stream": False,
                             "format": "json",
-                            "think": enable_thinking,
+                            "think": ollama_think,
                             "options": {
                                 "num_ctx": eff_context_window,
                                 "num_predict": eff_max_tokens,
                                 "temperature": 0.2,
+                                "repeat_penalty": 1.15,
                             },
                         },
                     )

@@ -1,7 +1,9 @@
 """Candidate Knowledge Base parser and default seeder service."""
 
+import asyncio
 import copy
 import logging
+import re
 import uuid
 from typing import Any
 
@@ -418,6 +420,17 @@ STRICT SECTION MANDATE:
   "languages", "trainings", "achievements", "interests", "clause".
 - Even if data for a section is missing from the input, you MUST STILL return that section
   with an empty array `items: []` or empty string `content: ""`. NEVER omit any of the 11 sections.
+
+STRICT SECTION EXCLUSION & NEGATIVE CONSTRAINTS:
+- CRITICAL: Universities, schools, colleges, degrees, and academic studies
+  MUST NEVER be placed into "projects". They belong EXCLUSIVELY to "education".
+- CRITICAL: Professional certifications, diplomas, credentials, and state qualifications
+  (e.g. CCNA, AWS, Cisco, OKE Kraków, GCP) MUST NEVER be placed into "projects".
+  They belong EXCLUSIVELY to "certificates".
+- CRITICAL: Internships, apprenticeships, and jobs (e.g. Praktykant, Stażysta, employment)
+  MUST NEVER be placed into "projects". They belong EXCLUSIVELY to "experience".
+- "projects" MUST ONLY contain technical projects, software repositories, applications,
+  homelab environments, open-source libraries, infrastructure, and engineering projects.
 
 NARRATIVE & FREE-FORM EXTRACTION INSTRUCTIONS:
 - Extract all professional background faithfully, even when written as informal narrative or notes:
@@ -932,6 +945,903 @@ def _sanitize_parsed_sections(raw_sections: list[dict[str, Any]]) -> list[dict[s
     return sanitized
 
 
+def _extract_contact_info_regex(text: str) -> dict[str, str | None]:
+    """Extract contact information and full name deterministically using regex.
+
+    Guarantees reliable extraction of email, phone, GitHub, LinkedIn, portfolio,
+    location, and name without LLM token cost or hallucination.
+    """
+    result: dict[str, str | None] = {
+        "full_name": None,
+        "email": None,
+        "phone": None,
+        "location": None,
+        "github": None,
+        "linkedin": None,
+        "portfolio": None,
+    }
+
+    if not text or not isinstance(text, str):
+        return result
+
+    # 1. Full name extraction
+    name_pattern = (
+        r"(?:imię\s+i\s+nazwisko|imie\s+i\s+nazwisko|full\s+name|name):\s*"
+        r"([A-ZĄĆĘŁŃÓŚŹŻ][a-ząćęłńóśźż]+(?:[ \t]+[A-ZĄĆĘŁŃÓŚŹŻ][a-ząćęłńóśźż]+)+)"
+    )
+    m_name_label = re.search(name_pattern, text, re.IGNORECASE)
+    if m_name_label:
+        result["full_name"] = m_name_label.group(1).strip()
+    else:
+        m_h1 = re.search(
+            r"^#\s+([A-ZĄĆĘŁŃÓŚŹŻ][a-ząćęłńóśźż]+(?:[ \t]+[A-ZĄĆĘŁŃÓŚŹŻ][a-ząćęłńóśźż]+)+)",
+            text,
+            re.MULTILINE,
+        )
+        if m_h1:
+            candidate_h1 = m_h1.group(1).strip()
+            lower_h1 = candidate_h1.lower()
+            if not any(
+                term in lower_h1
+                for term in [
+                    "baza wiedzy",
+                    "curriculum",
+                    "doświadczenie",
+                    "wykształcenie",
+                    "edukacja",
+                    "projekty",
+                    "umiejętności",
+                    "certyfikaty",
+                    "kontakt",
+                ]
+            ):
+                result["full_name"] = candidate_h1
+
+    # 1b. Fallback to LinkedIn or Email name extraction if full_name is still None
+    if not result["full_name"]:
+        m_li = re.search(
+            r"linkedin\.com/in/([a-zA-ZĄĆĘŁŃÓŚŹŻąćęłńóśźż]+)-([a-zA-ZĄĆĘŁŃÓŚŹŻąćęłńóśźż]+)(?:-[a-zA-Z0-9]+)?",
+            text,
+            re.IGNORECASE,
+        )
+        if m_li:
+            fn = m_li.group(1).capitalize()
+            ln = m_li.group(2).capitalize()
+            result["full_name"] = f"{fn} {ln}"
+        else:
+            m_em = re.search(
+                r"\b([a-zA-ZĄĆĘŁŃÓŚŹŻąćęłńóśźż]+)\.([a-zA-ZĄĆĘŁŃÓŚŹŻąćęłńóśźż]+)[0-9]*@[a-zA-Z0-9-]+\.",
+                text,
+            )
+            if m_em:
+                fn = m_em.group(1).capitalize()
+                ln = m_em.group(2).capitalize()
+                result["full_name"] = f"{fn} {ln}"
+
+    # 2. Email extraction
+    m_email = re.search(r"\b[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+\b", text)
+    if m_email:
+        result["email"] = m_email.group(0).strip().rstrip(".")
+
+    # 3. Phone extraction
+    m_phone_labeled = re.search(
+        r"(?:telefon|tel\.?|phone|mobile|kom\.?):\s*([+\d\s().-]{7,25})",
+        text,
+        re.IGNORECASE,
+    )
+    if m_phone_labeled:
+        raw_phone = m_phone_labeled.group(1).strip()
+        cleaned_phone = re.sub(r"[^\d+]", "", raw_phone)
+        if len(cleaned_phone) >= 9:
+            result["phone"] = raw_phone.strip().rstrip(".,;")
+    else:
+        m_phone_pl = re.search(
+            r"(?<!\w)(?:\+48[\s.-]?)?(?:\(?\d{2,3}\)?[\s.-]?)?\d{3}[\s.-]?\d{3}[\s.-]?\d{3}(?!\d)",
+            text,
+        )
+        if m_phone_pl:
+            cand_phone = m_phone_pl.group(0).strip()
+            digits_only = re.sub(r"\D", "", cand_phone)
+            if len(digits_only) in (9, 11):
+                result["phone"] = cand_phone
+
+    # 4. GitHub extraction
+    m_github = re.search(
+        r"(?:https?://)?(?:www\.)?github\.com/([a-zA-Z0-9_-]+)",
+        text,
+        re.IGNORECASE,
+    )
+    if m_github:
+        gh_user = m_github.group(1).strip()
+        if gh_user.lower() not in ("none", "null", "undefined"):
+            result["github"] = f"github.com/{gh_user}"
+
+    # 5. LinkedIn extraction
+    m_linkedin = re.search(
+        r"(?:https?://)?(?:www\.)?linkedin\.com/in/([a-zA-Z0-9_%-]+)",
+        text,
+        re.IGNORECASE,
+    )
+    if m_linkedin:
+        li_user = m_linkedin.group(1).strip()
+        if li_user.lower() not in ("none", "null", "undefined"):
+            result["linkedin"] = f"linkedin.com/in/{li_user}"
+
+    # 6. Portfolio / Personal website extraction
+    m_port_labeled = re.search(
+        r"(?:portfolio|strona\s*www|strona|website|web|www|url):\s*(https?://[^\s]+|[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}(?:/[^\s]*)?)",
+        text,
+        re.IGNORECASE,
+    )
+    if m_port_labeled:
+        p_val = m_port_labeled.group(1).strip().rstrip(".,;")
+        if "github.com" not in p_val.lower() and "linkedin.com" not in p_val.lower():
+            result["portfolio"] = p_val
+    else:
+        m_port_url = re.search(
+            r"https?://(?!github\.com|linkedin\.com|www\.github\.com|www\.linkedin\.com)[a-zA-Z0-9_.-]+\.[a-zA-Z]{2,}(?:/[^\s)]*)?",
+            text,
+            re.IGNORECASE,
+        )
+        if m_port_url:
+            p_val = m_port_url.group(0).strip().rstrip(".,;)")
+            result["portfolio"] = p_val
+
+    # 7. Location extraction
+    m_loc = re.search(
+        r"(?:lokalizacja|miejsce\s+zamieszkania|miasto|location|city):\s*([^\n,]+(?:,\s*[^\n]+)?)",
+        text,
+        re.IGNORECASE,
+    )
+    if m_loc:
+        result["location"] = m_loc.group(1).strip().rstrip(".,;")
+
+    return result
+
+
+SECTION_HEADER_MAP: dict[str, list[str]] = {
+    "summary": [
+        "podsumowanie zawodowe",
+        "podsumowanie",
+        "o mnie",
+        "profil zawodowy",
+        "profil",
+        "bio",
+        "o sobie",
+        "summary",
+        "professional summary",
+        "about me",
+        "about",
+    ],
+    "skills": [
+        "umiejętności techniczne",
+        "umiejętności",
+        "kompetencje",
+        "technologie",
+        "narzędzia",
+        "stack technologiczny",
+        "stack",
+        "skills",
+        "technical skills",
+        "competencies",
+        "technologies",
+        "tools",
+    ],
+    "experience": [
+        "doświadczenie zawodowe",
+        "doświadczenie",
+        "historia zatrudnienia",
+        "przebieg kariery",
+        "praca",
+        "zatrudnienie",
+        "work experience",
+        "professional experience",
+        "experience",
+        "employment history",
+        "employment",
+    ],
+    "projects": [
+        "wybrane projekty",
+        "projekty",
+        "portfolio",
+        "realizacje",
+        "twórczość",
+        "selected projects",
+        "projects",
+        "personal projects",
+    ],
+    "education": [
+        "historia edukacji",
+        "wykształcenie",
+        "edukacja",
+        "studia",
+        "szkoły",
+        "education",
+        "academic background",
+        "studies",
+    ],
+    "certificates": [
+        "uzyskane certyfikaty",
+        "certyfikaty",
+        "certyfikacje",
+        "uprawnienia",
+        "certificates",
+        "certifications",
+        "credentials",
+    ],
+    "languages": [
+        "znajomość języków",
+        "języki obce",
+        "języki",
+        "languages",
+        "language skills",
+        "foreign languages",
+    ],
+    "trainings": [
+        "kursy i szkolenia",
+        "szkolenia",
+        "kursy",
+        "warsztaty",
+        "trainings",
+        "courses",
+        "workshops",
+    ],
+    "achievements": [
+        "osiągnięcia",
+        "sukcesy",
+        "nagrody",
+        "wyróżnienia",
+        "achievements",
+        "awards",
+        "honors",
+    ],
+    "interests": [
+        "zainteresowania",
+        "hobby",
+        "pasje",
+        "interests",
+        "hobbies",
+    ],
+    "clause": [
+        "zgoda na przetwarzanie danych",
+        "klauzula rodo",
+        "klauzula",
+        "rodo",
+        "zgoda",
+        "clause",
+        "gdpr clause",
+        "data protection clause",
+    ],
+    "contact": [
+        "dane kontaktowe",
+        "kontakt",
+        "dane osobowe",
+        "contact info",
+        "contact details",
+        "contact",
+    ],
+}
+
+
+def _detect_dominant_heading_level(text: str) -> int:
+    """Detect dominant markdown heading level (# or ##) for resume sections."""
+    level_counts = {1: 0, 2: 0, 3: 0}
+    for line in text.splitlines():
+        m = re.match(r"^(#{1,3})\s+(.+)$", line.strip())
+        if m:
+            lvl = len(m.group(1))
+            raw_hdr = re.sub(r"[:*#]+$", "", m.group(2)).strip().lower()
+            cleaned = re.sub(r"^(?:\d+[\.\)]|[IVXLCDM]+[\.\)])\s*", "", raw_hdr).strip()
+            for syns in SECTION_HEADER_MAP.values():
+                if any(
+                    cleaned == syn
+                    or cleaned.startswith(f"{syn}:")
+                    or cleaned.startswith(f"{syn} -")
+                    for syn in syns
+                ):
+                    level_counts[lvl] += 1
+                    break
+    if level_counts[1] >= 2:
+        return 1
+    if level_counts[2] >= 2:
+        return 2
+    if level_counts[1] == 1 and level_counts[2] == 0:
+        return 1
+    if level_counts[2] == 1 and level_counts[1] == 0:
+        return 2
+    return 0
+
+
+def _normalize_header(line: str, allowed_level: int = 1) -> str | None:
+    """Classify a line as a standard section header if matched against known synonyms."""
+    raw = line.strip()
+    if not raw:
+        return None
+
+    header_text: str | None = None
+    m_md = re.match(r"^(#{1,6})\s+(.+)$", raw)
+    if m_md:
+        if len(m_md.group(1)) != allowed_level:
+            return None
+        header_text = m_md.group(2).strip()
+    else:
+        # If document uses markdown headers, only headings at allowed_level can be section
+        # boundaries
+        if allowed_level in (1, 2):
+            return None
+
+        # Fallback for plain text documents without markdown headings
+        m_bold = re.match(r"^\*\*(.+?)\*\*:?$", raw)
+        if m_bold:
+            header_text = m_bold.group(1).strip()
+        else:
+            m_label = re.match(r"^([A-ZĄĆĘŁŃÓŚŹŻa-ząćęłńóśźż\s\d.-]{3,50}):?$", raw)
+            if m_label and (raw.isupper() or raw.endswith(":")):
+                header_text = m_label.group(1).strip()
+
+    if not header_text:
+        return None
+
+    # Strip numbering prefix like "1. ", "1) ", "I. "
+    cleaned = re.sub(r"^(?:\d+[\.\)]|[IVXLCDM]+[\.\)])\s*", "", header_text).strip()
+    cleaned = re.sub(r"[:*#]+$", "", cleaned).strip().lower()
+
+    for sec_id, synonyms in SECTION_HEADER_MAP.items():
+        for syn in synonyms:
+            if (
+                cleaned == syn
+                or cleaned.startswith(f"{syn}:")
+                or cleaned.startswith(f"{syn} -")
+                or cleaned.startswith(f"{syn} –")
+            ):
+                return sec_id
+
+    return None
+
+
+def _segment_raw_text(text: str) -> dict[str, str]:
+    """Segment raw Markdown or structured text into isolated section blocks.
+
+    Recognizes standard section headings and isolates their respective text blocks,
+    preventing cross-contamination across sections during parsing.
+    """
+    allowed_level = _detect_dominant_heading_level(text)
+    segments: dict[str, list[str]] = {}
+    current_section = "header"
+    segments[current_section] = []
+
+    lines = text.splitlines()
+    for line in lines:
+        detected_sec = _normalize_header(line, allowed_level=allowed_level)
+        if detected_sec:
+            current_section = detected_sec
+            if current_section not in segments:
+                segments[current_section] = []
+        else:
+            segments[current_section].append(line)
+
+    result: dict[str, str] = {}
+    for sec_id, sec_lines in segments.items():
+        joined = "\n".join(sec_lines).strip()
+        if joined:
+            result[sec_id] = joined
+
+    return result
+
+
+SECTION_PROMPTS: dict[str, str] = {
+    "education": """You are an expert HR data parsing assistant.
+Extract ALL educational entries (universities, colleges, technical schools, degrees)
+from the text into valid JSON.
+There may be multiple schools or degrees - you MUST extract EVERY single one into the 'items' list.
+Do NOT stop after just 1 entry.
+
+JSON Structure:
+{
+  "items": [
+    {
+      "institution": "University or school name",
+      "degree": "Degree or title (e.g. Inżynier, Magister, Licencjat, Technik, BSc, MSc)",
+      "field_of_study": "Major or field of study (or empty string)",
+      "start_date": "Start year (YYYY) or empty string",
+      "end_date": "End year (YYYY), 'present', or empty string"
+    }
+  ]
+}
+Return ONLY valid JSON.
+""",
+    "experience": """You are an expert HR data parsing assistant.
+Extract professional work experience, employment history, and internships from the text
+into valid JSON.
+
+JSON Structure:
+{
+  "items": [
+    {
+      "position": "Job role / title (e.g. Software Engineer, Praktykant, DevOps Specialist)",
+      "company": "Company / employer name",
+      "location": "City or remote (or empty string)",
+      "start_date": "Start date (YYYY or YYYY-MM)",
+      "end_date": "End date (YYYY, YYYY-MM, or 'present')",
+      "highlights": ["Key responsibility or achievement"]
+    }
+  ]
+}
+Return ONLY valid JSON.
+""",
+    "projects": """You are an expert HR data parsing assistant.
+Extract ALL technical projects (applications, open-source repositories, infrastructure,
+homelab, websites, systems) from the text into valid JSON.
+Each project heading (e.g. '### Project Name') MUST be extracted as an item in the 'items' list.
+You MUST extract EVERY SINGLE project found in the text. Do NOT stop after just 1 project.
+
+JSON Structure:
+{
+  "items": [
+    {
+      "name": "Project name",
+      "role": "Role in project (e.g. Twórca, Współtwórca, Maintainer)",
+      "url": "Project or repository URL (or empty string)",
+      "start_date": "YYYY or empty string",
+      "end_date": "YYYY, 'present', or empty string",
+      "description": "Short project summary and purpose",
+      "technologies": ["Tech 1", "Tech 2"]
+    }
+  ]
+}
+
+NEGATIVE CONSTRAINTS:
+- DO NOT extract schools, academic studies, or degrees as projects. They belong to education.
+- DO NOT extract certifications (CCNA, AWS, Cisco, etc.) as projects. They belong to certificates.
+- DO NOT extract commercial employment or company internships (e.g. Praktykant) as projects.
+  They belong to experience.
+
+Return ONLY valid JSON.
+""",
+    "skills": """You are an expert HR data parsing assistant.
+Extract technical and professional skills grouped by category from the text into valid JSON.
+
+JSON Structure:
+{
+  "items": [
+    {
+      "category": "Category name (e.g. Platform & Cloud, Backend, Programowanie, Narzędzia)",
+      "skills": ["Skill 1", "Skill 2"]
+    }
+  ]
+}
+Return ONLY valid JSON.
+""",
+    "certificates": """You are an expert HR data parsing assistant.
+Extract ALL professional certificates, qualifications, and exams from the text into valid JSON.
+Extract EVERY single certificate into the 'items' list. Do NOT stop after the first certificate.
+
+JSON Structure:
+{
+  "items": [
+    {
+      "name": "Certificate name",
+      "issuer": "Issuing organization or authority",
+      "issue_date": "Issue date (YYYY or YYYY-MM) or empty string"
+    }
+  ]
+}
+Return ONLY valid JSON.
+""",
+    "languages": """You are an expert HR data parsing assistant.
+Extract spoken/written language proficiencies from the text into valid JSON.
+
+JSON Structure:
+{
+  "items": [
+    {
+      "name": "Language name (e.g. Polski, Angielski, Niemiecki)",
+      "level": "Proficiency level (e.g. Ojczysty (Native), C1, B2, Średniozaawansowany)"
+    }
+  ]
+}
+Return ONLY valid JSON.
+""",
+    "trainings": """You are an expert HR data parsing assistant.
+Extract ALL professional trainings, courses, and workshops from the text into valid JSON.
+Extract EVERY single course or training into the 'items' list. Do NOT repeat text or loop.
+
+JSON Structure:
+{
+  "items": [
+    {
+      "name": "Training or course name",
+      "organizer": "Organizer, institution, or platform",
+      "date": "Date (YYYY or YYYY-MM) or empty string",
+      "description": "Short description or empty string"
+    }
+  ]
+}
+Return ONLY valid JSON.
+""",
+    "achievements": """You are an expert HR data parsing assistant.
+Extract awards, hackathons, competition results, and key honors from the text into valid JSON.
+
+JSON Structure:
+{
+  "items": [
+    {
+      "title": "Achievement or award title",
+      "issuer": "Awarding body or organizer",
+      "date": "Date (YYYY) or empty string",
+      "description": "Details of the achievement"
+    }
+  ]
+}
+Return ONLY valid JSON.
+""",
+    "interests": """You are an expert HR data parsing assistant.
+Extract interests, hobbies, and passions from the text into valid JSON.
+
+JSON Structure:
+{
+  "items": ["Interest 1", "Interest 2"],
+  "content": "Short narrative or description (or empty string)"
+}
+Return ONLY valid JSON.
+""",
+    "summary": """You are an expert HR data parsing assistant.
+Extract candidate bio, professional summary, or about me narrative into valid JSON.
+
+JSON Structure:
+{
+  "content": "Clean narrative summary"
+}
+Return ONLY valid JSON.
+""",
+}
+
+
+def _is_education_entry(it: dict[str, Any]) -> bool:
+    """Check if a project entry actually describes an educational background/degree."""
+    if it.get("url") or (isinstance(it.get("technologies"), list) and len(it["technologies"]) > 0):
+        return False
+
+    name = str(it.get("name") or "").strip().lower()
+    role = str(it.get("role") or "").strip().lower()
+    desc = str(it.get("description") or "").strip().lower()
+    combined = f"{name} {role} {desc}"
+
+    software_terms = [
+        "aplikacja",
+        "platforma",
+        "system monitorowania",
+        "system zarządzania",
+        "bot",
+        "serwis",
+        "portal",
+        "homelab",
+        "klaster",
+        "biblioteka",
+        "narzędzie",
+        "plan zajęć",
+        "gamevibes",
+        "ancymon",
+        "kandidflow",
+    ]
+    if any(term in name for term in software_terms):
+        return False
+
+    school_terms = [
+        "politechnika",
+        "uniwersytet",
+        "zespół szkół",
+        "technikum",
+        "akademia górniczo",
+        "szkoła główna",
+        "uczelnia",
+        "liceum",
+    ]
+    if any(term in name for term in school_terms):
+        return True
+
+    degree_name_terms = [
+        "studia",
+        "studia inżynierskie",
+        "studia magisterskie",
+        "studia licencjackie",
+        "inżynier informatyki",
+        "magister informatyki",
+        "licencjat informatyki",
+    ]
+    if any(name.startswith(term) or name == term for term in degree_name_terms):
+        return True
+
+    degree_role_terms = ["inżynier", "magister", "licencjat", "technik", "student", "doktorant"]
+    if any(role.startswith(term) for term in degree_role_terms) and any(
+        term in combined for term in school_terms
+    ):
+        return True
+
+    return False
+
+
+def _is_certificate_entry(it: dict[str, Any]) -> bool:
+    """Check if a project entry actually describes a certification or exam."""
+    name = str(it.get("name") or "").strip().lower()
+    role = str(it.get("role") or "").strip().lower()
+    desc = str(it.get("description") or "").strip().lower()
+    combined = f"{name} {role} {desc}"
+
+    cert_terms = [
+        "certyfikat",
+        "certificate",
+        "ccna",
+        "cisco",
+        "oke kraków",
+        "oke ",
+        "aws certified",
+        "google cloud certified",
+        "cka:",
+        "ckad",
+        "rhcsa",
+        "azure certified",
+        "comptia",
+        "kwalifikacja",
+        "kwalifikacje",
+        "egzamin zawodowy",
+    ]
+    if any(
+        term in name
+        for term in [
+            "certyfikat",
+            "ccna",
+            "oke",
+            "aws certified",
+            "google cloud certified",
+            "cka",
+            "ckad",
+            "rhcsa",
+            "kwalifikacj",
+        ]
+    ):
+        return True
+
+    if any(term in combined for term in cert_terms) and any(
+        issuer in combined
+        for issuer in ["cisco", "google", "amazon", "aws", "oke", "linux foundation", "red hat"]
+    ):
+        return True
+
+    return False
+
+
+def _is_experience_entry(it: dict[str, Any]) -> bool:
+    """Check if a project entry actually describes an employment internship or job role."""
+    name = str(it.get("name") or "").strip().lower()
+    role = str(it.get("role") or "").strip().lower()
+    desc = str(it.get("description") or "").strip().lower()
+    combined = f"{name} {role} {desc}"
+
+    if any(kw in role for kw in ["praktykant", "stażysta", "staż", "intern"]):
+        return True
+
+    if "mk systems" in combined:
+        return True
+
+    if any(kw in role for kw in ["developer", "engineer", "specjalista"]) and any(
+        co in combined
+        for co in [
+            "mk systems",
+            "sp. z o.o.",
+            "inc.",
+            "ltd",
+            "gmbh",
+            "firma",
+            "solutions",
+            "software house",
+        ]
+    ):
+        return True
+
+    return False
+
+
+def _proj_to_education(it: dict[str, Any]) -> dict[str, Any]:
+    """Convert a misplaced project dict to an EducationItem compliant dict."""
+    name = str(it.get("name") or "").strip()
+    role = str(it.get("role") or "").strip()
+    desc = str(it.get("description") or "").strip()
+    s_date = str(it.get("start_date") or "").strip()
+    e_date = str(it.get("end_date") or "").strip()
+
+    school_candidates = [
+        "Politechnika Lubelska",
+        "Zespół Szkół Elektronicznych w Lublinie",
+        "Uniwersytet",
+        "Politechnika",
+        "Zespół Szkół",
+    ]
+    institution = name
+    for cand in school_candidates:
+        if cand.lower() in name.lower() or cand.lower() in desc.lower():
+            if cand in ["Politechnika Lubelska", "Zespół Szkół Elektronicznych w Lublinie"]:
+                institution = cand
+            break
+
+    degree = role
+    if not degree or degree.lower() in ["twórca", "autor", "student", "specjalista", ""]:
+        combined_text = f"{name} {desc}".lower()
+        if "magister" in combined_text:
+            degree = "Magister Inżynier"
+        elif "inżynier" in combined_text:
+            degree = "Inżynier"
+        elif "technik" in combined_text:
+            degree = "Technik Informatyk"
+        else:
+            degree = "Wykształcenie wyższe"
+
+    field_of_study = "Informatyka" if "informatyk" in f"{name} {role} {desc}".lower() else ""
+
+    return {
+        "institution": institution,
+        "degree": degree,
+        "field_of_study": field_of_study,
+        "start_date": s_date,
+        "end_date": e_date,
+    }
+
+
+def _proj_to_certificate(it: dict[str, Any]) -> dict[str, Any]:
+    """Convert a misplaced project dict to a CertificateItem compliant dict."""
+    name = str(it.get("name") or "").strip()
+    role = str(it.get("role") or "").strip()
+    desc = str(it.get("description") or "").strip()
+    s_date = str(it.get("start_date") or "").strip()
+    e_date = str(it.get("end_date") or "").strip()
+
+    issuer = role
+    combined = f"{name} {role} {desc}".lower()
+    if "cisco" in combined:
+        issuer = "Cisco Networking Academy"
+    elif "oke" in combined:
+        issuer = "OKE Kraków"
+    elif "google" in combined:
+        issuer = "Google Cloud"
+    elif "aws" in combined or "amazon" in combined:
+        issuer = "Amazon Web Services"
+
+    return {
+        "name": name,
+        "issuer": issuer,
+        "issue_date": s_date or e_date,
+    }
+
+
+def _proj_to_experience(it: dict[str, Any]) -> dict[str, Any]:
+    """Convert a misplaced project dict to an ExperienceItem compliant dict."""
+    name = str(it.get("name") or "").strip()
+    role = str(it.get("role") or "").strip()
+    desc = str(it.get("description") or "").strip()
+    s_date = str(it.get("start_date") or "").strip()
+    e_date = str(it.get("end_date") or "").strip()
+
+    combined = f"{name} {role} {desc}".lower()
+    company = "Mk Systems" if "mk systems" in combined else name
+    position = (
+        role
+        if ("praktyk" in role.lower() or "staż" in role.lower())
+        else ("Praktykant" if "praktyk" in combined else "Stażysta")
+    )
+
+    highlights = [desc] if desc else []
+
+    return {
+        "position": position,
+        "company": company,
+        "location": "",
+        "start_date": s_date,
+        "end_date": e_date,
+        "highlights": highlights,
+    }
+
+
+def _enforce_cross_section_guardrails(
+    sections: list[dict[str, Any]],
+    contact_info: dict[str, Any],
+    raw_text: str,
+) -> tuple[list[dict[str, Any]], dict[str, Any]]:
+    """Heuristic safety net enforcing section boundaries and backfilling contacts.
+
+    Detects if any entry inside `projects` actually describes an education institution,
+    certification, or employment internship, and safely relocates it to the
+    appropriate section. Also backfills missing contact information from regex extraction.
+    """
+    regex_contacts = _extract_contact_info_regex(raw_text)
+    for key in ["email", "phone", "location", "github", "linkedin", "portfolio"]:
+        if not contact_info.get(key) and regex_contacts.get(key):
+            contact_info[key] = regex_contacts[key]
+
+    sec_map: dict[str, dict[str, Any]] = {
+        s["id"]: s for s in sections if isinstance(s, dict) and "id" in s
+    }
+
+    for target_id in ("projects", "education", "certificates", "experience"):
+        if target_id not in sec_map:
+            sec_map[target_id] = copy.deepcopy(DEFAULT_SECTION_SKELETONS[target_id])
+            sections.append(sec_map[target_id])
+
+    proj_sec = sec_map.get("projects")
+    if not proj_sec or not isinstance(proj_sec.get("items"), list):
+        return _sanitize_parsed_sections(sections), contact_info
+
+    edu_sec = sec_map["education"]
+    cert_sec = sec_map["certificates"]
+    exp_sec = sec_map["experience"]
+
+    edu_items = edu_sec.setdefault("items", [])
+    cert_items = cert_sec.setdefault("items", [])
+    exp_items = exp_sec.setdefault("items", [])
+
+    existing_edu_keys = {
+        (
+            str(it.get("institution", "")).strip().lower(),
+            str(it.get("degree", "")).strip().lower(),
+        )
+        for it in edu_items
+        if isinstance(it, dict)
+    }
+    existing_cert_keys = {
+        str(it.get("name", "")).strip().lower() for it in cert_items if isinstance(it, dict)
+    }
+    existing_exp_keys = {
+        (
+            str(it.get("company", "")).strip().lower(),
+            str(it.get("position", "")).strip().lower(),
+        )
+        for it in exp_items
+        if isinstance(it, dict)
+    }
+
+    remaining_projects: list[dict[str, Any]] = []
+
+    for it in proj_sec["items"]:
+        if not isinstance(it, dict):
+            continue
+
+        if _is_education_entry(it):
+            edu_item = _proj_to_education(it)
+            key = (
+                str(edu_item.get("institution", "")).strip().lower(),
+                str(edu_item.get("degree", "")).strip().lower(),
+            )
+            if key != ("", "") and key not in existing_edu_keys:
+                edu_items.append(edu_item)
+                existing_edu_keys.add(key)
+            continue
+
+        if _is_certificate_entry(it):
+            cert_item = _proj_to_certificate(it)
+            key = str(cert_item.get("name", "")).strip().lower()
+            if key and key not in existing_cert_keys:
+                cert_items.append(cert_item)
+                existing_cert_keys.add(key)
+            continue
+
+        if _is_experience_entry(it):
+            exp_item = _proj_to_experience(it)
+            key = (
+                str(exp_item.get("company", "")).strip().lower(),
+                str(exp_item.get("position", "")).strip().lower(),
+            )
+            if key != ("", "") and key not in existing_exp_keys:
+                exp_items.append(exp_item)
+                existing_exp_keys.add(key)
+            continue
+
+        remaining_projects.append(it)
+
+    proj_sec["items"] = remaining_projects
+
+    sanitized = _sanitize_parsed_sections(sections)
+    return sanitized, contact_info
+
+
 class CandidateParser:
     """Service handling candidate profile reset and AI extraction / merging."""
 
@@ -990,31 +1900,186 @@ class CandidateParser:
         return candidate
 
     @classmethod
+    async def _parse_segmented_sections(
+        cls,
+        segments: dict[str, str],
+        request: CandidateAIFillRequest,
+    ) -> tuple[list[dict[str, Any]], str | None]:
+        """Parse segmented sections using isolated mini-prompts and fast-path heuristics."""
+        raw_sections: list[dict[str, Any]] = []
+        extracted_name: str | None = None
+
+        provider_arg = None if request.llm_provider == "default" else request.llm_provider
+
+        # Check header text for candidate name
+        header_text = segments.get("header", "")
+        if header_text:
+            m_h1 = re.search(
+                r"^#\s+([A-ZĄĆĘŁŃÓŚŹŻ][a-ząćęłńóśźż]+(?:[ \t]+[A-ZĄĆĘŁŃÓŚŹŻ][a-ząćęłńóśźż]+)+)",
+                header_text,
+                re.MULTILINE,
+            )
+            if m_h1:
+                extracted_name = m_h1.group(1).strip()
+
+        # Fast-path 1: RODO clause
+        if "clause" in segments:
+            clause_text = segments["clause"].strip()
+            clause_clean = re.sub(r"^[-*•]\s*", "", clause_text).strip()
+            raw_sections.append(
+                {
+                    "id": "clause",
+                    "type": "clause",
+                    "title": "Klauzula RODO",
+                    "content": clause_clean,
+                }
+            )
+
+        # Fast-path 2: Summary if contains blockquote or simple narrative
+        if "summary" in segments:
+            sum_text = segments["summary"].strip()
+            quote_lines = [
+                re.sub(r"^>\s*", "", line).strip()
+                for line in sum_text.splitlines()
+                if line.strip().startswith(">")
+            ]
+            extracted_quote = " ".join(line for line in quote_lines if line).strip()
+            if extracted_quote and len(extracted_quote) > 30:
+                raw_sections.append(
+                    {
+                        "id": "summary",
+                        "type": "summary",
+                        "title": "O mnie",
+                        "content": extracted_quote,
+                    }
+                )
+            elif not re.search(r"^[-*•]\s+", sum_text, re.MULTILINE):
+                raw_sections.append(
+                    {
+                        "id": "summary",
+                        "type": "summary",
+                        "title": "O mnie",
+                        "content": sum_text,
+                    }
+                )
+
+        # Structured sections to extract via isolated LLM prompts
+        parsed_ids = {s["id"] for s in raw_sections}
+        sections_to_query = [
+            sec_id
+            for sec_id in segments
+            if sec_id in SECTION_PROMPTS and sec_id not in parsed_ids and segments[sec_id].strip()
+        ]
+
+        async def _call_section_llm(sec_id: str) -> dict[str, Any] | None:
+            sec_text = segments[sec_id]
+            prompt = SECTION_PROMPTS[sec_id]
+            try:
+                res = await llm_client.generate_json(
+                    system_prompt=prompt,
+                    user_prompt=sec_text,
+                    provider=provider_arg,
+                    model=request.llm_model,
+                    api_key=request.api_key,
+                    enable_thinking=request.enable_thinking,
+                    context_window=request.context_window,
+                )
+                if not isinstance(res, (dict, list)):
+                    return None
+
+                if isinstance(res, list):
+                    return {"id": sec_id, "type": sec_id, "items": res}
+
+                sec_dict = dict(res)
+                sec_dict.setdefault("id", sec_id)
+                sec_dict.setdefault("type", sec_id)
+                return sec_dict
+            except Exception as err:
+                logger.warning("LLM extraction failed for section '%s': %s", sec_id, err)
+                return None
+
+        if sections_to_query:
+            # Throttle concurrency for local models (e.g. Ollama) to avoid GPU starvation / timeouts
+            concurrency_limit = (
+                1 if (provider_arg in ("local", "ollama") or provider_arg is None) else 3
+            )
+            sem = asyncio.Semaphore(concurrency_limit)
+
+            async def _throttled_call(s_id: str) -> dict[str, Any] | None:
+                async with sem:
+                    return await _call_section_llm(s_id)
+
+            tasks = [_throttled_call(sec_id) for sec_id in sections_to_query]
+            results = await asyncio.gather(*tasks, return_exceptions=True)
+            for res in results:
+                if isinstance(res, dict) and "id" in res:
+                    raw_sections.append(res)
+                elif isinstance(res, Exception):
+                    logger.warning("Section extraction task error: %s", res)
+
+        return raw_sections, extracted_name
+
+    @classmethod
     async def parse_and_apply(
         cls, request: CandidateAIFillRequest, db: AsyncSession
     ) -> CandidateProfile:
         """Parse raw text via LLM and apply extracted data in replace or merge mode."""
         candidate = await cls.get_or_create_candidate(db)
 
-        provider_arg = None if request.llm_provider == "default" else request.llm_provider
-        parsed_data = await llm_client.generate_json(
-            system_prompt=CANDIDATE_PARSER_SYSTEM_PROMPT,
-            user_prompt=request.text,
-            provider=provider_arg,
-            model=request.llm_model,
-            api_key=request.api_key,
-            enable_thinking=request.enable_thinking,
-            context_window=request.context_window,
-        )
+        # 1. Deterministic regex extraction of contact info & name
+        regex_contact = _extract_contact_info_regex(request.text)
 
-        if not isinstance(parsed_data, dict):
-            parsed_data = {}
+        # 2. Text pre-segmentation
+        segments = _segment_raw_text(request.text)
+        recognized_standard_sections = [
+            sec_id for sec_id in segments if sec_id in STANDARD_SECTION_ORDER
+        ]
 
-        raw_name = parsed_data.get("full_name")
-        raw_contact = parsed_data.get("contact_info") or {}
-        raw_sections = _extract_raw_sections(parsed_data)
+        raw_name: str | None = regex_contact.get("full_name")
+        raw_contact: dict[str, Any] = {
+            k: v for k, v in regex_contact.items() if k != "full_name" and v is not None
+        }
+
+        if len(recognized_standard_sections) >= 2:
+            raw_sections, seg_name = await cls._parse_segmented_sections(
+                segments=segments,
+                request=request,
+            )
+            if seg_name and not raw_name:
+                raw_name = seg_name
+        else:
+            provider_arg = None if request.llm_provider == "default" else request.llm_provider
+            parsed_data = await llm_client.generate_json(
+                system_prompt=CANDIDATE_PARSER_SYSTEM_PROMPT,
+                user_prompt=request.text,
+                provider=provider_arg,
+                model=request.llm_model,
+                api_key=request.api_key,
+                enable_thinking=request.enable_thinking,
+                context_window=request.context_window,
+            )
+
+            if not isinstance(parsed_data, dict):
+                parsed_data = {}
+
+            if not raw_name:
+                raw_name = parsed_data.get("full_name")
+
+            llm_contact = parsed_data.get("contact_info") or {}
+            for k in ["email", "phone", "location", "github", "linkedin", "portfolio"]:
+                if not raw_contact.get(k) and llm_contact.get(k):
+                    raw_contact[k] = llm_contact.get(k)
+
+            raw_sections = _extract_raw_sections(parsed_data)
 
         sanitized_sections = _sanitize_parsed_sections(raw_sections)
+
+        # 3. Post-processing Guardrails (Relocate misplaced projects & backfill contacts)
+        sanitized_sections, raw_contact = _enforce_cross_section_guardrails(
+            sections=sanitized_sections,
+            contact_info=raw_contact,
+            raw_text=request.text,
+        )
 
         if request.mode == "replace":
             if raw_name and str(raw_name).strip():
