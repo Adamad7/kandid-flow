@@ -47,6 +47,10 @@ async def test_reset_candidate_profile_to_default(async_client: httpx.AsyncClien
     assert "projects" in section_ids
     assert "education" in section_ids
     assert "certificates" in section_ids
+    assert "languages" in section_ids
+    assert "trainings" in section_ids
+    assert "achievements" in section_ids
+    assert "interests" in section_ids
     assert "clause" in section_ids
 
 
@@ -299,6 +303,10 @@ async def test_candidate_ai_fill_guarantees_all_7_sections(
         "projects",
         "education",
         "certificates",
+        "languages",
+        "trainings",
+        "achievements",
+        "interests",
         "clause",
     ]
 
@@ -514,7 +522,7 @@ async def test_candidate_ai_fill_narrative_bio_extraction(
         assert data["contact_info"]["email"] == "kacper.maj@example.com"
         assert data["contact_info"]["location"] == "Lublin, Polska"
 
-        # Check all 7 sections
+        # Check all 11 sections
         standard_ids = [
             "summary",
             "skills",
@@ -522,6 +530,10 @@ async def test_candidate_ai_fill_narrative_bio_extraction(
             "projects",
             "education",
             "certificates",
+            "languages",
+            "trainings",
+            "achievements",
+            "interests",
             "clause",
         ]
         assert [s["id"] for s in data["sections"]] == standard_ids
@@ -590,6 +602,10 @@ async def test_candidate_ai_fill_flexible_top_level_sections(
             "projects",
             "education",
             "certificates",
+            "languages",
+            "trainings",
+            "achievements",
+            "interests",
             "clause",
         ]
         assert [s["id"] for s in data["sections"]] == standard_ids
@@ -609,6 +625,109 @@ async def test_candidate_ai_fill_flexible_top_level_sections(
         assert proj_sec["items"][0]["name"] == "Biblioteka Open Source"
         assert proj_sec["items"][0]["url"] == "https://github.com/marek/lib"
         assert "Python" in proj_sec["items"][0]["technologies"]
+
+        # Clean up database to default Jan Kowalski baseline
+        await async_client.post("/api/v1/candidate/reset-default")
+
+
+@pytest.mark.asyncio
+async def test_candidate_ai_fill_and_merge_new_sections(async_client: httpx.AsyncClient) -> None:
+    """Test AI fill with new sections: languages, trainings, achievements, interests."""
+    new_sections_output = {
+        "full_name": "Piotr Wiśniewski",
+        "contact_info": {
+            "email": "piotr@example.com",
+            "phone": "+48 700 800 900",
+        },
+        "sections": [
+            {
+                "id": "languages",
+                "type": "languages",
+                "title": "Znajomość języków",
+                "items": [
+                    {"name": "Angielski", "level": "C2"},
+                    {"name": "Hiszpański", "level": "B1"},
+                ],
+            },
+            {
+                "id": "trainings",
+                "type": "trainings",
+                "title": "Szkolenia",
+                "items": [
+                    {
+                        "name": "Machine Learning Operations (MLOps)",
+                        "organizer": "DeepLearning.AI",
+                        "date": "2024",
+                        "description": "Potoki CI/CD dla modeli ML, monitoring driftu.",
+                    }
+                ],
+            },
+            {
+                "id": "achievements",
+                "type": "achievements",
+                "title": "Osiągnięcia",
+                "items": [
+                    {
+                        "title": "1. miejsce w Hackathonie AI Challenge",
+                        "issuer": "AI Poland Foundation",
+                        "date": "2024",
+                        "description": "Zwycięski prototyp agenta wspomagającego rekrutację.",
+                    }
+                ],
+            },
+            {
+                "id": "interests",
+                "type": "interests",
+                "title": "Zainteresowania",
+                "items": ["Modelarstwo", "Kolarstwo szosowe"],
+                "content": "Aktywny kolarz amator oraz pasjonat druku 3D.",
+            },
+        ],
+    }
+
+    target_mock = "app.services.candidate_parser.llm_client.generate_json"
+    with patch(target_mock, new_callable=AsyncMock) as mock_gen:
+        mock_gen.return_value = new_sections_output
+
+        response = await async_client.post(
+            "/api/v1/candidate/ai-fill",
+            json={
+                "text": (
+                    "Piotr Wiśniewski, Angielski C2, Hiszpański B1, "
+                    "szkolenie MLOps, 1. miejsce w Hackathonie."
+                ),
+                "mode": "merge",
+            },
+        )
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["full_name"] == "Piotr Wiśniewski"
+
+        sec_map = {s["id"]: s for s in data["sections"]}
+        assert "languages" in sec_map
+        assert "trainings" in sec_map
+        assert "achievements" in sec_map
+        assert "interests" in sec_map
+
+        # Verify languages items
+        lang_sec = sec_map["languages"]
+        lang_names = [lang_item["name"] for lang_item in lang_sec["items"]]
+        assert "Angielski" in lang_names
+        assert "Hiszpański" in lang_names
+
+        # Verify trainings items
+        trn_sec = sec_map["trainings"]
+        assert any("MLOps" in t["name"] for t in trn_sec["items"])
+
+        # Verify achievements items
+        ach_sec = sec_map["achievements"]
+        assert any("AI Challenge" in a["title"] for a in ach_sec["items"])
+
+        # Verify interests
+        int_sec = sec_map["interests"]
+        assert "Kolarstwo szosowe" in int_sec["items"]
+        assert "kolarz" in int_sec["content"]
 
         # Clean up database to default Jan Kowalski baseline
         await async_client.post("/api/v1/candidate/reset-default")

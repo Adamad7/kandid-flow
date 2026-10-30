@@ -75,5 +75,23 @@ export const SECTION_NAMES: Record<string, string> = {
   projects: "Projekty",
   education: "Edukacja",
   certificates: "Certyfikaty",
+  languages: "Znajomość języków",
+  trainings: "Szkolenia",
+  achievements: "Osiągnięcia",
+  interests: "Zainteresowania",
   clause: "Klauzula RODO",
 };
+
+export const SUGGESTED_LANGUAGE_LEVELS: string[] = [
+  "A1",
+  "A2",
+  "B1",
+  "B2",
+  "C1",
+  "C2",
+  "Podstawowy",
+  "Średniozaawansowany",
+  "Biegły",
+  "Ojczysty (Native)",
+];
+

@@ -191,12 +191,16 @@ class CVGeneratorService:
                 sanitized_sections.append(copy.deepcopy(base_sec))
                 continue
 
-            # In targeted mode, experience, projects, education, certificates are 100% baseline
+            # In targeted mode, factual sections are 100% baseline
             if tailoring_mode == "targeted_summary_keywords" and sec_type in (
                 "experience",
                 "projects",
                 "education",
                 "certificates",
+                "languages",
+                "trainings",
+                "achievements",
+                "interests",
             ):
                 sanitized_sections.append(copy.deepcopy(base_sec))
                 continue
@@ -373,7 +377,8 @@ class CVGeneratorService:
                 "in the candidate's knowledge base or do not directly result from "
                 "candidate database entries.\n"
                 "2. Tailor ONLY the 'summary', 'skills', and 'clause' blocks.\n"
-                "3. Keep all 'experience', 'projects', 'education', and 'certificates' "
+                "3. Keep all 'experience', 'projects', 'education', 'certificates', "
+                "'languages', 'trainings', 'achievements', and 'interests' "
                 "blocks strictly UNCHANGED.\n"
                 "4. NEVER invent fake companies, fake job titles, fake dates, or fake projects.\n"
                 "5. Return the complete updated resume JSON."

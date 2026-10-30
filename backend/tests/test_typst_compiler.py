@@ -71,3 +71,67 @@ def test_compile_nonexistent_template_error():
         typst_compiler.compile_to_svg({}, template_path="/nonexistent/template.typ")
 
     assert "not found" in str(exc_info.value)
+
+
+def test_compile_with_extended_sections():
+    """Verify clean Typst compilation with languages, trainings, achievements, and interests."""
+    extended_data = {
+        "full_name": "Jan Kowalski",
+        "language": "pl",
+        "contact_info": {
+            "email": "jan@example.com",
+            "phone": "+48 111 222 333",
+            "location": "Gdańsk, Polska",
+        },
+        "sections": [
+            {
+                "id": "languages",
+                "type": "languages",
+                "title": "Znajomość języków",
+                "items": [
+                    {"name": "Angielski", "level": "C1"},
+                    {"name": "Niemiecki", "level": "B2"},
+                ],
+            },
+            {
+                "id": "trainings",
+                "type": "trainings",
+                "title": "Szkolenia",
+                "items": [
+                    {
+                        "name": "Docker & Kubernetes Deep Dive",
+                        "organizer": "Linux Academy",
+                        "date": "2023",
+                        "description": "Zaawansowana konfiguracja klastrów i sieci CNI.",
+                    }
+                ],
+            },
+            {
+                "id": "achievements",
+                "type": "achievements",
+                "title": "Osiągnięcia",
+                "items": [
+                    {
+                        "title": "Laureat Hackathonu 2024",
+                        "issuer": "Tech Summit",
+                        "date": "2024",
+                        "description": "1. miejsce w kategorii Cloud Computing.",
+                    }
+                ],
+            },
+            {
+                "id": "interests",
+                "type": "interests",
+                "title": "Zainteresowania",
+                "items": ["Kolarstwo", "Fotografia analogowa", "Elektronika"],
+                "content": "Pasjonat fotografii ulicznej i wycieczek górskich.",
+            },
+        ],
+    }
+
+    svgs = typst_compiler.compile_to_svg(extended_data)
+    assert len(svgs) >= 1
+    assert "<svg" in svgs[0]
+
+    pdf = typst_compiler.compile_to_pdf(extended_data)
+    assert pdf.startswith(b"%PDF")

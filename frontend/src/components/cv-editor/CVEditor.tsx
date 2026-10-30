@@ -18,8 +18,13 @@ import {
   ChevronUp,
   ChevronDown,
   SplitSquareVertical,
+  Languages,
+  BookOpen,
+  Trophy,
+  Heart,
 } from "lucide-react";
 import { api } from "../../lib/api";
+import { SUGGESTED_LANGUAGE_LEVELS } from "../../lib/constants";
 import type {
   CVLayoutSchema,
   CVRefineBlockRequest,
@@ -39,6 +44,13 @@ import type {
   EducationItem,
   CertificatesSectionBlock,
   CertificateItem,
+  LanguageItem,
+  LanguagesSectionBlock,
+  TrainingItem,
+  TrainingsSectionBlock,
+  AchievementItem,
+  AchievementsSectionBlock,
+  InterestsSectionBlock,
   CustomSectionBlock,
   CandidateSectionBlock,
   PageBreakSectionBlock,
@@ -872,6 +884,203 @@ export const CVEditor: React.FC<CVEditorProps> = ({
     }));
   };
 
+  // Languages handlers
+  const addLanguageItem = (sectionId: string) => {
+    const newItem: LanguageItem = {
+      name: "",
+      level: "",
+    };
+    setLayoutSchema((prev) => ({
+      ...prev,
+      sections: prev.sections.map((sec) => {
+        if (sec.id === sectionId && sec.type === "languages") {
+          const lSec = sec as LanguagesSectionBlock;
+          return { ...lSec, items: [...(lSec.items || []), newItem] };
+        }
+        return sec;
+      }),
+    }));
+  };
+
+  const removeLanguageItem = (sectionId: string, itemIndex: number) => {
+    setLayoutSchema((prev) => ({
+      ...prev,
+      sections: prev.sections.map((sec) => {
+        if (sec.id === sectionId && sec.type === "languages") {
+          const lSec = sec as LanguagesSectionBlock;
+          return {
+            ...lSec,
+            items: (lSec.items || []).filter((_, i) => i !== itemIndex),
+          };
+        }
+        return sec;
+      }),
+    }));
+  };
+
+  const updateLanguageItem = (
+    sectionId: string,
+    itemIndex: number,
+    field: keyof LanguageItem,
+    value: string
+  ) => {
+    setLayoutSchema((prev) => ({
+      ...prev,
+      sections: prev.sections.map((sec) => {
+        if (sec.id === sectionId && sec.type === "languages") {
+          const lSec = sec as LanguagesSectionBlock;
+          const items = [...(lSec.items || [])];
+          items[itemIndex] = { ...items[itemIndex], [field]: value };
+          return { ...lSec, items };
+        }
+        return sec;
+      }),
+    }));
+  };
+
+  // Trainings handlers
+  const addTrainingItem = (sectionId: string) => {
+    const newItem: TrainingItem = {
+      name: "",
+      organizer: "",
+      date: "",
+      description: "",
+    };
+    setLayoutSchema((prev) => ({
+      ...prev,
+      sections: prev.sections.map((sec) => {
+        if (sec.id === sectionId && sec.type === "trainings") {
+          const tSec = sec as TrainingsSectionBlock;
+          return { ...tSec, items: [...(tSec.items || []), newItem] };
+        }
+        return sec;
+      }),
+    }));
+  };
+
+  const removeTrainingItem = (sectionId: string, itemIndex: number) => {
+    setLayoutSchema((prev) => ({
+      ...prev,
+      sections: prev.sections.map((sec) => {
+        if (sec.id === sectionId && sec.type === "trainings") {
+          const tSec = sec as TrainingsSectionBlock;
+          return {
+            ...tSec,
+            items: (tSec.items || []).filter((_, i) => i !== itemIndex),
+          };
+        }
+        return sec;
+      }),
+    }));
+  };
+
+  const updateTrainingItem = (
+    sectionId: string,
+    itemIndex: number,
+    field: keyof TrainingItem,
+    value: string
+  ) => {
+    setLayoutSchema((prev) => ({
+      ...prev,
+      sections: prev.sections.map((sec) => {
+        if (sec.id === sectionId && sec.type === "trainings") {
+          const tSec = sec as TrainingsSectionBlock;
+          const items = [...(tSec.items || [])];
+          items[itemIndex] = { ...items[itemIndex], [field]: value };
+          return { ...tSec, items };
+        }
+        return sec;
+      }),
+    }));
+  };
+
+  // Achievements handlers
+  const addAchievementItem = (sectionId: string) => {
+    const newItem: AchievementItem = {
+      title: "",
+      issuer: "",
+      date: "",
+      description: "",
+    };
+    setLayoutSchema((prev) => ({
+      ...prev,
+      sections: prev.sections.map((sec) => {
+        if (sec.id === sectionId && sec.type === "achievements") {
+          const aSec = sec as AchievementsSectionBlock;
+          return { ...aSec, items: [...(aSec.items || []), newItem] };
+        }
+        return sec;
+      }),
+    }));
+  };
+
+  const removeAchievementItem = (sectionId: string, itemIndex: number) => {
+    setLayoutSchema((prev) => ({
+      ...prev,
+      sections: prev.sections.map((sec) => {
+        if (sec.id === sectionId && sec.type === "achievements") {
+          const aSec = sec as AchievementsSectionBlock;
+          return {
+            ...aSec,
+            items: (aSec.items || []).filter((_, i) => i !== itemIndex),
+          };
+        }
+        return sec;
+      }),
+    }));
+  };
+
+  const updateAchievementItem = (
+    sectionId: string,
+    itemIndex: number,
+    field: keyof AchievementItem,
+    value: string
+  ) => {
+    setLayoutSchema((prev) => ({
+      ...prev,
+      sections: prev.sections.map((sec) => {
+        if (sec.id === sectionId && sec.type === "achievements") {
+          const aSec = sec as AchievementsSectionBlock;
+          const items = [...(aSec.items || [])];
+          items[itemIndex] = { ...items[itemIndex], [field]: value };
+          return { ...aSec, items };
+        }
+        return sec;
+      }),
+    }));
+  };
+
+  // Interests handlers
+  const updateInterestsTags = (sectionId: string, tagsRaw: string) => {
+    const items = tagsRaw
+      .split(",")
+      .map((t) => t.trim())
+      .filter(Boolean);
+    setLayoutSchema((prev) => ({
+      ...prev,
+      sections: prev.sections.map((sec) => {
+        if (sec.id === sectionId && sec.type === "interests") {
+          const iSec = sec as InterestsSectionBlock;
+          return { ...iSec, items };
+        }
+        return sec;
+      }),
+    }));
+  };
+
+  const updateInterestsContent = (sectionId: string, content: string) => {
+    setLayoutSchema((prev) => ({
+      ...prev,
+      sections: prev.sections.map((sec) => {
+        if (sec.id === sectionId && sec.type === "interests") {
+          const iSec = sec as InterestsSectionBlock;
+          return { ...iSec, content };
+        }
+        return sec;
+      }),
+    }));
+  };
+
   // Custom section handlers
   const updateCustomSectionContent = (sectionId: string, content: string) => {
     setLayoutSchema((prev) => ({
@@ -910,6 +1119,14 @@ export const CVEditor: React.FC<CVEditorProps> = ({
         return <GraduationCap className="h-4 w-4 text-amber-600 dark:text-amber-400 shrink-0" />;
       case "certificates":
         return <Award className="h-4 w-4 text-rose-600 dark:text-rose-400 shrink-0" />;
+      case "languages":
+        return <Languages className="h-4 w-4 text-cyan-600 dark:text-cyan-400 shrink-0" />;
+      case "trainings":
+        return <BookOpen className="h-4 w-4 text-amber-600 dark:text-amber-400 shrink-0" />;
+      case "achievements":
+        return <Trophy className="h-4 w-4 text-yellow-600 dark:text-yellow-400 shrink-0" />;
+      case "interests":
+        return <Heart className="h-4 w-4 text-rose-600 dark:text-rose-400 shrink-0" />;
       case "clause":
         return <ShieldCheck className="h-4 w-4 text-slate-600 dark:text-slate-400 shrink-0" />;
       default:
@@ -1429,6 +1646,248 @@ export const CVEditor: React.FC<CVEditorProps> = ({
                 Dodaj certyfikat
               </Button>
             </div>
+          </div>
+        );
+      }
+
+      case "languages": {
+        const langSec = sec as LanguagesSectionBlock;
+        return (
+          <div className="space-y-4">
+            {(langSec.items || []).map((lang, idx) => (
+              <div
+                key={idx}
+                className="p-3.5 bg-slate-50 dark:bg-slate-800/60 rounded-lg border border-slate-200 dark:border-slate-700/60 text-xs space-y-3"
+              >
+                <div className="flex items-center justify-between">
+                  <span className="font-semibold text-slate-800 dark:text-slate-200">
+                    Język #{idx + 1}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => removeLanguageItem(sec.id, idx)}
+                    className="text-slate-400 dark:text-slate-500 hover:text-rose-600 dark:hover:text-rose-400 p-1"
+                    title="Usuń język"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <Input
+                    label="Nazwa języka"
+                    value={lang.name}
+                    onChange={(e) =>
+                      updateLanguageItem(sec.id, idx, "name", e.target.value)
+                    }
+                    placeholder="np. Angielski, Niemiecki"
+                    required
+                  />
+                  <div>
+                    <Input
+                      label="Poziom biegłości"
+                      value={lang.level}
+                      onChange={(e) =>
+                        updateLanguageItem(sec.id, idx, "level", e.target.value)
+                      }
+                      placeholder="np. C1, B2, Średniozaawansowany, Biegły"
+                      required
+                    />
+                    <div className="flex flex-wrap gap-1 mt-1.5">
+                      {SUGGESTED_LANGUAGE_LEVELS.map((preset) => (
+                        <button
+                          key={preset}
+                          type="button"
+                          onClick={() => updateLanguageItem(sec.id, idx, "level", preset)}
+                          className="px-1.5 py-0.5 text-[10px] rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-cyan-600 dark:hover:text-cyan-400 hover:border-cyan-500"
+                        >
+                          {preset}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+
+            <div className="pt-2 border-t border-slate-100 dark:border-slate-800">
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => addLanguageItem(sec.id)}
+                className="text-xs h-7"
+              >
+                <Plus className="h-3 w-3 mr-1" />
+                Dodaj język
+              </Button>
+            </div>
+          </div>
+        );
+      }
+
+      case "trainings": {
+        const trnSec = sec as TrainingsSectionBlock;
+        return (
+          <div className="space-y-4">
+            {(trnSec.items || []).map((trn, idx) => (
+              <div
+                key={idx}
+                className="p-3.5 bg-slate-50 dark:bg-slate-800/60 rounded-lg border border-slate-200 dark:border-slate-700/60 text-xs space-y-3"
+              >
+                <div className="flex items-center justify-between">
+                  <span className="font-semibold text-slate-800 dark:text-slate-200">
+                    Szkolenie #{idx + 1}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => removeTrainingItem(sec.id, idx)}
+                    className="text-slate-400 dark:text-slate-500 hover:text-rose-600 dark:hover:text-rose-400 p-1"
+                    title="Usuń szkolenie"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <Input
+                    label="Nazwa szkolenia"
+                    value={trn.name}
+                    onChange={(e) =>
+                      updateTrainingItem(sec.id, idx, "name", e.target.value)
+                    }
+                    required
+                  />
+                  <Input
+                    label="Organizator"
+                    value={trn.organizer}
+                    onChange={(e) =>
+                      updateTrainingItem(sec.id, idx, "organizer", e.target.value)
+                    }
+                  />
+                  <DateInput
+                    label="Data ukończenia"
+                    value={trn.date}
+                    onChange={(val) =>
+                      updateTrainingItem(sec.id, idx, "date", val)
+                    }
+                  />
+                </div>
+                <Textarea
+                  label="Opis"
+                  value={trn.description}
+                  onChange={(e) =>
+                    updateTrainingItem(sec.id, idx, "description", e.target.value)
+                  }
+                  rows={2}
+                />
+              </div>
+            ))}
+
+            <div className="pt-2 border-t border-slate-100 dark:border-slate-800">
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => addTrainingItem(sec.id)}
+                className="text-xs h-7"
+              >
+                <Plus className="h-3 w-3 mr-1" />
+                Dodaj szkolenie
+              </Button>
+            </div>
+          </div>
+        );
+      }
+
+      case "achievements": {
+        const achSec = sec as AchievementsSectionBlock;
+        return (
+          <div className="space-y-4">
+            {(achSec.items || []).map((ach, idx) => (
+              <div
+                key={idx}
+                className="p-3.5 bg-slate-50 dark:bg-slate-800/60 rounded-lg border border-slate-200 dark:border-slate-700/60 text-xs space-y-3"
+              >
+                <div className="flex items-center justify-between">
+                  <span className="font-semibold text-slate-800 dark:text-slate-200">
+                    Osiągnięcie #{idx + 1}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => removeAchievementItem(sec.id, idx)}
+                    className="text-slate-400 dark:text-slate-500 hover:text-rose-600 dark:hover:text-rose-400 p-1"
+                    title="Usuń osiągnięcie"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <Input
+                    label="Tytuł osiągnięcia"
+                    value={ach.title}
+                    onChange={(e) =>
+                      updateAchievementItem(sec.id, idx, "title", e.target.value)
+                    }
+                    required
+                  />
+                  <Input
+                    label="Instytucja / Konkurs"
+                    value={ach.issuer}
+                    onChange={(e) =>
+                      updateAchievementItem(sec.id, idx, "issuer", e.target.value)
+                    }
+                  />
+                  <DateInput
+                    label="Data"
+                    value={ach.date}
+                    onChange={(val) =>
+                      updateAchievementItem(sec.id, idx, "date", val)
+                    }
+                  />
+                </div>
+                <Textarea
+                  label="Opis"
+                  value={ach.description}
+                  onChange={(e) =>
+                    updateAchievementItem(sec.id, idx, "description", e.target.value)
+                  }
+                  rows={2}
+                />
+              </div>
+            ))}
+
+            <div className="pt-2 border-t border-slate-100 dark:border-slate-800">
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => addAchievementItem(sec.id)}
+                className="text-xs h-7"
+              >
+                <Plus className="h-3 w-3 mr-1" />
+                Dodaj osiągnięcie
+              </Button>
+            </div>
+          </div>
+        );
+      }
+
+      case "interests": {
+        const intSec = sec as InterestsSectionBlock;
+        return (
+          <div className="space-y-3">
+            <Input
+              label="Zainteresowania (rozdzielone przecinkami)"
+              value={(intSec.items || []).join(", ")}
+              onChange={(e) => updateInterestsTags(sec.id, e.target.value)}
+              placeholder="np. Kolarstwo, Druk 3D, Żeglarstwo"
+            />
+            <Textarea
+              label="Opis narracyjny (opcjonalnie)"
+              value={intSec.content || ""}
+              onChange={(e) => updateInterestsContent(sec.id, e.target.value)}
+              rows={2}
+              placeholder="Krótki opis pasji..."
+            />
           </div>
         );
       }

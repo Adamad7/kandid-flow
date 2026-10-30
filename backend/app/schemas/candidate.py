@@ -85,6 +85,42 @@ class CertificateItem(BaseModel):
     model_config = ConfigDict(extra="ignore")
 
 
+class LanguageItem(BaseModel):
+    """Foreign or native language proficiency entry."""
+
+    name: str = Field(..., description="Language name (e.g. Polski, Angielski, Niemiecki)")
+    level: str = Field(
+        ...,
+        description=(
+            "Proficiency level (e.g. C1, B2, Średniozaawansowany, Biegły, Ojczysty / Native)"
+        ),
+    )
+
+    model_config = ConfigDict(extra="ignore")
+
+
+class TrainingItem(BaseModel):
+    """Professional training or course completion entry."""
+
+    name: str = Field(..., description="Training or course title")
+    organizer: str = Field(default="", description="Training provider, academy, or platform")
+    date: str = Field(default="", description="Date or year of completion")
+    description: str = Field(default="", description="Brief description or covered skills")
+
+    model_config = ConfigDict(extra="ignore")
+
+
+class AchievementItem(BaseModel):
+    """Award, honor, competition, or milestone entry."""
+
+    title: str = Field(..., description="Achievement or award title")
+    issuer: str = Field(default="", description="Granting institution, competition, or context")
+    date: str = Field(default="", description="Date or year of achievement")
+    description: str = Field(default="", description="Description and impact of the achievement")
+
+    model_config = ConfigDict(extra="ignore")
+
+
 class SummarySectionBlock(BaseModel):
     """Professional summary section."""
 
@@ -159,6 +195,59 @@ class CertificatesSectionBlock(BaseModel):
     model_config = ConfigDict(extra="ignore")
 
 
+class LanguagesSectionBlock(BaseModel):
+    """Foreign or native languages section."""
+
+    id: str = Field(default="languages", description="Section identifier")
+    type: Literal["languages"] = Field(default="languages", description="Section discriminator")
+    title: str = Field(default="Znajomość języków", description="Header title")
+    items: list[LanguageItem] = Field(
+        default_factory=list, description="Languages and proficiency levels"
+    )
+
+    model_config = ConfigDict(extra="ignore")
+
+
+class TrainingsSectionBlock(BaseModel):
+    """Professional courses and trainings section."""
+
+    id: str = Field(default="trainings", description="Section identifier")
+    type: Literal["trainings"] = Field(default="trainings", description="Section discriminator")
+    title: str = Field(default="Szkolenia", description="Header title")
+    items: list[TrainingItem] = Field(
+        default_factory=list, description="Courses and professional trainings"
+    )
+
+    model_config = ConfigDict(extra="ignore")
+
+
+class AchievementsSectionBlock(BaseModel):
+    """Honors, awards, and milestones section."""
+
+    id: str = Field(default="achievements", description="Section identifier")
+    type: Literal["achievements"] = Field(
+        default="achievements", description="Section discriminator"
+    )
+    title: str = Field(default="Osiągnięcia", description="Header title")
+    items: list[AchievementItem] = Field(
+        default_factory=list, description="Key accomplishments and honors"
+    )
+
+    model_config = ConfigDict(extra="ignore")
+
+
+class InterestsSectionBlock(BaseModel):
+    """Personal interests and hobbies section."""
+
+    id: str = Field(default="interests", description="Section identifier")
+    type: Literal["interests"] = Field(default="interests", description="Section discriminator")
+    title: str = Field(default="Zainteresowania", description="Header title")
+    items: list[str] = Field(default_factory=list, description="List of interests and hobby tags")
+    content: str = Field(default="", description="Optional narrative description of interests")
+
+    model_config = ConfigDict(extra="ignore")
+
+
 class ClauseSectionBlock(BaseModel):
     """GDPR / RODO legal compliance clause section."""
 
@@ -199,6 +288,10 @@ CandidateSectionBlock = (
     | ProjectsSectionBlock
     | EducationSectionBlock
     | CertificatesSectionBlock
+    | LanguagesSectionBlock
+    | TrainingsSectionBlock
+    | AchievementsSectionBlock
+    | InterestsSectionBlock
     | ClauseSectionBlock
     | PageBreakSectionBlock
     | CustomSectionBlock
@@ -245,6 +338,10 @@ class CandidateProfileBase(BaseModel):
             SectionDefaultConfig(id="projects", mode="ai"),
             SectionDefaultConfig(id="education", mode="raw"),
             SectionDefaultConfig(id="certificates", mode="raw"),
+            SectionDefaultConfig(id="languages", mode="raw"),
+            SectionDefaultConfig(id="trainings", mode="raw"),
+            SectionDefaultConfig(id="achievements", mode="ai"),
+            SectionDefaultConfig(id="interests", mode="raw"),
             SectionDefaultConfig(id="clause", mode="ai"),
         ],
         description="List of section configurations specifying default generation mode",

@@ -29,6 +29,10 @@
     projects: "Projekty",
     education: "Edukacja",
     certificates: "Certyfikaty",
+    languages: "Znajomość języków",
+    trainings: "Szkolenia",
+    achievements: "Osiągnięcia",
+    interests: "Zainteresowania",
     present: "obecnie",
     clause: "Wyrażam zgodę na przetwarzanie moich danych osobowych dla potrzeb niezbędnych do realizacji procesu rekrutacji zgodnie z Rozporządzeniem Parlamentu Europejskiego i Rady (UE) 2016/679 (RODO)."
   ),
@@ -39,6 +43,10 @@
     projects: "Projects",
     education: "Education",
     certificates: "Certifications",
+    languages: "Languages",
+    trainings: "Training & Courses",
+    achievements: "Achievements",
+    interests: "Interests",
     present: "Present",
     clause: "I hereby consent to my personal data being processed for the purpose of the recruitment process in accordance with the General Data Protection Regulation (EU) 2016/679 (GDPR)."
   )
@@ -231,6 +239,75 @@
       ]
       #v(0.2em)
     ]
+  ] else if sec_type == "languages" [
+    #let items = sec.at("items", default: ())
+    #section-heading(sec_title)
+    #if type(items) == array [
+      #for lang_item in items [
+        #if type(lang_item) == dictionary [
+          #let l_name = lang_item.at("name", default: lang_item.at("language", default: ""))
+          #let l_level = lang_item.at("level", default: lang_item.at("proficiency", default: ""))
+          - *#l_name* #if l_level != "" [– #l_level]
+        ] else [
+          - #lang_item
+        ]
+      ]
+      #v(0.2em)
+    ]
+  ] else if sec_type == "trainings" [
+    #let items = sec.at("items", default: ())
+    #section-heading(sec_title)
+    #if type(items) == array [
+      #for trn in items [
+        #if type(trn) == dictionary [
+          #let t_name = trn.at("name", default: trn.at("title", default: ""))
+          #let t_org = trn.at("organizer", default: trn.at("provider", default: trn.at("issuer", default: "")))
+          #let t_date = trn.at("date", default: trn.at("completion_date", default: ""))
+          #let t_desc = trn.at("description", default: "")
+
+          - *#t_name* #if t_org != "" [| #text(fill: rgb("#374151"))[#t_org]] #h(1fr) #text(size: 8.5pt, fill: rgb("#4b5563"))[#t_date]\
+          #if t_desc != "" [
+            #h(1.2em)#text(size: 8.5pt, fill: rgb("#4b5563"))[#t_desc]\
+          ]
+        ] else [
+          - #trn
+        ]
+      ]
+      #v(0.2em)
+    ]
+  ] else if sec_type == "achievements" [
+    #let items = sec.at("items", default: ())
+    #section-heading(sec_title)
+    #if type(items) == array [
+      #for ach in items [
+        #if type(ach) == dictionary [
+          #let a_title = ach.at("title", default: ach.at("name", default: ""))
+          #let a_issuer = ach.at("issuer", default: ach.at("organization", default: ""))
+          #let a_date = ach.at("date", default: "")
+          #let a_desc = ach.at("description", default: "")
+
+          - *#a_title* #if a_issuer != "" [| #text(fill: rgb("#374151"))[#a_issuer]] #h(1fr) #text(size: 8.5pt, fill: rgb("#4b5563"))[#a_date]\
+          #if a_desc != "" [
+            #h(1.2em)#text(size: 8.5pt, fill: rgb("#4b5563"))[#a_desc]\
+          ]
+        ] else [
+          - #ach
+        ]
+      ]
+      #v(0.2em)
+    ]
+  ] else if sec_type == "interests" [
+    #let items = sec.at("items", default: ())
+    #let content = sec.at("content", default: sec.at("description", default: ""))
+    #section-heading(sec_title)
+    #if content != "" and content != none [
+      #content\
+    ]
+    #if type(items) == array and items.len() > 0 [
+      #let items_str = items.map(str).join("  •  ")
+      #items_str
+    ]
+    #v(0.2em)
   ] else if sec_type == "pagebreak" [
     #pagebreak()
   ] else if sec_type == "clause" [

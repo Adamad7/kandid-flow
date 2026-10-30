@@ -11,6 +11,8 @@ from sqlalchemy.orm.attributes import flag_modified
 
 from app.models.candidate import CandidateProfile
 from app.schemas.candidate import (
+    AchievementItem,
+    AchievementsSectionBlock,
     CandidateAIFillRequest,
     CandidateContactInfo,
     CertificateItem,
@@ -20,11 +22,16 @@ from app.schemas.candidate import (
     EducationSectionBlock,
     ExperienceItem,
     ExperienceSectionBlock,
+    InterestsSectionBlock,
+    LanguageItem,
+    LanguagesSectionBlock,
     ProjectItem,
     ProjectsSectionBlock,
     SkillCategoryItem,
     SkillsSectionBlock,
     SummarySectionBlock,
+    TrainingItem,
+    TrainingsSectionBlock,
 )
 from app.services.llm_client import llm_client
 
@@ -47,6 +54,10 @@ DEFAULT_CANDIDATE_DATA: dict[str, Any] = {
         "projects",
         "education",
         "certificates",
+        "languages",
+        "trainings",
+        "achievements",
+        "interests",
         "clause",
     ],
     "sections": [
@@ -183,6 +194,69 @@ DEFAULT_CANDIDATE_DATA: dict[str, Any] = {
             ],
         },
         {
+            "id": "languages",
+            "type": "languages",
+            "title": "Znajomość języków",
+            "items": [
+                {"name": "Polski", "level": "Ojczysty (Native)"},
+                {"name": "Angielski", "level": "C1"},
+                {"name": "Niemiecki", "level": "B2"},
+            ],
+        },
+        {
+            "id": "trainings",
+            "type": "trainings",
+            "title": "Szkolenia",
+            "items": [
+                {
+                    "name": "Zaawansowane wzorce Kubernetes i Service Mesh (Istio)",
+                    "organizer": "Cloud Academy",
+                    "date": "2024",
+                    "description": (
+                        "Zaawansowana orkiestracja mikroserwisów, routing ruchu i observability."
+                    ),
+                },
+                {
+                    "name": "Production-grade CI/CD z GitHub Actions",
+                    "organizer": "DevOps School",
+                    "date": "2023",
+                    "description": (
+                        "Bezpieczeństwo pipeline'ów, self-hosted runnery i automatyzacja wydań."
+                    ),
+                },
+            ],
+        },
+        {
+            "id": "achievements",
+            "type": "achievements",
+            "title": "Osiągnięcia",
+            "items": [
+                {
+                    "title": "Zwycięzca Hackathonu CloudTech 2023",
+                    "issuer": "TechFest Polska",
+                    "date": "2023",
+                    "description": (
+                        "Zaprojektowanie i wdrożenie automatycznego systemu autotuningu klastra "
+                        "K8s w 24 godziny."
+                    ),
+                },
+            ],
+        },
+        {
+            "id": "interests",
+            "type": "interests",
+            "title": "Zainteresowania",
+            "items": [
+                "Automatyka domowa (Home Assistant)",
+                "Open Source",
+                "Kolarstwo gravelowe",
+            ],
+            "content": (
+                "Pasjonat kolarstwa długodystansowego oraz projektowania inteligentnego domu "
+                "z użyciem otwartego oprogramowania."
+            ),
+        },
+        {
             "id": "clause",
             "type": "clause",
             "title": "Klauzula RODO",
@@ -286,6 +360,50 @@ The JSON MUST adhere to this exact structure:
       ]
     },
     {
+      "id": "languages",
+      "type": "languages",
+      "title": "Znajomość języków",
+      "items": [
+        {
+          "name": "Language name (e.g. Angielski, Niemiecki)",
+          "level": "Proficiency level (e.g. C1, B2, Średniozaawansowany, Biegły, Ojczysty (Native))"
+        }
+      ]
+    },
+    {
+      "id": "trainings",
+      "type": "trainings",
+      "title": "Szkolenia",
+      "items": [
+        {
+          "name": "Training or course name",
+          "organizer": "Organizer or platform",
+          "date": "YYYY or YYYY-MM",
+          "description": "Optional short summary"
+        }
+      ]
+    },
+    {
+      "id": "achievements",
+      "type": "achievements",
+      "title": "Osiągnięcia",
+      "items": [
+        {
+          "title": "Achievement or award title",
+          "issuer": "Awarding body or organizer",
+          "date": "YYYY",
+          "description": "Details of the achievement"
+        }
+      ]
+    },
+    {
+      "id": "interests",
+      "type": "interests",
+      "title": "Zainteresowania",
+      "items": ["Interest 1", "Interest 2"],
+      "content": "Optional narrative description"
+    },
+    {
       "id": "clause",
       "type": "clause",
       "title": "Klauzula RODO",
@@ -295,10 +413,11 @@ The JSON MUST adhere to this exact structure:
 }
 
 STRICT SECTION MANDATE:
-- The JSON response MUST ALWAYS contain ALL 7 standard sections in the "sections" array:
-  "summary", "skills", "experience", "projects", "education", "certificates", "clause".
+- The JSON response MUST ALWAYS contain ALL 11 standard sections in the "sections" array:
+  "summary", "skills", "experience", "projects", "education", "certificates",
+  "languages", "trainings", "achievements", "interests", "clause".
 - Even if data for a section is missing from the input, you MUST STILL return that section
-  with an empty array `items: []` or empty string `content: ""`. NEVER omit any of the 7 sections.
+  with an empty array `items: []` or empty string `content: ""`. NEVER omit any of the 11 sections.
 
 NARRATIVE & FREE-FORM EXTRACTION INSTRUCTIONS:
 - Extract all professional background faithfully, even when written as informal narrative or notes:
@@ -313,6 +432,14 @@ NARRATIVE & FREE-FORM EXTRACTION INSTRUCTIONS:
     technologies: ["Aplikacje mobilne", "Google Play", "AI"]).
   - Skills, programming languages, libraries, tools, and methodologies: MUST be extracted and
     grouped logically by category in the "skills" section.
+  - Foreign and native languages (e.g. "Angielski C1", "Polski ojczysty"): MUST be extracted
+    into the "languages" section with name and level.
+  - Completed trainings, workshops, bootcamps, and specialized courses: MUST be extracted into the
+    "trainings" section.
+  - Awards, competitions, hackathons, open-source milestones, or honors: MUST be extracted into the
+    "achievements" section.
+  - Hobbies, personal interests, sports, and passions: MUST be extracted into the "interests"
+    section (as tags in items and/or narrative in content).
   - Professional bio, career goals, and narrative summaries: MUST be extracted into the
     "summary" section ("O mnie").
 - Preserve technical keywords, library names, frameworks, and tools faithfully.
@@ -327,6 +454,10 @@ STANDARD_SECTION_ORDER: list[str] = [
     "projects",
     "education",
     "certificates",
+    "languages",
+    "trainings",
+    "achievements",
+    "interests",
     "clause",
 ]
 
@@ -366,6 +497,31 @@ DEFAULT_SECTION_SKELETONS: dict[str, dict[str, Any]] = {
         "type": "certificates",
         "title": "Certyfikaty",
         "items": [],
+    },
+    "languages": {
+        "id": "languages",
+        "type": "languages",
+        "title": "Znajomość języków",
+        "items": [],
+    },
+    "trainings": {
+        "id": "trainings",
+        "type": "trainings",
+        "title": "Szkolenia",
+        "items": [],
+    },
+    "achievements": {
+        "id": "achievements",
+        "type": "achievements",
+        "title": "Osiągnięcia",
+        "items": [],
+    },
+    "interests": {
+        "id": "interests",
+        "type": "interests",
+        "title": "Zainteresowania",
+        "items": [],
+        "content": "",
     },
     "clause": {
         "id": "clause",
@@ -645,6 +801,115 @@ def _sanitize_parsed_sections(raw_sections: list[dict[str, Any]]) -> list[dict[s
             sanitized.append(block.model_dump(mode="json"))
             seen_ids.add("certificates")
 
+        elif sec_type == "languages":
+            raw_items = sec.get("items") or sec.get("languages") or []
+            lang_items: list[LanguageItem] = []
+            if isinstance(raw_items, list):
+                for it in raw_items:
+                    if isinstance(it, dict):
+                        lname = str(it.get("name") or it.get("language") or "").strip()
+                        llevel = str(it.get("level") or it.get("proficiency") or "").strip()
+                        if lname:
+                            lang_items.append(
+                                LanguageItem(name=lname, level=llevel or "Podstawowy")
+                            )
+                    elif isinstance(it, str) and it.strip():
+                        lang_items.append(LanguageItem(name=it.strip(), level="Znajomość"))
+            block = LanguagesSectionBlock(
+                id="languages",
+                type="languages",
+                title=sec.get("title") or "Znajomość języków",
+                items=lang_items,
+            )
+            sanitized.append(block.model_dump(mode="json"))
+            seen_ids.add("languages")
+
+        elif sec_type in ("trainings", "courses"):
+            raw_items = sec.get("items") or sec.get("trainings") or sec.get("courses") or []
+            train_items: list[TrainingItem] = []
+            if isinstance(raw_items, list):
+                for it in raw_items:
+                    if isinstance(it, dict):
+                        tname = str(it.get("name") or it.get("title") or "").strip()
+                        torg = str(
+                            it.get("organizer") or it.get("provider") or it.get("issuer") or ""
+                        ).strip()
+                        tdate = str(it.get("date") or it.get("completion_date") or "").strip()
+                        tdesc = str(it.get("description") or "").strip()
+                        if tname:
+                            train_items.append(
+                                TrainingItem(
+                                    name=tname,
+                                    organizer=torg,
+                                    date=tdate,
+                                    description=tdesc,
+                                )
+                            )
+                    elif isinstance(it, str) and it.strip():
+                        train_items.append(TrainingItem(name=it.strip()))
+            block = TrainingsSectionBlock(
+                id="trainings",
+                type="trainings",
+                title=sec.get("title") or "Szkolenia",
+                items=train_items,
+            )
+            sanitized.append(block.model_dump(mode="json"))
+            seen_ids.add("trainings")
+
+        elif sec_type == "achievements":
+            raw_items = sec.get("items") or sec.get("achievements") or []
+            ach_items: list[AchievementItem] = []
+            if isinstance(raw_items, list):
+                for it in raw_items:
+                    if isinstance(it, dict):
+                        atitle = str(it.get("title") or it.get("name") or "").strip()
+                        aissuer = str(it.get("issuer") or it.get("organization") or "").strip()
+                        adate = str(it.get("date") or "").strip()
+                        adesc = str(it.get("description") or "").strip()
+                        if atitle:
+                            ach_items.append(
+                                AchievementItem(
+                                    title=atitle,
+                                    issuer=aissuer,
+                                    date=adate,
+                                    description=adesc,
+                                )
+                            )
+                    elif isinstance(it, str) and it.strip():
+                        ach_items.append(AchievementItem(title=it.strip()))
+            block = AchievementsSectionBlock(
+                id="achievements",
+                type="achievements",
+                title=sec.get("title") or "Osiągnięcia",
+                items=ach_items,
+            )
+            sanitized.append(block.model_dump(mode="json"))
+            seen_ids.add("achievements")
+
+        elif sec_type in ("interests", "hobbies"):
+            raw_items = sec.get("items") or sec.get("interests") or sec.get("hobbies") or []
+            items_list: list[str] = []
+            if isinstance(raw_items, str):
+                items_list = [i.strip() for i in raw_items.split(",") if i.strip()]
+            elif isinstance(raw_items, list):
+                for it in raw_items:
+                    if isinstance(it, str) and it.strip():
+                        items_list.append(it.strip())
+                    elif isinstance(it, dict):
+                        val = str(it.get("name") or it.get("title") or "").strip()
+                        if val:
+                            items_list.append(val)
+            content_val = sec.get("content") or sec.get("description") or sec.get("text") or ""
+            block = InterestsSectionBlock(
+                id="interests",
+                type="interests",
+                title=sec.get("title") or "Zainteresowania",
+                items=items_list,
+                content=str(content_val).strip(),
+            )
+            sanitized.append(block.model_dump(mode="json"))
+            seen_ids.add("interests")
+
         elif sec_type == "clause":
             content_val = sec.get("content") or sec.get("text") or ""
             block = ClauseSectionBlock(
@@ -909,9 +1174,70 @@ class CandidateParser:
                                 curr_items.append(new_item)
                                 existing_keys.add(key)
 
+                elif sec_id == "languages":
+                    new_items = new_sec.get("items", [])
+                    if new_items:
+                        curr_items = curr_sec.setdefault("items", [])
+                        existing_keys = {
+                            str(it.get("name", "")).strip().lower()
+                            for it in curr_items
+                            if isinstance(it, dict)
+                        }
+                        for new_item in new_items:
+                            key = str(new_item.get("name", "")).strip().lower()
+                            if key and key not in existing_keys:
+                                curr_items.append(new_item)
+                                existing_keys.add(key)
+
+                elif sec_id == "trainings":
+                    new_items = new_sec.get("items", [])
+                    if new_items:
+                        curr_items = curr_sec.setdefault("items", [])
+                        existing_keys = {
+                            str(it.get("name", "")).strip().lower()
+                            for it in curr_items
+                            if isinstance(it, dict)
+                        }
+                        for new_item in new_items:
+                            key = str(new_item.get("name", "")).strip().lower()
+                            if key and key not in existing_keys:
+                                curr_items.append(new_item)
+                                existing_keys.add(key)
+
+                elif sec_id == "achievements":
+                    new_items = new_sec.get("items", [])
+                    if new_items:
+                        curr_items = curr_sec.setdefault("items", [])
+                        existing_keys = {
+                            str(it.get("title", "")).strip().lower()
+                            for it in curr_items
+                            if isinstance(it, dict)
+                        }
+                        for new_item in new_items:
+                            key = str(new_item.get("title", "")).strip().lower()
+                            if key and key not in existing_keys:
+                                curr_items.append(new_item)
+                                existing_keys.add(key)
+
+                elif sec_id == "interests":
+                    new_items = new_sec.get("items", [])
+                    if new_items:
+                        curr_items = curr_sec.setdefault("items", [])
+                        existing_items_lower = {
+                            str(it).strip().lower() for it in curr_items if str(it).strip()
+                        }
+                        for item_str in new_items:
+                            s_val = str(item_str).strip()
+                            if s_val and s_val.lower() not in existing_items_lower:
+                                curr_items.append(s_val)
+                                existing_items_lower.add(s_val.lower())
+                    new_content = str(new_sec.get("content") or "").strip()
+                    if new_content:
+                        curr_sec["content"] = new_content
+
                 elif sec_id == "clause":
                     new_content = str(new_sec.get("content") or "").strip()
-                    if new_content and not str(curr_sec.get("content") or "").strip():
+                    if new_content:
                         curr_sec["content"] = new_content
 
             order_index = {sec_id: idx for idx, sec_id in enumerate(STANDARD_SECTION_ORDER)}

@@ -152,6 +152,25 @@ export interface CertificateItem {
   issue_date: string;
 }
 
+export interface LanguageItem {
+  name: string;
+  level: string;
+}
+
+export interface TrainingItem {
+  name: string;
+  organizer: string;
+  date: string;
+  description: string;
+}
+
+export interface AchievementItem {
+  title: string;
+  issuer: string;
+  date: string;
+  description: string;
+}
+
 export interface SummarySectionBlock {
   id: string;
   type: "summary";
@@ -194,6 +213,35 @@ export interface CertificatesSectionBlock {
   items: CertificateItem[];
 }
 
+export interface LanguagesSectionBlock {
+  id: string;
+  type: "languages";
+  title: string;
+  items: LanguageItem[];
+}
+
+export interface TrainingsSectionBlock {
+  id: string;
+  type: "trainings";
+  title: string;
+  items: TrainingItem[];
+}
+
+export interface AchievementsSectionBlock {
+  id: string;
+  type: "achievements";
+  title: string;
+  items: AchievementItem[];
+}
+
+export interface InterestsSectionBlock {
+  id: string;
+  type: "interests";
+  title: string;
+  items: string[];
+  content?: string;
+}
+
 export interface ClauseSectionBlock {
   id: string;
   type: "clause";
@@ -222,6 +270,10 @@ export type CandidateSectionBlock =
   | ProjectsSectionBlock
   | EducationSectionBlock
   | CertificatesSectionBlock
+  | LanguagesSectionBlock
+  | TrainingsSectionBlock
+  | AchievementsSectionBlock
+  | InterestsSectionBlock
   | ClauseSectionBlock
   | PageBreakSectionBlock
   | CustomSectionBlock;

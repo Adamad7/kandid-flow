@@ -19,8 +19,13 @@ import {
   FileText,
   FileCode,
   RotateCcw,
+  Languages,
+  BookOpen,
+  Trophy,
+  Heart,
 } from "lucide-react";
 import { api } from "../../lib/api";
+import { SUGGESTED_LANGUAGE_LEVELS } from "../../lib/constants";
 import type {
   CandidateContactInfo,
   CandidateProfileRead,
@@ -30,11 +35,18 @@ import type {
   EducationItem,
   ExperienceItem,
   ProjectItem,
+  LanguageItem,
+  TrainingItem,
+  AchievementItem,
   SkillsSectionBlock,
   ExperienceSectionBlock,
   ProjectsSectionBlock,
   EducationSectionBlock,
   CertificatesSectionBlock,
+  LanguagesSectionBlock,
+  TrainingsSectionBlock,
+  AchievementsSectionBlock,
+  InterestsSectionBlock,
   SummarySectionBlock,
   ClauseSectionBlock,
   CustomSectionBlock,
@@ -91,6 +103,30 @@ export const STANDARD_SECTION_DEFAULTS: {
     createDefault: () => ({ id: "certificates", type: "certificates", title: "Certyfikaty", items: [] } as CertificatesSectionBlock),
   },
   {
+    id: "languages",
+    type: "languages",
+    title: "Znajomość języków",
+    createDefault: () => ({ id: "languages", type: "languages", title: "Znajomość języków", items: [] } as LanguagesSectionBlock),
+  },
+  {
+    id: "trainings",
+    type: "trainings",
+    title: "Szkolenia",
+    createDefault: () => ({ id: "trainings", type: "trainings", title: "Szkolenia", items: [] } as TrainingsSectionBlock),
+  },
+  {
+    id: "achievements",
+    type: "achievements",
+    title: "Osiągnięcia",
+    createDefault: () => ({ id: "achievements", type: "achievements", title: "Osiągnięcia", items: [] } as AchievementsSectionBlock),
+  },
+  {
+    id: "interests",
+    type: "interests",
+    title: "Zainteresowania",
+    createDefault: () => ({ id: "interests", type: "interests", title: "Zainteresowania", items: [], content: "" } as InterestsSectionBlock),
+  },
+  {
     id: "clause",
     type: "clause",
     title: "Klauzula RODO",
@@ -135,6 +171,10 @@ export const KnowledgeBaseEditor: React.FC = () => {
     { id: "projects", mode: "ai" },
     { id: "education", mode: "raw" },
     { id: "certificates", mode: "raw" },
+    { id: "languages", mode: "raw" },
+    { id: "trainings", mode: "raw" },
+    { id: "achievements", mode: "ai" },
+    { id: "interests", mode: "raw" },
     { id: "clause", mode: "ai" },
   ]);
   const [sections, setSections] = useState<CandidateSectionBlock[]>([]);
@@ -143,6 +183,7 @@ export const KnowledgeBaseEditor: React.FC = () => {
   // Keyed by category index or project index
   const [skillTagsRaw, setSkillTagsRaw] = useState<Record<number, string>>({});
   const [projectTechsRaw, setProjectTechsRaw] = useState<Record<number, string>>({});
+  const [interestTagsRaw, setInterestTagsRaw] = useState<string>("");
 
   // Reset confirmation modal & AI modal state
   const [isResetModalOpen, setIsResetModalOpen] = useState(false);
@@ -176,6 +217,10 @@ export const KnowledgeBaseEditor: React.FC = () => {
         { id: "projects", mode: "ai" },
         { id: "education", mode: "raw" },
         { id: "certificates", mode: "raw" },
+        { id: "languages", mode: "raw" },
+        { id: "trainings", mode: "raw" },
+        { id: "achievements", mode: "ai" },
+        { id: "interests", mode: "raw" },
         { id: "clause", mode: "ai" },
       ];
     }
@@ -207,6 +252,14 @@ export const KnowledgeBaseEditor: React.FC = () => {
       setProjectTechsRaw(rawPMap);
     } else {
       setProjectTechsRaw({});
+    }
+
+    // Initialize raw text for interests
+    const iSec = secs.find((s) => s.type === "interests") as InterestsSectionBlock | undefined;
+    if (iSec?.items && Array.isArray(iSec.items)) {
+      setInterestTagsRaw(iSec.items.join(", "));
+    } else {
+      setInterestTagsRaw("");
     }
 
     setInitialFullName(fName);
@@ -260,6 +313,10 @@ export const KnowledgeBaseEditor: React.FC = () => {
         { id: "projects", mode: "ai" },
         { id: "education", mode: "raw" },
         { id: "certificates", mode: "raw" },
+        { id: "languages", mode: "raw" },
+        { id: "trainings", mode: "raw" },
+        { id: "achievements", mode: "ai" },
+        { id: "interests", mode: "raw" },
         { id: "clause", mode: "ai" },
       ];
       const rawSecs: CandidateSectionBlock[] = [
@@ -431,7 +488,7 @@ export const KnowledgeBaseEditor: React.FC = () => {
   const getSectionDefaultMode = (secId: string): SectionGenerationMode => {
     const found = defaultSections.find((ds) => ds.id === secId);
     if (found) return found.mode;
-    if (["summary", "skills", "experience", "projects", "clause"].includes(secId)) {
+    if (["summary", "skills", "experience", "projects", "achievements", "clause"].includes(secId)) {
       return "ai";
     }
     return "raw";
@@ -826,6 +883,205 @@ export const KnowledgeBaseEditor: React.FC = () => {
     );
   };
 
+  // Languages Handlers
+  const addLanguageItem = () => {
+    setSections((prev) =>
+      prev.map((sec) => {
+        if (sec.type === "languages") {
+          const s = sec as LanguagesSectionBlock;
+          return {
+            ...s,
+            items: [
+              ...(s.items || []),
+              {
+                name: "Nowy język",
+                level: "B2",
+              },
+            ],
+          };
+        }
+        return sec;
+      })
+    );
+  };
+
+  const updateLanguageItem = (
+    index: number,
+    field: keyof LanguageItem,
+    value: string
+  ) => {
+    setSections((prev) =>
+      prev.map((sec) => {
+        if (sec.type === "languages") {
+          const s = sec as LanguagesSectionBlock;
+          const items = [...(s.items || [])];
+          items[index] = { ...items[index], [field]: value };
+          return { ...s, items };
+        }
+        return sec;
+      })
+    );
+  };
+
+  const removeLanguageItem = (index: number) => {
+    setSections((prev) =>
+      prev.map((sec) => {
+        if (sec.type === "languages") {
+          const s = sec as LanguagesSectionBlock;
+          return {
+            ...s,
+            items: (s.items || []).filter((_, idx) => idx !== index),
+          };
+        }
+        return sec;
+      })
+    );
+  };
+
+  // Trainings Handlers
+  const addTrainingItem = () => {
+    setSections((prev) =>
+      prev.map((sec) => {
+        if (sec.type === "trainings") {
+          const s = sec as TrainingsSectionBlock;
+          return {
+            ...s,
+            items: [
+              ...(s.items || []),
+              {
+                name: "Nowe szkolenie",
+                organizer: "Organizator",
+                date: "2024",
+                description: "",
+              },
+            ],
+          };
+        }
+        return sec;
+      })
+    );
+  };
+
+  const updateTrainingItem = (
+    index: number,
+    field: keyof TrainingItem,
+    value: string
+  ) => {
+    setSections((prev) =>
+      prev.map((sec) => {
+        if (sec.type === "trainings") {
+          const s = sec as TrainingsSectionBlock;
+          const items = [...(s.items || [])];
+          items[index] = { ...items[index], [field]: value };
+          return { ...s, items };
+        }
+        return sec;
+      })
+    );
+  };
+
+  const removeTrainingItem = (index: number) => {
+    setSections((prev) =>
+      prev.map((sec) => {
+        if (sec.type === "trainings") {
+          const s = sec as TrainingsSectionBlock;
+          return {
+            ...s,
+            items: (s.items || []).filter((_, idx) => idx !== index),
+          };
+        }
+        return sec;
+      })
+    );
+  };
+
+  // Achievements Handlers
+  const addAchievementItem = () => {
+    setSections((prev) =>
+      prev.map((sec) => {
+        if (sec.type === "achievements") {
+          const s = sec as AchievementsSectionBlock;
+          return {
+            ...s,
+            items: [
+              ...(s.items || []),
+              {
+                title: "Nowe osiągnięcie",
+                issuer: "Instytucja / Konkurs",
+                date: "2024",
+                description: "",
+              },
+            ],
+          };
+        }
+        return sec;
+      })
+    );
+  };
+
+  const updateAchievementItem = (
+    index: number,
+    field: keyof AchievementItem,
+    value: string
+  ) => {
+    setSections((prev) =>
+      prev.map((sec) => {
+        if (sec.type === "achievements") {
+          const s = sec as AchievementsSectionBlock;
+          const items = [...(s.items || [])];
+          items[index] = { ...items[index], [field]: value };
+          return { ...s, items };
+        }
+        return sec;
+      })
+    );
+  };
+
+  const removeAchievementItem = (index: number) => {
+    setSections((prev) =>
+      prev.map((sec) => {
+        if (sec.type === "achievements") {
+          const s = sec as AchievementsSectionBlock;
+          return {
+            ...s,
+            items: (s.items || []).filter((_, idx) => idx !== index),
+          };
+        }
+        return sec;
+      })
+    );
+  };
+
+  // Interests Handlers
+  const handleInterestsTagsChange = (rawValue: string) => {
+    setInterestTagsRaw(rawValue);
+    const items = rawValue
+      .split(",")
+      .map((t) => t.trim())
+      .filter(Boolean);
+    setSections((prev) =>
+      prev.map((sec) => {
+        if (sec.type === "interests") {
+          const s = sec as InterestsSectionBlock;
+          return { ...s, items };
+        }
+        return sec;
+      })
+    );
+  };
+
+  const updateInterestsContent = (content: string) => {
+    setSections((prev) =>
+      prev.map((sec) => {
+        if (sec.type === "interests") {
+          const s = sec as InterestsSectionBlock;
+          return { ...s, content };
+        }
+        return sec;
+      })
+    );
+  };
+
   // Custom Sections Handler
   const addCustomSection = () => {
     const newId = `custom_${Date.now()}`;
@@ -889,12 +1145,32 @@ export const KnowledgeBaseEditor: React.FC = () => {
     STANDARD_SECTION_DEFAULTS.find((s) => s.id === "education")!.createDefault()) as EducationSectionBlock;
   const certsSection = (sections.find((s) => s.type === "certificates" || s.id === "certificates") ||
     STANDARD_SECTION_DEFAULTS.find((s) => s.id === "certificates")!.createDefault()) as CertificatesSectionBlock;
+  const languagesSection = (sections.find((s) => s.type === "languages" || s.id === "languages") ||
+    STANDARD_SECTION_DEFAULTS.find((s) => s.id === "languages")!.createDefault()) as LanguagesSectionBlock;
+  const trainingsSection = (sections.find((s) => s.type === "trainings" || s.id === "trainings") ||
+    STANDARD_SECTION_DEFAULTS.find((s) => s.id === "trainings")!.createDefault()) as TrainingsSectionBlock;
+  const achievementsSection = (sections.find((s) => s.type === "achievements" || s.id === "achievements") ||
+    STANDARD_SECTION_DEFAULTS.find((s) => s.id === "achievements")!.createDefault()) as AchievementsSectionBlock;
+  const interestsSection = (sections.find((s) => s.type === "interests" || s.id === "interests") ||
+    STANDARD_SECTION_DEFAULTS.find((s) => s.id === "interests")!.createDefault()) as InterestsSectionBlock;
   const clauseSection = (sections.find((s) => s.type === "clause" || s.id === "clause") ||
     STANDARD_SECTION_DEFAULTS.find((s) => s.id === "clause")!.createDefault()) as ClauseSectionBlock;
   const customSections = sections.filter(
     (s) =>
       s.type === "custom" ||
-      !["summary", "skills", "experience", "projects", "education", "certificates", "clause"].includes(s.type)
+      ![
+        "summary",
+        "skills",
+        "experience",
+        "projects",
+        "education",
+        "certificates",
+        "languages",
+        "trainings",
+        "achievements",
+        "interests",
+        "clause",
+      ].includes(s.type)
   ) as CustomSectionBlock[];
 
   // Reusable Section Save Button Component
@@ -1121,6 +1397,30 @@ export const KnowledgeBaseEditor: React.FC = () => {
                 icon: Award,
               },
               {
+                id: "languages",
+                label: "Znajomość języków",
+                description: "Języki obce i ojczyste wraz z poziomami biegłości",
+                icon: Languages,
+              },
+              {
+                id: "trainings",
+                label: "Szkolenia",
+                description: "Kursy specjalistyczne, warsztaty i programy szkoleniowe",
+                icon: BookOpen,
+              },
+              {
+                id: "achievements",
+                label: "Osiągnięcia",
+                description: "Nagrody, wyróżnienia, hackathony i kluczowe sukcesy",
+                icon: Trophy,
+              },
+              {
+                id: "interests",
+                label: "Zainteresowania",
+                description: "Pasje, hobby i zainteresowania pozazawodowe",
+                icon: Heart,
+              },
+              {
                 id: "clause",
                 label: "Klauzula RODO",
                 description: "Zgoda na przetwarzanie danych pod danego pracodawcę",
@@ -1173,22 +1473,6 @@ export const KnowledgeBaseEditor: React.FC = () => {
                         >
                           {sec.label}
                         </span>
-                        {isOff && (
-                          <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400">
-                            Nie umieszczaj
-                          </span>
-                        )}
-                        {isRaw && (
-                          <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300">
-                            Z bazy wiedzy
-                          </span>
-                        )}
-                        {isAi && (
-                          <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-indigo-100 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300 flex items-center gap-1">
-                            <Sparkles className="h-2.5 w-2.5 shrink-0" />
-                            Generuj AI
-                          </span>
-                        )}
                       </div>
                       <p className="text-xs text-slate-500 dark:text-slate-400 truncate">
                         {sec.description}
@@ -1741,6 +2025,304 @@ export const KnowledgeBaseEditor: React.FC = () => {
               Dodaj certyfikat
             </Button>
             {renderSectionSaveButton(certsSection.id, isSectionDirty(certsSection.id))}
+          </div>
+        </div>
+      )}
+
+      {/* Languages Section */}
+      {languagesSection && (
+        <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-6 shadow-xs space-y-4">
+          <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+            <div className="flex items-center gap-2 flex-1 mr-4">
+              <Languages className="h-5 w-5 text-cyan-600 dark:text-cyan-400 shrink-0" />
+              <input
+                type="text"
+                value={languagesSection.title}
+                onChange={(e) => updateSectionTitle(languagesSection.id, e.target.value)}
+                className="font-semibold text-slate-900 dark:text-slate-100 text-base bg-transparent border-b border-transparent hover:border-slate-300 dark:hover:border-slate-700 focus:border-blue-500 focus:outline-none px-1 py-0.5"
+                placeholder="Tytuł sekcji"
+              />
+              <span className="text-xs text-slate-400 dark:text-slate-500 font-mono">(Languages)</span>
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            {(languagesSection.items || []).map((lang, idx) => (
+              <div
+                key={idx}
+                className="rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-800/50 p-4 space-y-3"
+              >
+                <div className="flex items-center justify-between">
+                  <span className="font-semibold text-sm text-slate-800 dark:text-slate-200">
+                    Język #{idx + 1}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => removeLanguageItem(idx)}
+                    className="text-slate-400 dark:text-slate-500 hover:text-rose-600 dark:hover:text-rose-400 p-1"
+                    title="Usuń język"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <Input
+                    label="Nazwa języka"
+                    value={lang.name}
+                    onChange={(e) => updateLanguageItem(idx, "name", e.target.value)}
+                    placeholder="np. Angielski, Niemiecki, Polski"
+                    required
+                  />
+                  <div>
+                    <Input
+                      label="Poziom biegłości"
+                      value={lang.level}
+                      onChange={(e) => updateLanguageItem(idx, "level", e.target.value)}
+                      placeholder="np. C1, B2, Średniozaawansowany, Biegły, Ojczysty"
+                      required
+                    />
+                    <div className="flex flex-wrap gap-1 mt-1.5">
+                      {SUGGESTED_LANGUAGE_LEVELS.map((preset) => (
+                        <button
+                          key={preset}
+                          type="button"
+                          onClick={() => updateLanguageItem(idx, "level", preset)}
+                          className="px-1.5 py-0.5 text-[10px] rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-cyan-600 dark:hover:text-cyan-400 hover:border-cyan-500"
+                        >
+                          {preset}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Bottom Actions for Languages */}
+          <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
+            <Button size="sm" variant="outline" onClick={addLanguageItem} className="text-xs h-8">
+              <Plus className="h-3.5 w-3.5 mr-1" />
+              Dodaj język
+            </Button>
+            {renderSectionSaveButton(languagesSection.id, isSectionDirty(languagesSection.id))}
+          </div>
+        </div>
+      )}
+
+      {/* Trainings Section */}
+      {trainingsSection && (
+        <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-6 shadow-xs space-y-4">
+          <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+            <div className="flex items-center gap-2 flex-1 mr-4">
+              <BookOpen className="h-5 w-5 text-amber-600 dark:text-amber-400 shrink-0" />
+              <input
+                type="text"
+                value={trainingsSection.title}
+                onChange={(e) => updateSectionTitle(trainingsSection.id, e.target.value)}
+                className="font-semibold text-slate-900 dark:text-slate-100 text-base bg-transparent border-b border-transparent hover:border-slate-300 dark:hover:border-slate-700 focus:border-blue-500 focus:outline-none px-1 py-0.5"
+                placeholder="Tytuł sekcji"
+              />
+              <span className="text-xs text-slate-400 dark:text-slate-500 font-mono">(Trainings)</span>
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            {(trainingsSection.items || []).map((trn, idx) => (
+              <div
+                key={idx}
+                className="rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-800/50 p-4 space-y-4"
+              >
+                <div className="flex items-center justify-between">
+                  <span className="font-semibold text-sm text-slate-800 dark:text-slate-200">
+                    Szkolenie #{idx + 1}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => removeTrainingItem(idx)}
+                    className="text-slate-400 dark:text-slate-500 hover:text-rose-600 dark:hover:text-rose-400 p-1"
+                    title="Usuń szkolenie"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <Input
+                    label="Nazwa szkolenia / kursu"
+                    value={trn.name}
+                    onChange={(e) => updateTrainingItem(idx, "name", e.target.value)}
+                    placeholder="np. Kubernetes Administrator Bootcamp"
+                    required
+                  />
+                  <Input
+                    label="Organizator / Platforma"
+                    value={trn.organizer}
+                    onChange={(e) => updateTrainingItem(idx, "organizer", e.target.value)}
+                    placeholder="np. Udemy, Sages, Coursera"
+                  />
+                  <DateInput
+                    label="Data ukończenia"
+                    value={trn.date}
+                    onChange={(val) => updateTrainingItem(idx, "date", val)}
+                    placeholder="np. 2024, 2024-03 lub data"
+                  />
+                </div>
+
+                <Textarea
+                  label="Opis szkolenia / zdobyte umiejętności (opcjonalnie)"
+                  value={trn.description}
+                  onChange={(e) => updateTrainingItem(idx, "description", e.target.value)}
+                  placeholder="Krótki opis poruszanych zagadnień i zrealizowanych projektów warsztatowych..."
+                  rows={2}
+                />
+              </div>
+            ))}
+          </div>
+
+          {/* Bottom Actions for Trainings */}
+          <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
+            <Button size="sm" variant="outline" onClick={addTrainingItem} className="text-xs h-8">
+              <Plus className="h-3.5 w-3.5 mr-1" />
+              Dodaj szkolenie
+            </Button>
+            {renderSectionSaveButton(trainingsSection.id, isSectionDirty(trainingsSection.id))}
+          </div>
+        </div>
+      )}
+
+      {/* Achievements Section */}
+      {achievementsSection && (
+        <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-6 shadow-xs space-y-4">
+          <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+            <div className="flex items-center gap-2 flex-1 mr-4">
+              <Trophy className="h-5 w-5 text-yellow-600 dark:text-yellow-400 shrink-0" />
+              <input
+                type="text"
+                value={achievementsSection.title}
+                onChange={(e) => updateSectionTitle(achievementsSection.id, e.target.value)}
+                className="font-semibold text-slate-900 dark:text-slate-100 text-base bg-transparent border-b border-transparent hover:border-slate-300 dark:hover:border-slate-700 focus:border-blue-500 focus:outline-none px-1 py-0.5"
+                placeholder="Tytuł sekcji"
+              />
+              <span className="text-xs text-slate-400 dark:text-slate-500 font-mono">(Achievements)</span>
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            {(achievementsSection.items || []).map((ach, idx) => (
+              <div
+                key={idx}
+                className="rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-800/50 p-4 space-y-4"
+              >
+                <div className="flex items-center justify-between">
+                  <span className="font-semibold text-sm text-slate-800 dark:text-slate-200">
+                    Osiągnięcie #{idx + 1}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => removeAchievementItem(idx)}
+                    className="text-slate-400 dark:text-slate-500 hover:text-rose-600 dark:hover:text-rose-400 p-1"
+                    title="Usuń osiągnięcie"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <Input
+                    label="Nazwa osiągnięcia / nagrody"
+                    value={ach.title}
+                    onChange={(e) => updateAchievementItem(idx, "title", e.target.value)}
+                    placeholder="np. Laureat 1. miejsca w Hackathonie"
+                    required
+                  />
+                  <Input
+                    label="Instytucja przyznająca / Konkurs"
+                    value={ach.issuer}
+                    onChange={(e) => updateAchievementItem(idx, "issuer", e.target.value)}
+                    placeholder="np. Tech Summit Polska, Uczelnia"
+                  />
+                  <DateInput
+                    label="Data / Rok uzyskania"
+                    value={ach.date}
+                    onChange={(val) => updateAchievementItem(idx, "date", val)}
+                    placeholder="np. 2023, 2023-10 lub data"
+                  />
+                </div>
+
+                <Textarea
+                  label="Opis osiągnięcia i uzyskane rezultaty (opcjonalnie)"
+                  value={ach.description}
+                  onChange={(e) => updateAchievementItem(idx, "description", e.target.value)}
+                  placeholder="Krótki opis kontekstu, skali projektu oraz wymiernych efektów..."
+                  rows={2}
+                />
+              </div>
+            ))}
+          </div>
+
+          {/* Bottom Actions for Achievements */}
+          <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
+            <Button size="sm" variant="outline" onClick={addAchievementItem} className="text-xs h-8">
+              <Plus className="h-3.5 w-3.5 mr-1" />
+              Dodaj osiągnięcie
+            </Button>
+            {renderSectionSaveButton(achievementsSection.id, isSectionDirty(achievementsSection.id))}
+          </div>
+        </div>
+      )}
+
+      {/* Interests Section */}
+      {interestsSection && (
+        <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-6 shadow-xs space-y-4">
+          <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+            <div className="flex items-center gap-2 flex-1 mr-4">
+              <Heart className="h-5 w-5 text-rose-600 dark:text-rose-400 shrink-0" />
+              <input
+                type="text"
+                value={interestsSection.title}
+                onChange={(e) => updateSectionTitle(interestsSection.id, e.target.value)}
+                className="font-semibold text-slate-900 dark:text-slate-100 text-base bg-transparent border-b border-transparent hover:border-slate-300 dark:hover:border-slate-700 focus:border-blue-500 focus:outline-none px-1 py-0.5"
+                placeholder="Tytuł sekcji"
+              />
+              <span className="text-xs text-slate-400 dark:text-slate-500 font-mono">(Interests)</span>
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            <Input
+              label="Lista zainteresowań (rozdzielone przecinkami)"
+              value={interestTagsRaw}
+              onChange={(e) => handleInterestsTagsChange(e.target.value)}
+              placeholder="np. Kolarstwo gravelowe, Druk 3D, Automatyka domowa, Żeglarstwo"
+            />
+
+            {(interestsSection.items || []).length > 0 && (
+              <div className="flex flex-wrap gap-1.5 pt-1">
+                {interestsSection.items.map((item, idx) => (
+                  <span
+                    key={idx}
+                    className="rounded bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/50 px-2.5 py-1 text-xs text-rose-700 dark:text-rose-300 font-medium shadow-xs"
+                  >
+                    {item}
+                  </span>
+                ))}
+              </div>
+            )}
+
+            <Textarea
+              label="Opis narracyjny pasji (opcjonalnie)"
+              value={interestsSection.content || ""}
+              onChange={(e) => updateInterestsContent(e.target.value)}
+              placeholder="Krótki akapit opisujący Twoje zainteresowania poza pracą zawodową..."
+              rows={3}
+            />
+          </div>
+
+          {/* Bottom Actions for Interests */}
+          <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex justify-end">
+            {renderSectionSaveButton(interestsSection.id, isSectionDirty(interestsSection.id))}
           </div>
         </div>
       )}

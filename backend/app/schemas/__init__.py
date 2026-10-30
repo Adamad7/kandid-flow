@@ -13,6 +13,8 @@ from app.schemas.attachment import (
     JobAttachmentUpdate,
 )
 from app.schemas.candidate import (
+    AchievementItem,
+    AchievementsSectionBlock,
     CandidateAIFillRequest,
     CandidateContactInfo,
     CandidateProfileBase,
@@ -28,11 +30,16 @@ from app.schemas.candidate import (
     EducationSectionBlock,
     ExperienceItem,
     ExperienceSectionBlock,
+    InterestsSectionBlock,
+    LanguageItem,
+    LanguagesSectionBlock,
     ProjectItem,
     ProjectsSectionBlock,
     SkillCategoryItem,
     SkillsSectionBlock,
     SummarySectionBlock,
+    TrainingItem,
+    TrainingsSectionBlock,
 )
 from app.schemas.cv import (
     CVGenerateRequest,
@@ -157,6 +164,10 @@ __all__ = [
     "ProjectsSectionBlock",
     "EducationSectionBlock",
     "CertificatesSectionBlock",
+    "LanguagesSectionBlock",
+    "TrainingsSectionBlock",
+    "AchievementsSectionBlock",
+    "InterestsSectionBlock",
     "ClauseSectionBlock",
     "CustomSectionBlock",
     "SkillCategoryItem",
@@ -164,6 +175,9 @@ __all__ = [
     "ProjectItem",
     "EducationItem",
     "CertificateItem",
+    "LanguageItem",
+    "TrainingItem",
+    "AchievementItem",
     # Attachments
     "JobAttachmentCategory",
     "JobAttachmentBase",

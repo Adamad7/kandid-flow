@@ -12,6 +12,10 @@ import {
   Award,
   FileText,
   FileCode,
+  Languages,
+  BookOpen,
+  Trophy,
+  Heart,
 } from "lucide-react";
 import { api } from "../../lib/api";
 import type {
@@ -82,6 +86,30 @@ const STANDARD_SECTIONS: SectionDefinition[] = [
     icon: Award,
   },
   {
+    id: "languages",
+    title: "Znajomość języków",
+    description: "Języki obce i ojczyste z poziomami biegłości",
+    icon: Languages,
+  },
+  {
+    id: "trainings",
+    title: "Szkolenia",
+    description: "Kursy specjalistyczne, warsztaty i programy szkoleniowe",
+    icon: BookOpen,
+  },
+  {
+    id: "achievements",
+    title: "Osiągnięcia",
+    description: "Nagrody, wyróżnienia, hackathony i kluczowe sukcesy",
+    icon: Trophy,
+  },
+  {
+    id: "interests",
+    title: "Zainteresowania",
+    description: "Pasje, hobby i zainteresowania pozazawodowe",
+    icon: Heart,
+  },
+  {
     id: "clause",
     title: "Klauzula RODO",
     description: "Zgoda na przetwarzanie danych osobowych pod danego pracodawcę",
@@ -116,6 +144,10 @@ export const CVGeneratorModal: React.FC<CVGeneratorModalProps> = ({
     projects: "ai",
     education: "raw",
     certificates: "raw",
+    languages: "raw",
+    trainings: "raw",
+    achievements: "ai",
+    interests: "raw",
     clause: "ai",
   });
 
@@ -153,6 +185,10 @@ export const CVGeneratorModal: React.FC<CVGeneratorModalProps> = ({
         projects: "ai",
         education: "raw",
         certificates: "raw",
+        languages: "raw",
+        trainings: "raw",
+        achievements: "ai",
+        interests: "raw",
         clause: "ai",
       };
 
@@ -511,22 +547,6 @@ export const CVGeneratorModal: React.FC<CVGeneratorModalProps> = ({
                           >
                             {sec.title}
                           </span>
-                          {isOff && (
-                            <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400">
-                              Nie umieszczaj
-                            </span>
-                          )}
-                          {isRaw && (
-                            <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300">
-                              Z bazy wiedzy
-                            </span>
-                          )}
-                          {isAi && (
-                            <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-indigo-100 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300 flex items-center gap-1">
-                              <Sparkles className="h-2.5 w-2.5 shrink-0" />
-                              Generuj AI
-                            </span>
-                          )}
                         </div>
                         <p className="text-xs text-slate-500 dark:text-slate-400 truncate">
                           {sec.description}

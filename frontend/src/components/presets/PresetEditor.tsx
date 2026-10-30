@@ -574,7 +574,19 @@ export const PresetEditor: React.FC<PresetEditorProps> = ({
   const customBlocks = sections.filter(
     (s) =>
       s.type === "custom" ||
-      !["summary", "skills", "experience", "projects", "education", "certificates", "clause"].includes(s.type)
+      ![
+        "summary",
+        "skills",
+        "experience",
+        "projects",
+        "education",
+        "certificates",
+        "languages",
+        "trainings",
+        "achievements",
+        "interests",
+        "clause",
+      ].includes(s.type)
   ) as CustomSectionBlock[];
 
   return (
