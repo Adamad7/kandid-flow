@@ -10,6 +10,7 @@
 
 // Candidate & Contact Details
 #let full_name = cv_data.at("full_name", default: cv_data.at("name", default: "Jan Kowalski"))
+#let job_title = cv_data.at("job_title", default: cv_data.at("target_role", default: cv_data.at("headline", default: none)))
 #let contact = cv_data.at("contact_info", default: cv_data.at("contact", default: (:)))
 #let lang = cv_data.at("language", default: "pl")
 
@@ -104,6 +105,10 @@
 // ---------------- HEADER ----------------
 #align(center)[
   #text(size: 18pt, weight: "bold", fill: rgb("#111827"))[#full_name]\
+  #if job_title != none and job_title != "" [
+    #v(-0.2em)
+    #text(size: 11pt, weight: "semibold", fill: rgb("#2563eb"))[#job_title]\
+  ]
   #if contact_items.len() > 0 [
     #v(0.2em)
     #text(size: 8.5pt, fill: rgb("#4b5563"))[

@@ -55,7 +55,25 @@ async def _resolve_cv_data(
             layout.contact_info = contact_info
         if not layout.language:
             layout.language = request.language
+        if not layout.job_title and request.job_offer_id:
+            from app.models.job import JobOffer
+
+            stmt_job = select(JobOffer).where(JobOffer.id == request.job_offer_id)
+            res_job = await db.execute(stmt_job)
+            job = res_job.scalar_one_or_none()
+            if job and job.role_title:
+                layout.job_title = job.role_title
         return layout
+
+    job_title: str | None = None
+    if request.job_offer_id:
+        from app.models.job import JobOffer
+
+        stmt_job = select(JobOffer).where(JobOffer.id == request.job_offer_id)
+        res_job = await db.execute(stmt_job)
+        job = res_job.scalar_one_or_none()
+        if job and job.role_title:
+            job_title = job.role_title
 
     # Otherwise construct from candidate profile knowledge base
     active_sections: list[CandidateSectionBlock] = []
@@ -68,6 +86,7 @@ async def _resolve_cv_data(
 
     return CVLayoutSchema(
         full_name=candidate_name,
+        job_title=job_title,
         contact_info=contact_info,
         language=request.language,
         sections=active_sections,

@@ -134,11 +134,18 @@ export const CVEditor: React.FC<CVEditorProps> = ({
 
   // Layout Schema State for active version
   const [layoutSchema, setLayoutSchema] = useState<CVLayoutSchema>(
-    initialVersion.layout_schema || {
-      full_name: "Jan Kowalski",
-      language: initialVersion.language || "pl",
-      sections: [],
-    }
+    initialVersion.layout_schema
+      ? {
+          ...initialVersion.layout_schema,
+          job_title:
+            initialVersion.layout_schema.job_title ?? job?.role_title ?? null,
+        }
+      : {
+          full_name: "Jan Kowalski",
+          job_title: job?.role_title ?? null,
+          language: initialVersion.language || "pl",
+          sections: [],
+        }
   );
 
   const [isSaving, setIsSaving] = useState(false);
@@ -171,7 +178,20 @@ export const CVEditor: React.FC<CVEditorProps> = ({
 
   const handleSwitchVersion = (version: CVVersionRead) => {
     setCurrentVersion(version);
-    setLayoutSchema(version.layout_schema);
+    setLayoutSchema(
+      version.layout_schema
+        ? {
+            ...version.layout_schema,
+            job_title:
+              version.layout_schema.job_title ?? job?.role_title ?? null,
+          }
+        : {
+            full_name: "Jan Kowalski",
+            job_title: job?.role_title ?? null,
+            language: version.language || "pl",
+            sections: [],
+          }
+    );
   };
 
   const handleSaveVersion = async () => {
@@ -2054,6 +2074,40 @@ export const CVEditor: React.FC<CVEditorProps> = ({
                 setLayoutSchema({ ...layoutSchema, full_name: e.target.value })
               }
             />
+
+            <div className="space-y-1.5">
+              <Input
+                label="Stanowisko docelowe / Nagłówek zawodowy"
+                value={layoutSchema.job_title || ""}
+                onChange={(e) =>
+                  setLayoutSchema({
+                    ...layoutSchema,
+                    job_title: e.target.value,
+                  })
+                }
+                placeholder='np. "Flutter Developer", "Junior DevOps Engineer"'
+              />
+              {job?.role_title && layoutSchema.job_title !== job.role_title && (
+                <div className="flex items-center pt-0.5">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setLayoutSchema({
+                        ...layoutSchema,
+                        job_title: job.role_title,
+                      })
+                    }
+                    className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-950/50 hover:bg-blue-100 dark:hover:bg-blue-900/60 rounded-md border border-blue-200 dark:border-blue-800 transition-colors cursor-pointer"
+                  >
+                    <Sparkles className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400" />
+                    <span>
+                      Użyj z oferty:{" "}
+                      <strong className="font-semibold">{job.role_title}</strong>
+                    </span>
+                  </button>
+                </div>
+              )}
+            </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <Input

@@ -36,6 +36,7 @@ class CVGeneratorService:
         contact_info = candidate.contact_info if candidate else {}
 
         # 2. Resolve baseline sections: from BaseCVPreset if specified, else from CandidateProfile
+        job_title: str | None = None
         if request.preset_id:
             stmt_preset = select(BaseCVPreset).where(BaseCVPreset.id == request.preset_id)
             res_preset = await db.execute(stmt_preset)
@@ -45,13 +46,18 @@ class CVGeneratorService:
                     status_code=status.HTTP_404_NOT_FOUND,
                     detail=f"Base CV Preset with ID '{request.preset_id}' not found",
                 )
-            raw_sections = (
-                preset.layout_schema
-                if isinstance(preset.layout_schema, list)
-                else preset.layout_schema.get("sections", [])
-            )
+            if isinstance(preset.layout_schema, dict):
+                raw_sections = preset.layout_schema.get("sections", [])
+                job_title = preset.layout_schema.get("job_title") or preset.title
+            else:
+                raw_sections = (
+                    preset.layout_schema if isinstance(preset.layout_schema, list) else []
+                )
+                job_title = preset.title
         else:
             raw_sections = candidate.sections if candidate else []
+            if candidate and isinstance(candidate.contact_info, dict):
+                job_title = candidate.contact_info.get("job_title")
 
         # 3. Filter sections if specified
         section_mode_map: dict[str, str] = {}
@@ -79,6 +85,7 @@ class CVGeneratorService:
 
         baseline_payload = {
             "full_name": full_name,
+            "job_title": job_title,
             "contact_info": contact_info,
             "language": request.language,
             "sections": active_sections,
@@ -93,6 +100,8 @@ class CVGeneratorService:
     ) -> dict[str, Any]:
         """Deterministic tailoring fallback for offline execution and fast responses."""
         result = copy.deepcopy(baseline)
+        if not result.get("job_title") and job.role_title:
+            result["job_title"] = job.role_title
         sections = result.get("sections", [])
         company = job.company_name or "Pracodawca"
         role = job.role_title or "Specjalista"
@@ -472,8 +481,9 @@ class CVGeneratorService:
             target_language=request.language,
         )
 
-        # Ensure name, contact and language are strictly preserved
+        # Ensure name, job title, contact and language are strictly preserved
         tailored_data["full_name"] = full_name
+        tailored_data["job_title"] = baseline_payload.get("job_title") or job.role_title
         tailored_data["contact_info"] = contact_info
         tailored_data["language"] = request.language
 

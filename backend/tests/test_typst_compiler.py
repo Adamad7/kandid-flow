@@ -135,3 +135,41 @@ def test_compile_with_extended_sections():
 
     pdf = typst_compiler.compile_to_pdf(extended_data)
     assert pdf.startswith(b"%PDF")
+
+
+def test_compile_with_job_title():
+    """Verify that compiling data with job_title renders the title in both SVG and PDF outputs."""
+    sample_data = {
+        "full_name": "Anna Nowak",
+        "job_title": "Senior Flutter Developer",
+        "language": "pl",
+        "contact_info": {
+            "email": "anna.nowak@example.com",
+            "phone": "+48 600 700 800",
+            "location": "Kraków, Polska",
+        },
+        "sections": [
+            {
+                "id": "summary",
+                "type": "summary",
+                "title": "O mnie",
+                "content": "Doświadczona programistka Flutter z pasją do czystego kodu.",
+            }
+        ],
+    }
+
+    svg_pages = typst_compiler.compile_to_svg(sample_data)
+    assert isinstance(svg_pages, list)
+    assert len(svg_pages) >= 1
+    # Typst renders the job_title with dedicated accent fill (#2563eb)
+    assert "#2563eb" in svg_pages[0]
+
+    # Without job_title, the accent fill is absent
+    sample_without_title = {**sample_data, "job_title": None}
+    svg_without = typst_compiler.compile_to_svg(sample_without_title)
+    assert "#2563eb" not in svg_without[0]
+
+    pdf = typst_compiler.compile_to_pdf(sample_data)
+    assert isinstance(pdf, bytes)
+    assert pdf.startswith(b"%PDF")
+    assert len(pdf) > 1000

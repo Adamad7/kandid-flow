@@ -15,6 +15,13 @@ class CVLayoutSchema(BaseModel):
     """Normalized layout schema for CV compilation and rendering."""
 
     full_name: str | None = Field(default=None, description="Candidate name")
+    job_title: str | None = Field(
+        default=None,
+        description=(
+            "Target job title or professional headline "
+            "(e.g. 'Flutter Developer', 'Junior DevOps Engineer')"
+        ),
+    )
     contact_info: CandidateContactInfo | None = Field(
         default=None, description="Contact information"
     )

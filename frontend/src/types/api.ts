@@ -442,6 +442,7 @@ export interface RecruitmentEventRead extends RecruitmentEventBase {
 
 export interface CVLayoutSchema {
   full_name?: string | null;
+  job_title?: string | null;
   contact_info?: CandidateContactInfo | null;
   language: string;
   sections: CandidateSectionBlock[];

@@ -66,6 +66,7 @@ export const PresetEditor: React.FC<PresetEditorProps> = ({
       ? (preset.layout_schema as CVLayoutSchema)
       : {
           full_name: "Jan Kowalski",
+          job_title: null,
           language: preset.language || "pl",
           sections: Array.isArray(preset.layout_schema)
             ? (preset.layout_schema as CandidateSectionBlock[])
@@ -73,6 +74,7 @@ export const PresetEditor: React.FC<PresetEditorProps> = ({
         };
 
   const [fullName, setFullName] = useState(initialLayout.full_name || "Jan Kowalski");
+  const [jobTitle, setJobTitle] = useState(initialLayout.job_title || "");
   const [contactInfo, setContactInfo] = useState<CandidateContactInfo>(
     initialLayout.contact_info || {}
   );
@@ -116,6 +118,7 @@ export const PresetEditor: React.FC<PresetEditorProps> = ({
   // Compute consolidated CVLayoutSchema for Live Preview
   const currentLayoutSchema: CVLayoutSchema = {
     full_name: fullName,
+    job_title: jobTitle.trim() ? jobTitle.trim() : null,
     contact_info: contactInfo,
     language: language,
     sections: sections,
@@ -705,6 +708,12 @@ export const PresetEditor: React.FC<PresetEditorProps> = ({
                 label="Imię i nazwisko"
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
+              />
+              <Input
+                label="Stanowisko docelowe / Nagłówek"
+                value={jobTitle}
+                onChange={(e) => setJobTitle(e.target.value)}
+                placeholder='np. "Flutter Developer", "DevOps Engineer"'
               />
               <Input
                 label="Adres e-mail"
