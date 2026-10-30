@@ -23,6 +23,7 @@ import {
   BookOpen,
   Trophy,
   Heart,
+  X,
 } from "lucide-react";
 import { api } from "../../lib/api";
 import { SUGGESTED_LANGUAGE_LEVELS } from "../../lib/constants";
@@ -179,9 +180,19 @@ export const KnowledgeBaseEditor: React.FC = () => {
   ]);
   const [sections, setSections] = useState<CandidateSectionBlock[]>([]);
 
-  // Raw text states for comma-separated inputs to allow typing commas, trailing spaces, special chars
-  // Keyed by category index or project index
-  const [skillTagsRaw, setSkillTagsRaw] = useState<Record<number, string>>({});
+  // Skills interactive management states
+  const [newSkillInputs, setNewSkillInputs] = useState<Record<number, string>>({});
+  const [editingSkill, setEditingSkill] = useState<{
+    catIndex: number;
+    skillIndex: number;
+    value: string;
+  } | null>(null);
+  const [categoryToDelete, setCategoryToDelete] = useState<{
+    index: number;
+    name: string;
+  } | null>(null);
+
+  // Raw text states for comma-separated inputs (projects, interests)
   const [projectTechsRaw, setProjectTechsRaw] = useState<Record<number, string>>({});
   const [interestTagsRaw, setInterestTagsRaw] = useState<string>("");
 
@@ -229,18 +240,6 @@ export const KnowledgeBaseEditor: React.FC = () => {
     setContactInfo(cInfo);
     setDefaultSections(defSecs);
     setSections(secs);
-
-    // Initialize raw text for skills
-    const sSec = secs.find((s) => s.type === "skills") as SkillsSectionBlock | undefined;
-    if (sSec?.items) {
-      const rawMap: Record<number, string> = {};
-      sSec.items.forEach((cat, idx) => {
-        rawMap[idx] = (cat.skills || []).join(", ");
-      });
-      setSkillTagsRaw(rawMap);
-    } else {
-      setSkillTagsRaw({});
-    }
 
     // Initialize raw text for project technologies
     const pSec = secs.find((s) => s.type === "projects") as ProjectsSectionBlock | undefined;
@@ -398,12 +397,6 @@ export const KnowledgeBaseEditor: React.FC = () => {
       setDefaultSections(defSecs);
       setSections(secs);
 
-      const rawMap: Record<number, string> = {
-        0: "TypeScript, Python, Go",
-        1: "React, FastAPI, Tailwind CSS",
-      };
-      setSkillTagsRaw(rawMap);
-
       setProjectTechsRaw({
         0: "React, TypeScript, FastAPI, PostgreSQL",
       });
@@ -531,8 +524,6 @@ export const KnowledgeBaseEditor: React.FC = () => {
         if (sec.type === "skills") {
           const s = sec as SkillsSectionBlock;
           const nextItems = [...s.items, { category: "Nowa kategoria", skills: [] }];
-          const newIdx = nextItems.length - 1;
-          setSkillTagsRaw((r) => ({ ...r, [newIdx]: "" }));
           return {
             ...s,
             items: nextItems,
@@ -549,12 +540,6 @@ export const KnowledgeBaseEditor: React.FC = () => {
         if (sec.type === "skills") {
           const s = sec as SkillsSectionBlock;
           const items = s.items.filter((_, idx) => idx !== catIndex);
-          // Re-index skillTagsRaw
-          const nextRaw: Record<number, string> = {};
-          items.forEach((item, idx) => {
-            nextRaw[idx] = item.skills.join(", ");
-          });
-          setSkillTagsRaw(nextRaw);
           return {
             ...s,
             items,
@@ -579,22 +564,59 @@ export const KnowledgeBaseEditor: React.FC = () => {
     );
   };
 
-  const handleSkillTagsChange = (catIndex: number, rawValue: string) => {
-    // 1. Keep the exact raw text so user can freely type commas, spaces, dashes, etc.
-    setSkillTagsRaw((prev) => ({ ...prev, [catIndex]: rawValue }));
-
-    // 2. Parse into list of items for the actual data model
-    const skills = rawValue
-      .split(",")
-      .map((t) => t.trim())
-      .filter(Boolean);
-
+  const addSkillToCategory = (catIndex: number, skillName: string) => {
+    const trimmed = skillName.trim();
+    if (!trimmed) return;
     setSections((prev) =>
       prev.map((sec) => {
         if (sec.type === "skills") {
           const s = sec as SkillsSectionBlock;
           const items = [...s.items];
-          items[catIndex] = { ...items[catIndex], skills };
+          const cat = items[catIndex];
+          if (!cat) return sec;
+          items[catIndex] = {
+            ...cat,
+            skills: [...(cat.skills || []), trimmed],
+          };
+          return { ...s, items };
+        }
+        return sec;
+      })
+    );
+  };
+
+  const removeSkillFromCategory = (catIndex: number, skillIndex: number) => {
+    setSections((prev) =>
+      prev.map((sec) => {
+        if (sec.type === "skills") {
+          const s = sec as SkillsSectionBlock;
+          const items = [...s.items];
+          const cat = items[catIndex];
+          if (!cat) return sec;
+          items[catIndex] = {
+            ...cat,
+            skills: (cat.skills || []).filter((_, idx) => idx !== skillIndex),
+          };
+          return { ...s, items };
+        }
+        return sec;
+      })
+    );
+  };
+
+  const updateSkillInCategory = (catIndex: number, skillIndex: number, newValue: string) => {
+    const trimmed = newValue.trim();
+    if (!trimmed) return;
+    setSections((prev) =>
+      prev.map((sec) => {
+        if (sec.type === "skills") {
+          const s = sec as SkillsSectionBlock;
+          const items = [...s.items];
+          const cat = items[catIndex];
+          if (!cat) return sec;
+          const skills = [...(cat.skills || [])];
+          skills[skillIndex] = trimmed;
+          items[catIndex] = { ...cat, skills };
           return { ...s, items };
         }
         return sec;
@@ -1580,7 +1602,7 @@ export const KnowledgeBaseEditor: React.FC = () => {
             {skillsSection.items.map((cat, idx) => (
               <div
                 key={idx}
-                className="rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-800/50 p-4 space-y-3"
+                className="rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-800/50 p-4 space-y-4"
               >
                 <div className="flex items-center justify-between gap-3">
                   <div className="flex items-center gap-2 flex-1">
@@ -1595,31 +1617,173 @@ export const KnowledgeBaseEditor: React.FC = () => {
                   </div>
                   <button
                     type="button"
-                    onClick={() => removeSkillCategory(idx)}
-                    className="text-slate-400 dark:text-slate-500 hover:text-rose-600 dark:hover:text-rose-400 p-1 rounded"
-                    title="Usuń kategorię"
+                    onClick={() =>
+                      setCategoryToDelete({
+                        index: idx,
+                        name: cat.category || `Kategoria #${idx + 1}`,
+                      })
+                    }
+                    className="text-slate-400 dark:text-slate-500 hover:text-rose-600 dark:hover:text-rose-400 p-1 rounded transition-colors"
+                    title="Usuń całą kategorię"
                   >
                     <Trash2 className="h-4 w-4" />
                   </button>
                 </div>
 
-                <Input
-                  label="Lista umiejętności (rozdzielone przecinkami)"
-                  value={skillTagsRaw[idx] ?? cat.skills.join(", ")}
-                  onChange={(e) => handleSkillTagsChange(idx, e.target.value)}
-                  placeholder="np. Python, Docker, Komunikatywność, C/C++, CI/CD"
-                />
-
-                <div className="flex flex-wrap gap-1.5 pt-1">
-                  {cat.skills.map((skill, sIdx) => (
-                    <span
-                      key={sIdx}
-                      className="rounded bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-2 py-0.5 text-xs font-mono text-slate-700 dark:text-slate-300 shadow-xs"
-                    >
-                      {skill}
-                    </span>
-                  ))}
+                <div className="w-full sm:w-1/2 flex items-end gap-2">
+                  <div className="flex-1">
+                    <Input
+                      label="Dodaj nową umiejętność"
+                      value={newSkillInputs[idx] || ""}
+                      onChange={(e) =>
+                        setNewSkillInputs((prev) => ({ ...prev, [idx]: e.target.value }))
+                      }
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          const val = (newSkillInputs[idx] || "").trim();
+                          if (val) {
+                            addSkillToCategory(idx, val);
+                            setNewSkillInputs((prev) => ({ ...prev, [idx]: "" }));
+                          }
+                        }
+                      }}
+                      placeholder="Wpisz umiejętność i naciśnij Enter..."
+                    />
+                  </div>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    className="h-9 px-3 shrink-0"
+                    onClick={() => {
+                      const val = (newSkillInputs[idx] || "").trim();
+                      if (val) {
+                        addSkillToCategory(idx, val);
+                        setNewSkillInputs((prev) => ({ ...prev, [idx]: "" }));
+                      }
+                    }}
+                    disabled={!(newSkillInputs[idx] || "").trim()}
+                    title="Dodaj umiejętność"
+                  >
+                    <Plus className="h-4 w-4" />
+                  </Button>
                 </div>
+
+                {cat.skills && cat.skills.length > 0 ? (
+                  <div className="flex flex-wrap gap-2 pt-1">
+                    {cat.skills.map((skill, sIdx) => {
+                      const isEditing =
+                        editingSkill?.catIndex === idx && editingSkill?.skillIndex === sIdx;
+
+                      if (isEditing) {
+                        return (
+                          <div
+                            key={sIdx}
+                            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-blue-500 bg-white dark:bg-slate-900 shadow-xs"
+                          >
+                            <input
+                              type="text"
+                              autoFocus
+                              value={editingSkill.value}
+                              onChange={(e) =>
+                                setEditingSkill((prev) =>
+                                  prev ? { ...prev, value: e.target.value } : null
+                                )
+                              }
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter") {
+                                  e.preventDefault();
+                                  const val = editingSkill.value.trim();
+                                  if (val) {
+                                    updateSkillInCategory(idx, sIdx, val);
+                                  }
+                                  setEditingSkill(null);
+                                } else if (e.key === "Escape") {
+                                  e.preventDefault();
+                                  setEditingSkill(null);
+                                }
+                              }}
+                              onBlur={() => {
+                                const val = editingSkill.value.trim();
+                                if (val) {
+                                  updateSkillInCategory(idx, sIdx, val);
+                                }
+                                setEditingSkill(null);
+                              }}
+                              className="text-sm font-medium text-slate-800 dark:text-slate-200 bg-transparent focus:outline-none w-32 sm:w-40"
+                            />
+                            <button
+                              type="button"
+                              onMouseDown={(e) => e.preventDefault()}
+                              onClick={() => {
+                                const val = editingSkill.value.trim();
+                                if (val) {
+                                  updateSkillInCategory(idx, sIdx, val);
+                                }
+                                setEditingSkill(null);
+                              }}
+                              className="text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300 p-0.5 rounded"
+                              title="Zatwierdź (Enter)"
+                            >
+                              <Check className="h-3.5 w-3.5" />
+                            </button>
+                            <button
+                              type="button"
+                              onMouseDown={(e) => e.preventDefault()}
+                              onClick={() => setEditingSkill(null)}
+                              className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-0.5 rounded"
+                              title="Anuluj (Esc)"
+                            >
+                              <X className="h-3.5 w-3.5" />
+                            </button>
+                          </div>
+                        );
+                      }
+
+                      return (
+                        <div
+                          key={sIdx}
+                          className="px-3 py-1.5 text-sm font-medium rounded-lg border shadow-xs bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 inline-flex items-center gap-2 hover:border-slate-300 dark:hover:border-slate-600 transition-colors"
+                        >
+                          <span
+                            className="cursor-pointer select-none"
+                            onDoubleClick={() =>
+                              setEditingSkill({ catIndex: idx, skillIndex: sIdx, value: skill })
+                            }
+                            title="Kliknij dwukrotnie lub użyj ikony ołówka, aby edytować"
+                          >
+                            {skill}
+                          </span>
+                          <div className="flex items-center gap-1 ml-1 border-l border-slate-200 dark:border-slate-700 pl-1.5">
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setEditingSkill({ catIndex: idx, skillIndex: sIdx, value: skill })
+                              }
+                              className="text-slate-400 hover:text-blue-600 dark:text-slate-500 dark:hover:text-blue-400 p-0.5 rounded transition-colors"
+                              title="Edytuj umiejętność"
+                            >
+                              <Edit2 className="h-3.5 w-3.5" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => removeSkillFromCategory(idx, sIdx)}
+                              className="text-slate-400 hover:text-rose-600 dark:text-slate-500 dark:hover:text-rose-400 p-0.5 rounded transition-colors"
+                              title="Usuń umiejętność"
+                            >
+                              <X className="h-3.5 w-3.5" />
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <p className="text-xs text-slate-400 dark:text-slate-500 italic py-1">
+                    Brak umiejętności w tej kategorii. Wpisz nazwę w polu powyżej i naciśnij Enter.
+                  </p>
+                )}
               </div>
             ))}
           </div>
@@ -1782,15 +1946,16 @@ export const KnowledgeBaseEditor: React.FC = () => {
                   </button>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  <Input
-                    label="Nazwa projektu"
-                    value={proj.name}
-                    onChange={(e) =>
-                      updateProjectItem(idx, "name", e.target.value)
-                    }
-                    required
-                  />
+                <Input
+                  label="Nazwa projektu"
+                  value={proj.name}
+                  onChange={(e) =>
+                    updateProjectItem(idx, "name", e.target.value)
+                  }
+                  required
+                />
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <Input
                     label="Twoja rola"
                     value={proj.role}
@@ -1834,11 +1999,12 @@ export const KnowledgeBaseEditor: React.FC = () => {
                   rows={2}
                 />
 
-                <Input
+                <Textarea
                   label="Użyte technologie (rozdzielone przecinkami)"
                   value={projectTechsRaw[idx] ?? proj.technologies.join(", ")}
                   onChange={(e) => handleProjectTechsChange(idx, e.target.value)}
                   placeholder="np. React, TypeScript, Vite, Tailwind CSS"
+                  rows={1}
                 />
               </div>
             ))}
@@ -1988,31 +2154,36 @@ export const KnowledgeBaseEditor: React.FC = () => {
                   </button>
                 </div>
 
+                <Input
+                  label="Nazwa certyfikatu"
+                  value={cert.name}
+                  onChange={(e) =>
+                    updateCertificateItem(idx, "name", e.target.value)
+                  }
+                  required
+                />
+
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  <Input
-                    label="Nazwa certyfikatu"
-                    value={cert.name}
-                    onChange={(e) =>
-                      updateCertificateItem(idx, "name", e.target.value)
-                    }
-                    required
-                  />
-                  <Input
-                    label="Organizacja wydająca"
-                    value={cert.issuer}
-                    onChange={(e) =>
-                      updateCertificateItem(idx, "issuer", e.target.value)
-                    }
-                    placeholder="np. AWS, Microsoft, CNCF"
-                  />
-                  <DateInput
-                    label="Data uzyskania"
-                    value={cert.issue_date}
-                    onChange={(val) =>
-                      updateCertificateItem(idx, "issue_date", val)
-                    }
-                    placeholder="np. 2023, 2023-08 lub data"
-                  />
+                  <div className="sm:col-span-2">
+                    <Input
+                      label="Organizacja wydająca"
+                      value={cert.issuer}
+                      onChange={(e) =>
+                        updateCertificateItem(idx, "issuer", e.target.value)
+                      }
+                      placeholder="np. AWS, Microsoft, CNCF"
+                    />
+                  </div>
+                  <div className="sm:col-span-1">
+                    <DateInput
+                      label="Data uzyskania"
+                      value={cert.issue_date}
+                      onChange={(val) =>
+                        updateCertificateItem(idx, "issue_date", val)
+                      }
+                      placeholder="np. 2023, 2023-08 lub data"
+                    />
+                  </div>
                 </div>
               </div>
             ))}
@@ -2148,26 +2319,31 @@ export const KnowledgeBaseEditor: React.FC = () => {
                   </button>
                 </div>
 
+                <Input
+                  label="Nazwa szkolenia / kursu"
+                  value={trn.name}
+                  onChange={(e) => updateTrainingItem(idx, "name", e.target.value)}
+                  placeholder="np. Kubernetes Administrator Bootcamp"
+                  required
+                />
+
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  <Input
-                    label="Nazwa szkolenia / kursu"
-                    value={trn.name}
-                    onChange={(e) => updateTrainingItem(idx, "name", e.target.value)}
-                    placeholder="np. Kubernetes Administrator Bootcamp"
-                    required
-                  />
-                  <Input
-                    label="Organizator / Platforma"
-                    value={trn.organizer}
-                    onChange={(e) => updateTrainingItem(idx, "organizer", e.target.value)}
-                    placeholder="np. Udemy, Sages, Coursera"
-                  />
-                  <DateInput
-                    label="Data ukończenia"
-                    value={trn.date}
-                    onChange={(val) => updateTrainingItem(idx, "date", val)}
-                    placeholder="np. 2024, 2024-03 lub data"
-                  />
+                  <div className="sm:col-span-2">
+                    <Input
+                      label="Organizator / Platforma"
+                      value={trn.organizer}
+                      onChange={(e) => updateTrainingItem(idx, "organizer", e.target.value)}
+                      placeholder="np. Udemy, Sages, Coursera"
+                    />
+                  </div>
+                  <div className="sm:col-span-1">
+                    <DateInput
+                      label="Data ukończenia"
+                      value={trn.date}
+                      onChange={(val) => updateTrainingItem(idx, "date", val)}
+                      placeholder="np. 2024, 2024-03 lub data"
+                    />
+                  </div>
                 </div>
 
                 <Textarea
@@ -2229,20 +2405,22 @@ export const KnowledgeBaseEditor: React.FC = () => {
                   </button>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  <Input
-                    label="Nazwa osiągnięcia / nagrody"
-                    value={ach.title}
-                    onChange={(e) => updateAchievementItem(idx, "title", e.target.value)}
-                    placeholder="np. Laureat 1. miejsca w Hackathonie"
-                    required
-                  />
-                  <Input
-                    label="Instytucja przyznająca / Konkurs"
-                    value={ach.issuer}
-                    onChange={(e) => updateAchievementItem(idx, "issuer", e.target.value)}
-                    placeholder="np. Tech Summit Polska, Uczelnia"
-                  />
+                <Input
+                  label="Nazwa osiągnięcia / nagrody"
+                  value={ach.title}
+                  onChange={(e) => updateAchievementItem(idx, "title", e.target.value)}
+                  placeholder="np. Laureat 1. miejsca w Hackathonie"
+                  required
+                />
+
+                <Input
+                  label="Instytucja przyznająca / Konkurs"
+                  value={ach.issuer}
+                  onChange={(e) => updateAchievementItem(idx, "issuer", e.target.value)}
+                  placeholder="np. Tech Summit Polska, Uczelnia"
+                />
+
+                <div className="w-full sm:w-1/3">
                   <DateInput
                     label="Data / Rok uzyskania"
                     value={ach.date}
@@ -2291,11 +2469,12 @@ export const KnowledgeBaseEditor: React.FC = () => {
           </div>
 
           <div className="space-y-4">
-            <Input
+            <Textarea
               label="Lista zainteresowań (rozdzielone przecinkami)"
               value={interestTagsRaw}
               onChange={(e) => handleInterestsTagsChange(e.target.value)}
               placeholder="np. Kolarstwo gravelowe, Druk 3D, Automatyka domowa, Żeglarstwo"
+              rows={1}
             />
 
             {(interestsSection.items || []).length > 0 && (
@@ -2470,6 +2649,52 @@ export const KnowledgeBaseEditor: React.FC = () => {
             >
               <RotateCcw className="h-4 w-4" />
               Tak, przywróć dane
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Category Delete Confirmation Modal */}
+      <Modal
+        isOpen={categoryToDelete !== null}
+        onClose={() => setCategoryToDelete(null)}
+        title="Usunięcie kategorii umiejętności"
+        description={
+          categoryToDelete
+            ? `Czy na pewno chcesz usunąć kategorię „${categoryToDelete.name}” wraz ze wszystkimi przypisanymi do niej umiejętnościami?`
+            : ""
+        }
+        maxWidth="md"
+      >
+        <div className="space-y-4 pt-2">
+          <div className="p-3.5 rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/50 text-xs text-amber-800 dark:text-amber-300 flex items-start gap-3">
+            <AlertCircle className="h-5 w-5 shrink-0 text-amber-600 dark:text-amber-400 mt-0.5" />
+            <p className="leading-relaxed">
+              Wszystkie umiejętności należące do tej kategorii zostaną trwale usunięte z Twojego profilu. Pamiętaj, aby po potwierdzeniu zapisać sekcję lub cały profil.
+            </p>
+          </div>
+
+          <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setCategoryToDelete(null)}
+            >
+              Anuluj
+            </Button>
+            <Button
+              type="button"
+              variant="destructive"
+              onClick={() => {
+                if (categoryToDelete !== null) {
+                  removeSkillCategory(categoryToDelete.index);
+                  setCategoryToDelete(null);
+                }
+              }}
+              className="bg-rose-600 hover:bg-rose-700 text-white gap-2"
+            >
+              <Trash2 className="h-4 w-4" />
+              Usuń kategorię
             </Button>
           </div>
         </div>
