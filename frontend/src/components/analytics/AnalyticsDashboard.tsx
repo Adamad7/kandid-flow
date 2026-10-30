@@ -10,6 +10,7 @@ import {
   RefreshCw,
   Sparkles,
   Building,
+  Archive,
 } from "lucide-react";
 import { api } from "../../lib/api";
 import type { AnalyticsOverviewResponse, JobOfferRead } from "../../types";
@@ -98,7 +99,7 @@ export const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
       ) : (
         <>
           {/* Top KPI Cards Grid */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-3">
             <Card className="p-4 border-slate-200/90 dark:border-slate-800">
               <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
                 Wszystkie oferty
@@ -173,6 +174,19 @@ export const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
               </div>
               <span className="text-[10px] text-slate-400 dark:text-slate-500">
                 Średnia dni do rozmowy
+              </span>
+            </Card>
+
+            <Card className="p-4 border-slate-200/90 dark:border-slate-800 bg-stone-50/20 dark:bg-stone-950/10">
+              <span className="text-[11px] font-semibold text-stone-600 dark:text-stone-400 uppercase tracking-wider flex items-center gap-1">
+                <Archive className="h-3 w-3" />
+                Zarchiwizowane
+              </span>
+              <div className="text-2xl font-black text-stone-700 dark:text-stone-300 mt-1">
+                {data.archived_count ?? 0}
+              </div>
+              <span className="text-[10px] text-slate-400 dark:text-slate-500">
+                Wygasłe lub w archiwum
               </span>
             </Card>
           </div>

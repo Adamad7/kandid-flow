@@ -27,7 +27,8 @@ export type JobStatusType =
   | "applied"
   | "interview"
   | "rejected"
-  | "offer";
+  | "offer"
+  | "archived";
 
 export type JobLanguageType = "pl" | "en";
 
@@ -617,6 +618,7 @@ export interface AnalyticsOverviewResponse {
   interview_count: number;
   offer_count: number;
   rejected_count: number;
+  archived_count: number;
   overall_response_rate: number;
   average_response_days: number | null;
   ghosting_alert_count: number;

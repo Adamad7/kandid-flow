@@ -21,6 +21,8 @@ import {
   Send,
   Users,
   Award,
+  Archive,
+  ArchiveRestore,
 } from "lucide-react";
 import { api } from "../../lib/api";
 import type {
@@ -45,6 +47,22 @@ import { JobOfferDescription } from "../jobs/JobOfferDescription";
 import { JobAttachmentsTab } from "../jobs/JobAttachmentsTab";
 import { StatusTransitionModal } from "../modals/StatusTransitionModal";
 import { FollowUpModal } from "../modals/FollowUpModal";
+
+function isDeadlineExpiredWithoutApplication(job: JobOfferRead): boolean {
+  if (job.applied_at) return false;
+  if (!job.application_deadline) return false;
+  const trimmed = job.application_deadline.trim();
+  let deadlineDate: Date;
+  if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
+    const [y, m, d] = trimmed.split("-").map(Number);
+    deadlineDate = new Date(y, m - 1, d, 23, 59, 59, 999);
+  } else {
+    deadlineDate = new Date(trimmed);
+  }
+  const time = deadlineDate.getTime();
+  if (isNaN(time)) return false;
+  return time < Date.now();
+}
 
 interface JobDetailsModalProps {
   job: JobOfferRead | null;
@@ -106,6 +124,7 @@ export const JobDetailsModal: React.FC<JobDetailsModalProps> = ({
   );
   const deadlineInfo = formatDeadline(job.application_deadline);
   const structured = job.structured_data;
+  const isExpiredWithoutApp = isDeadlineExpiredWithoutApplication(job);
 
   const handleSaveNotes = async () => {
     try {
@@ -313,6 +332,43 @@ export const JobDetailsModal: React.FC<JobDetailsModalProps> = ({
 
             {/* Dedicated Primary Stage Transition Button */}
             <div className="flex flex-wrap items-center justify-end gap-2 mt-1">
+              {job.status === "archived" && (
+                <>
+                  {isExpiredWithoutApp ? (
+                    <>
+                      <Button
+                        size="sm"
+                        variant="primary"
+                        onClick={() => setIsStatusModalOpen(true)}
+                        className="text-xs shadow-xs"
+                      >
+                        <Send className="h-3.5 w-3.5 mr-1.5" />
+                        Aplikowałem na tę ofertę
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="primary"
+                        onClick={() => handleStatusChange("interview")}
+                        className="text-xs bg-purple-600 hover:bg-purple-700 text-white border-purple-600"
+                      >
+                        <Users className="h-3.5 w-3.5 mr-1.5" />
+                        Zaproszenie na rozmowę
+                      </Button>
+                    </>
+                  ) : (
+                    <Button
+                      size="sm"
+                      variant="primary"
+                      onClick={() => handleStatusChange("ready")}
+                      className="text-xs font-semibold shadow-xs bg-emerald-600 hover:bg-emerald-700 text-white"
+                    >
+                      <ArchiveRestore className="h-3.5 w-3.5 mr-1.5" />
+                      Przywróć do gotowych
+                    </Button>
+                  )}
+                </>
+              )}
+
               {(job.status === "inbox" || job.status === "failed_parsing") && (
                 <>
                   <Button
@@ -392,6 +448,19 @@ export const JobDetailsModal: React.FC<JobDetailsModalProps> = ({
                   Otrzymano ofertę
                 </Button>
               )}
+
+              {job.status !== "archived" && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => handleStatusChange("archived")}
+                  className="text-xs text-stone-600 dark:text-stone-300 border-stone-200 dark:border-stone-700 hover:bg-stone-50 dark:hover:bg-slate-800"
+                  title="Przenieś ofertę do archiwum"
+                >
+                  <Archive className="h-3.5 w-3.5 mr-1 text-stone-500" />
+                  Zarchiwizuj ofertę
+                </Button>
+              )}
             </div>
 
             {/* Subdued / Secondary Manual Status Switcher */}
@@ -409,20 +478,37 @@ export const JobDetailsModal: React.FC<JobDetailsModalProps> = ({
               )}
               <span className="text-slate-400">•</span>
               <label className="text-slate-500 dark:text-slate-400">Zmień status ręcznie:</label>
-              <select
-                value={job.status}
-                onChange={(e) =>
-                  handleStatusChange(e.target.value as JobStatusType)
-                }
-                className="text-[11px] rounded border border-slate-200 bg-white px-1.5 py-0.5 text-slate-600 shadow-2xs dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 cursor-pointer focus:outline-none"
-              >
-                <option value="inbox">Do przetworzenia</option>
-                <option value="ready">Gotowe do aplikacji</option>
-                <option value="applied">Zaaplikowano</option>
-                <option value="interview">Rozmowy</option>
-                <option value="offer">Oferta</option>
-                <option value="rejected">Odrzucone</option>
-              </select>
+              {job.status === "archived" && isExpiredWithoutApp ? (
+                <select
+                  value={job.status}
+                  onChange={(e) =>
+                    handleStatusChange(e.target.value as JobStatusType)
+                  }
+                  className="text-[11px] rounded border border-slate-200 bg-white px-1.5 py-0.5 text-slate-600 shadow-2xs dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 cursor-pointer focus:outline-none"
+                >
+                  <option value="archived">Zarchiwizowane</option>
+                  <option value="applied">Zaaplikowano</option>
+                  <option value="interview">Rozmowy</option>
+                  <option value="offer">Oferta</option>
+                  <option value="rejected">Odrzucone</option>
+                </select>
+              ) : (
+                <select
+                  value={job.status}
+                  onChange={(e) =>
+                    handleStatusChange(e.target.value as JobStatusType)
+                  }
+                  className="text-[11px] rounded border border-slate-200 bg-white px-1.5 py-0.5 text-slate-600 shadow-2xs dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 cursor-pointer focus:outline-none"
+                >
+                  <option value="inbox">Do przetworzenia</option>
+                  <option value="ready">Gotowe do aplikacji</option>
+                  <option value="applied">Zaaplikowano</option>
+                  <option value="interview">Rozmowy</option>
+                  <option value="offer">Oferta</option>
+                  <option value="rejected">Odrzucone</option>
+                  <option value="archived">Zarchiwizowane</option>
+                </select>
+              )}
             </div>
 
             {job.source_url && (
@@ -438,6 +524,34 @@ export const JobDetailsModal: React.FC<JobDetailsModalProps> = ({
             )}
           </div>
         </div>
+
+        {/* Archive banner */}
+        {job.status === "archived" && (
+          <div className="mt-4 rounded-lg bg-stone-100 border border-stone-200 p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-stone-800 dark:bg-stone-800/80 dark:border-stone-700 dark:text-stone-200">
+            <div className="flex items-start gap-2">
+              <Archive className="h-4 w-4 text-stone-600 dark:text-stone-400 mt-0.5 shrink-0" />
+              <div>
+                <p className="font-semibold">Oferta znajduje się w archiwum</p>
+                <p className="mt-0.5 text-stone-500 dark:text-stone-400">
+                  {isExpiredWithoutApp
+                    ? "Termin zgłoszeń minął bez zarejestrowanej aplikacji. Aby przywrócić tę ofertę do aktywnego lejka, wybierz status 'Zaaplikowano' lub zaproszenie na rozmowę."
+                    : "Oferta jest zarchiwizowana. Możesz przywrócić ją do gotowych lub wybrać kolejny etap rekrutacji."}
+                </p>
+              </div>
+            </div>
+            {!isExpiredWithoutApp && (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => handleStatusChange("ready")}
+                className="text-xs bg-white dark:bg-slate-900 border-stone-300 dark:border-stone-700 text-stone-800 dark:text-stone-200 shrink-0 gap-1.5"
+              >
+                <ArchiveRestore className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
+                Przywróć do gotowych
+              </Button>
+            )}
+          </div>
+        )}
 
         {/* Failed parsing banner */}
         {job.status === "failed_parsing" && (

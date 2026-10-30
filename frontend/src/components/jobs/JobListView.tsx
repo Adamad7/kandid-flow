@@ -17,6 +17,8 @@ import {
   MessageSquare,
   AlertTriangle,
   HelpCircle,
+  Archive,
+  ArchiveRestore,
 } from "lucide-react";
 import { api } from "../../lib/api";
 import type {
@@ -69,7 +71,24 @@ function hasMeaningfulWorkModelDetails(
   return true;
 }
 
+function isDeadlineExpiredWithoutApplication(job: JobOfferRead): boolean {
+  if (job.applied_at) return false;
+  if (!job.application_deadline) return false;
+  const trimmed = job.application_deadline.trim();
+  let deadlineDate: Date;
+  if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
+    const [y, m, d] = trimmed.split("-").map(Number);
+    deadlineDate = new Date(y, m - 1, d, 23, 59, 59, 999);
+  } else {
+    deadlineDate = new Date(trimmed);
+  }
+  const time = deadlineDate.getTime();
+  if (isNaN(time)) return false;
+  return time < Date.now();
+}
+
 interface JobListViewProps {
+  isArchive?: boolean;
   onSelectJob: (job: JobOfferRead) => void;
   onGenerateCV: (job: JobOfferRead) => void;
   refreshTrigger?: number;
@@ -77,6 +96,7 @@ interface JobListViewProps {
 }
 
 export const JobListView: React.FC<JobListViewProps> = ({
+  isArchive = false,
   onSelectJob,
   onGenerateCV,
   refreshTrigger,
@@ -154,7 +174,7 @@ export const JobListView: React.FC<JobListViewProps> = ({
     try {
       setIsLoading(true);
       const [jobsData, tagsData] = await Promise.all([
-        api.jobs.list({ limit: 150 }),
+        api.jobs.list({ archived: isArchive, limit: 150 }),
         api.jobs.listTags().catch(() => []),
       ]);
       setJobs(jobsData);
@@ -168,8 +188,37 @@ export const JobListView: React.FC<JobListViewProps> = ({
 
   useEffect(() => {
     fetchJobs();
-  }, [refreshTrigger]);
+  }, [refreshTrigger, isArchive]);
 
+  const handleRestoreJob = async (job: JobOfferRead) => {
+    try {
+      const updated = await api.jobs.update(job.id, { status: "ready" });
+      setJobs((prev) => prev.filter((j) => j.id !== updated.id));
+      setSelectedJobIds((prev) => {
+        const next = new Set(prev);
+        next.delete(job.id);
+        return next;
+      });
+    } catch (err: unknown) {
+      const errorMsg =
+        err instanceof Error ? err.message : "Nie udało się przywrócić oferty.";
+      alert(errorMsg);
+    }
+  };
+
+  const handleArchiveJob = async (job: JobOfferRead) => {
+    try {
+      const updated = await api.jobs.update(job.id, { status: "archived" });
+      setJobs((prev) => prev.filter((j) => j.id !== updated.id));
+      setSelectedJobIds((prev) => {
+        const next = new Set(prev);
+        next.delete(job.id);
+        return next;
+      });
+    } catch {
+      alert("Nie udało się zarchiwizować oferty.");
+    }
+  };
 
   const handleReparse = async (
     job: JobOfferRead,
@@ -195,11 +244,10 @@ export const JobListView: React.FC<JobListViewProps> = ({
   };
 
   const handleDelete = async (job: JobOfferRead) => {
-    if (
-      !confirm(
-        `Czy na pewno chcesz usunąć ofertę "${job.role_title || "Nieokreślone stanowisko"}" z firmy ${job.company_name || ""}?`
-      )
-    ) {
+    const confirmMessage = isArchive
+      ? `Czy na pewno chcesz trwale usunąć ofertę "${job.role_title || "Nieokreślone stanowisko"}" z firmy ${job.company_name || ""}? Tej operacji nie można cofnąć.`
+      : `Czy na pewno chcesz usunąć ofertę "${job.role_title || "Nieokreślone stanowisko"}" z firmy ${job.company_name || ""}?`;
+    if (!confirm(confirmMessage)) {
       return;
     }
     try {
@@ -235,20 +283,59 @@ export const JobListView: React.FC<JobListViewProps> = ({
     }
   };
 
+  const handleBatchRestore = async () => {
+    if (selectedJobIds.size === 0) return;
+    try {
+      setIsBatchProcessing(true);
+      const ids = Array.from(selectedJobIds);
+      await api.jobs.batchUpdateStatus(ids, "ready");
+      setJobs((prev) => prev.filter((j) => !selectedJobIds.has(j.id)));
+      setSelectedJobIds(new Set());
+    } catch (err: unknown) {
+      const errorMsg =
+        err instanceof Error
+          ? err.message
+          : "Nie udało się przywrócić wybranych ofert. Sprawdź, czy termin zgłoszeń nie upłynął.";
+      alert(errorMsg);
+    } finally {
+      setIsBatchProcessing(false);
+    }
+  };
+
+  const handleBatchArchive = async () => {
+    if (selectedJobIds.size === 0) return;
+    try {
+      setIsBatchProcessing(true);
+      const ids = Array.from(selectedJobIds);
+      await api.jobs.batchUpdateStatus(ids, "archived");
+      setJobs((prev) => prev.filter((j) => !selectedJobIds.has(j.id)));
+      setSelectedJobIds(new Set());
+    } catch {
+      alert("Nie udało się zarchiwizować zaznaczonych ofert.");
+    } finally {
+      setIsBatchProcessing(false);
+    }
+  };
+
   const handleBatchDelete = async () => {
     if (selectedJobIds.size === 0) return;
     const count = selectedJobIds.size;
-    if (
-      !confirm(
-        `Czy na pewno chcesz usunąć ${count} ${
+    const confirmMessage = isArchive
+      ? `Czy na pewno chcesz trwale usunąć ${count} ${
           count === 1
             ? "zaznaczoną ofertę"
             : count < 5
             ? "zaznaczone oferty"
             : "zaznaczonych ofert"
         }? Ta operacja jest nieodwracalna.`
-      )
-    ) {
+      : `Czy na pewno chcesz usunąć ${count} ${
+          count === 1
+            ? "zaznaczoną ofertę"
+            : count < 5
+            ? "zaznaczone oferty"
+            : "zaznaczonych ofert"
+        }? Ta operacja jest nieodwracalna.`;
+    if (!confirm(confirmMessage)) {
       return;
     }
     try {
@@ -460,6 +547,25 @@ export const JobListView: React.FC<JobListViewProps> = ({
 
   return (
     <div className="space-y-4">
+      {/* Archive Header Banner */}
+      {isArchive && (
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-xl border border-stone-200 bg-white p-5 shadow-xs dark:border-stone-800 dark:bg-stone-900/60">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-stone-100 text-stone-700 dark:bg-stone-800 dark:text-stone-300">
+              <Archive className="h-5 w-5" />
+            </div>
+            <div>
+              <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">
+                Archiwum ofert
+              </h2>
+              <p className="text-xs text-slate-500 dark:text-slate-400">
+                Przeglądaj zarchiwizowane i wygasłe oferty z możliwością ich przywrócenia
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Control Bar: Search & Filters */}
       <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-xs dark:border-slate-800 dark:bg-slate-900">
         <div className="flex items-center justify-between gap-3">
@@ -482,7 +588,7 @@ export const JobListView: React.FC<JobListViewProps> = ({
             >
               <Filter className="h-3.5 w-3.5 mr-1.5" />
               Filtry
-              {(workModelFilter !== "all" || statusFilter !== "all" || tagFilter !== "all") && (
+              {(workModelFilter !== "all" || (!isArchive && statusFilter !== "all") || tagFilter !== "all") && (
                 <span className="ml-1.5 rounded-full bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300 px-1.5 py-0.2 text-[10px] font-bold">
                   !
                 </span>
@@ -521,24 +627,26 @@ export const JobListView: React.FC<JobListViewProps> = ({
               </select>
             </div>
 
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                Status oferty:
-              </label>
-              <select
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-                className="w-full text-xs rounded-md border border-slate-300 bg-white px-2.5 py-1.5 text-slate-800 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
-              >
-                <option value="all">Wszystkie statusy</option>
-                <option value="inbox">Do przetworzenia</option>
-                <option value="ready">Gotowe do aplikacji</option>
-                <option value="applied">Zaaplikowano</option>
-                <option value="interview">Rozmowy rekrutacyjne</option>
-                <option value="offer">Oferty</option>
-                <option value="rejected">Odrzucone</option>
-              </select>
-            </div>
+            {!isArchive && (
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                  Status oferty:
+                </label>
+                <select
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value)}
+                  className="w-full text-xs rounded-md border border-slate-300 bg-white px-2.5 py-1.5 text-slate-800 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
+                >
+                  <option value="all">Wszystkie statusy</option>
+                  <option value="inbox">Do przetworzenia</option>
+                  <option value="ready">Gotowe do aplikacji</option>
+                  <option value="applied">Zaaplikowano</option>
+                  <option value="interview">Rozmowy rekrutacyjne</option>
+                  <option value="offer">Oferty</option>
+                  <option value="rejected">Odrzucone</option>
+                </select>
+              </div>
+            )}
 
             <div>
               <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
@@ -608,34 +716,64 @@ export const JobListView: React.FC<JobListViewProps> = ({
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
-            <div className="flex items-center gap-1.5">
-              <span className="text-xs font-medium text-slate-700 dark:text-slate-300 hidden sm:inline">
-                Zmień status:
-              </span>
-              <select
-                value={bulkStatus}
-                onChange={(e) => setBulkStatus(e.target.value as JobStatusType)}
-                disabled={isBatchProcessing}
-                className="h-8 rounded-lg border border-slate-300 bg-white px-2.5 py-1 text-xs text-slate-800 shadow-2xs dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:opacity-50"
-              >
-                <option value="inbox">Do przetworzenia</option>
-                <option value="ready">Gotowe do aplikacji</option>
-                <option value="applied">Zaaplikowano</option>
-                <option value="interview">Rozmowy</option>
-                <option value="offer">Oferta</option>
-                <option value="rejected">Odrzucone</option>
-              </select>
+            {isArchive ? (
               <Button
                 size="sm"
-                variant="outline"
-                onClick={handleBatchStatusUpdate}
+                variant="primary"
+                onClick={handleBatchRestore}
                 isLoading={isBatchProcessing}
                 disabled={isBatchProcessing}
-                className="h-8 text-xs bg-white dark:bg-slate-800"
+                className="h-8 text-xs gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white"
               >
-                Zastosuj status
+                <ArchiveRestore className="h-3.5 w-3.5" />
+                Przywróć zaznaczone ({selectedJobIds.size})
               </Button>
-            </div>
+            ) : (
+              <>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-xs font-medium text-slate-700 dark:text-slate-300 hidden sm:inline">
+                    Zmień status:
+                  </span>
+                  <select
+                    value={bulkStatus}
+                    onChange={(e) => setBulkStatus(e.target.value as JobStatusType)}
+                    disabled={isBatchProcessing}
+                    className="h-8 rounded-lg border border-slate-300 bg-white px-2.5 py-1 text-xs text-slate-800 shadow-2xs dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:opacity-50"
+                  >
+                    <option value="inbox">Do przetworzenia</option>
+                    <option value="ready">Gotowe do aplikacji</option>
+                    <option value="applied">Zaaplikowano</option>
+                    <option value="interview">Rozmowy</option>
+                    <option value="offer">Oferta</option>
+                    <option value="rejected">Odrzucone</option>
+                    <option value="archived">Zarchiwizowane</option>
+                  </select>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={handleBatchStatusUpdate}
+                    isLoading={isBatchProcessing}
+                    disabled={isBatchProcessing}
+                    className="h-8 text-xs bg-white dark:bg-slate-800"
+                  >
+                    Zastosuj status
+                  </Button>
+                </div>
+
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={handleBatchArchive}
+                  isLoading={isBatchProcessing}
+                  disabled={isBatchProcessing}
+                  className="h-8 text-xs gap-1.5 bg-white dark:bg-slate-800 text-stone-700 dark:text-stone-300 border-stone-300 dark:border-stone-700"
+                  title="Przenieś zaznaczone oferty do archiwum"
+                >
+                  <Archive className="h-3.5 w-3.5" />
+                  Zarchiwizuj ({selectedJobIds.size})
+                </Button>
+              </>
+            )}
 
             <div className="h-4 w-px bg-blue-200 dark:bg-blue-800/80 mx-1 hidden sm:block" />
 
@@ -648,7 +786,7 @@ export const JobListView: React.FC<JobListViewProps> = ({
               className="h-8 text-xs gap-1.5"
             >
               <Trash2 className="h-3.5 w-3.5" />
-              Usuń zaznaczone ({selectedJobIds.size})
+              {isArchive ? "Usuń trwale" : "Usuń zaznaczone"} ({selectedJobIds.size})
             </Button>
           </div>
         </div>
@@ -742,10 +880,14 @@ export const JobListView: React.FC<JobListViewProps> = ({
             ) : filteredAndSortedJobs.length === 0 ? (
               <div className="p-12 text-center">
                 <p className="text-sm font-medium text-slate-700 dark:text-slate-200">
-                  Brak ofert spełniających podane kryteria
+                  {isArchive && jobs.length === 0
+                    ? "Archiwum jest puste"
+                    : "Brak ofert spełniających podane kryteria"}
                 </p>
                 <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
-                  Zmień filtry wyszukiwania lub dodaj nowe ogłoszenia za pomocą wtyczki przeglądarki.
+                  {isArchive && jobs.length === 0
+                    ? "Zarchiwizowane lub wygasłe oferty pracy pojawią się w tym miejscu."
+                    : "Zmień filtry wyszukiwania lub dodaj nowe ogłoszenia za pomocą wtyczki przeglądarki."}
                 </p>
               </div>
             ) : (
@@ -963,11 +1105,45 @@ export const JobListView: React.FC<JobListViewProps> = ({
                           )}
                         </div>
 
-                        {/* Actions Menu Trigger */}
+                        {/* Actions Menu Trigger & Quick Actions */}
                         <div
                           className="flex items-center gap-1.5 shrink-0"
                           onClick={(e) => e.stopPropagation()}
                         >
+                          {isArchive && (
+                            (() => {
+                              const isExpired = isDeadlineExpiredWithoutApplication(job);
+                              if (isExpired) {
+                                return (
+                                  <button
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      onSelectJob(job);
+                                    }}
+                                    title="Termin zgłoszeń minął. Otwórz szczegóły oferty i wybierz status 'Zaaplikowano' lub dalszy, aby ją przywrócić."
+                                    className="p-1.5 rounded-lg text-slate-300 dark:text-slate-600 hover:text-amber-600 dark:hover:text-amber-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-help"
+                                  >
+                                    <ArchiveRestore className="h-4 w-4" />
+                                  </button>
+                                );
+                              }
+                              return (
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleRestoreJob(job);
+                                  }}
+                                  title="Przywróć ofertę do gotowych do aplikacji"
+                                  className="p-1.5 rounded-lg text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/50 transition-colors cursor-pointer"
+                                >
+                                  <ArchiveRestore className="h-4 w-4" />
+                                </button>
+                              );
+                            })()
+                          )}
+
                           <button
                             type="button"
                             data-menu-trigger={job.id}
@@ -1027,60 +1203,67 @@ export const JobListView: React.FC<JobListViewProps> = ({
             className="w-48 rounded-xl border border-slate-200 bg-white py-1.5 shadow-xl dark:border-slate-800 dark:bg-slate-800 animate-in fade-in zoom-in-95 duration-100"
             onClick={(e) => e.stopPropagation()}
           >
-            <button
-              type="button"
-              onClick={() => {
-                const currentJob = activeMenu.job;
-                setActiveMenu(null);
-                onSelectJob(currentJob);
-              }}
-              className="w-full px-3.5 py-2 text-left text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 flex items-center gap-2 cursor-pointer"
-            >
-              Szczegóły oferty
-            </button>
+            {isArchive ? (
+              <>
+                {(() => {
+                  const isExpired = isDeadlineExpiredWithoutApplication(activeMenu.job);
+                  if (isExpired) {
+                    return (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const currentJob = activeMenu.job;
+                          setActiveMenu(null);
+                          onSelectJob(currentJob);
+                        }}
+                        title="Termin zgłoszeń minął. Otwórz szczegóły oferty i wybierz status 'Zaaplikowano' lub dalszy, aby ją przywrócić."
+                        className="w-full px-3.5 py-2 text-left text-xs text-amber-700 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-slate-700 flex items-center gap-2 cursor-pointer font-medium"
+                      >
+                        <ArchiveRestore className="h-3.5 w-3.5 text-amber-600 dark:text-amber-400" />
+                        Przywróć (wymaga szczegółów)
+                      </button>
+                    );
+                  }
+                  return (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const currentJob = activeMenu.job;
+                        setActiveMenu(null);
+                        handleRestoreJob(currentJob);
+                      }}
+                      className="w-full px-3.5 py-2 text-left text-xs text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-slate-700 flex items-center gap-2 font-medium cursor-pointer"
+                    >
+                      <ArchiveRestore className="h-3.5 w-3.5" />
+                      Przywróć do aktualnych
+                    </button>
+                  );
+                })()}
 
-
-            <button
-              type="button"
-              onClick={() => {
-                const currentJob = activeMenu.job;
-                setActiveMenu(null);
-                onGenerateCV(currentJob);
-              }}
-              className="w-full px-3.5 py-2 text-left text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 flex items-center gap-2 cursor-pointer"
-            >
-              <Sparkles className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400" />
-              Generuj CV
-            </button>
-
-            {activeMenu.job.status === "applied" && (
-              <button
-                type="button"
-                onClick={() => {
-                  const currentJob = activeMenu.job;
-                  setActiveMenu(null);
-                  setFollowUpJob(currentJob);
-                }}
-                className="w-full px-3.5 py-2 text-left text-xs text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-slate-700 flex items-center gap-2 font-medium cursor-pointer"
-              >
-                <MessageSquare className="h-3.5 w-3.5" />
-                Generuj follow-up
-              </button>
-            )}
-
-            {(activeMenu.job.status === "inbox" || activeMenu.job.status === "failed_parsing") && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    const currentJob = activeMenu.job;
+                    setActiveMenu(null);
+                    onSelectJob(currentJob);
+                  }}
+                  className="w-full px-3.5 py-2 text-left text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 flex items-center gap-2 cursor-pointer"
+                >
+                  Szczegóły oferty
+                </button>
+              </>
+            ) : (
               <>
                 <button
                   type="button"
                   onClick={() => {
                     const currentJob = activeMenu.job;
                     setActiveMenu(null);
-                    handleReparse(currentJob, "ai");
+                    onSelectJob(currentJob);
                   }}
                   className="w-full px-3.5 py-2 text-left text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 flex items-center gap-2 cursor-pointer"
                 >
-                  <Sparkles className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400" />
-                  Parsuj przez AI
+                  Szczegóły oferty
                 </button>
 
                 <button
@@ -1088,12 +1271,70 @@ export const JobListView: React.FC<JobListViewProps> = ({
                   onClick={() => {
                     const currentJob = activeMenu.job;
                     setActiveMenu(null);
-                    handleReparse(currentJob, "traditional");
+                    onGenerateCV(currentJob);
                   }}
                   className="w-full px-3.5 py-2 text-left text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 flex items-center gap-2 cursor-pointer"
                 >
-                  <Cpu className="h-3.5 w-3.5 text-slate-600 dark:text-slate-400" />
-                  Auto-parsuj tradycyjne
+                  <Sparkles className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400" />
+                  Generuj CV
+                </button>
+
+                {activeMenu.job.status === "applied" && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const currentJob = activeMenu.job;
+                      setActiveMenu(null);
+                      setFollowUpJob(currentJob);
+                    }}
+                    className="w-full px-3.5 py-2 text-left text-xs text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-slate-700 flex items-center gap-2 font-medium cursor-pointer"
+                  >
+                    <MessageSquare className="h-3.5 w-3.5" />
+                    Generuj follow-up
+                  </button>
+                )}
+
+                {(activeMenu.job.status === "inbox" || activeMenu.job.status === "failed_parsing") && (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const currentJob = activeMenu.job;
+                        setActiveMenu(null);
+                        handleReparse(currentJob, "ai");
+                      }}
+                      className="w-full px-3.5 py-2 text-left text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 flex items-center gap-2 cursor-pointer"
+                    >
+                      <Sparkles className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400" />
+                      Parsuj przez AI
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const currentJob = activeMenu.job;
+                        setActiveMenu(null);
+                        handleReparse(currentJob, "traditional");
+                      }}
+                      className="w-full px-3.5 py-2 text-left text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 flex items-center gap-2 cursor-pointer"
+                    >
+                      <Cpu className="h-3.5 w-3.5 text-slate-600 dark:text-slate-400" />
+                      Auto-parsuj tradycyjne
+                    </button>
+                  </>
+                )}
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    const currentJob = activeMenu.job;
+                    setActiveMenu(null);
+                    handleArchiveJob(currentJob);
+                  }}
+                  className="w-full px-3.5 py-2 text-left text-xs text-stone-600 dark:text-stone-300 hover:bg-stone-50 dark:hover:bg-slate-700 flex items-center gap-2 cursor-pointer"
+                >
+                  <Archive className="h-3.5 w-3.5" />
+                  Zarchiwizuj ofertę
                 </button>
               </>
             )}
@@ -1123,7 +1364,7 @@ export const JobListView: React.FC<JobListViewProps> = ({
               className="w-full px-3.5 py-2 text-left text-xs text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-slate-700 flex items-center gap-2 cursor-pointer"
             >
               <Trash2 className="h-3.5 w-3.5" />
-              Usuń ofertę
+              {isArchive ? "Usuń trwale" : "Usuń ofertę"}
             </button>
           </div>,
           document.body

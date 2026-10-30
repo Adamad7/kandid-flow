@@ -11,6 +11,7 @@ from app.services.cv_generator import (
 )
 from app.services.job_parser import (
     JobParserWorker,
+    auto_archive_expired_jobs,
     canonicalize_url,
     job_parser_worker,
     reparse_job_by_id,
@@ -38,6 +39,7 @@ __all__ = [
     "llm_client",
     "JobParserWorker",
     "job_parser_worker",
+    "auto_archive_expired_jobs",
     "canonicalize_url",
     "reparse_job_by_id",
 ]

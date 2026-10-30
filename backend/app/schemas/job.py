@@ -31,7 +31,15 @@ def _validate_deadline(v: object) -> date | None:
 
 
 JobStatusType = Literal[
-    "inbox", "parsing", "failed_parsing", "ready", "applied", "interview", "rejected", "offer"
+    "inbox",
+    "parsing",
+    "failed_parsing",
+    "ready",
+    "applied",
+    "interview",
+    "rejected",
+    "offer",
+    "archived",
 ]
 WorkModelType = Literal["remote", "hybrid", "onsite"]
 JobPortalType = Literal["justjoin", "pracuj", "nofluffjobs", "linkedin", "generic"]

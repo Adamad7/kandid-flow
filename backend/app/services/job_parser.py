@@ -3,10 +3,11 @@
 import asyncio
 import logging
 import re
+from datetime import UTC, datetime
 from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
 from uuid import UUID
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import async_session_factory
@@ -213,6 +214,55 @@ def sanitize_work_model_details(details: str | None) -> str | None:
     return clean
 
 
+async def auto_archive_expired_jobs(session: AsyncSession) -> list[UUID]:
+    """Auto-archive expired job offers where application deadline has passed without submission.
+
+    Queries and updates all JobOffers where:
+      - JobOffer.status is in ['inbox', 'parsing', 'failed_parsing', 'ready']
+      - JobOffer.applied_at is None
+      - JobOffer.application_deadline is not None
+      - JobOffer.application_deadline < current UTC date
+
+    Transitions their status to 'archived', sets updated_at = func.now(), commits,
+    broadcasts 'job_updated' SSE event for each affected job, and returns list of UUIDs.
+    """
+    today = datetime.now(UTC).date()
+    stmt = select(JobOffer).where(
+        JobOffer.status.in_(["inbox", "parsing", "failed_parsing", "ready"]),
+        JobOffer.applied_at.is_(None),
+        JobOffer.application_deadline.is_not(None),
+        JobOffer.application_deadline < today,
+    )
+    result = await session.execute(stmt)
+    expired_jobs = list(result.scalars().all())
+
+    if not expired_jobs:
+        return []
+
+    archived_ids: list[UUID] = []
+    for job in expired_jobs:
+        job.status = "archived"
+        job.updated_at = func.now()
+        archived_ids.append(job.id)
+
+    await session.commit()
+
+    for job in expired_jobs:
+        await events_broadcaster.broadcast(
+            "job_updated",
+            RealtimeEventPayload(
+                job_id=job.id,
+                role_title=job.role_title,
+                company_name=job.company_name,
+                status=job.status,
+                message="Oferta została automatycznie zarchiwizowana po upływie terminu zgłoszeń",
+            ),
+        )
+
+    logger.info("Auto-archived %d expired job offer(s)", len(archived_ids))
+    return archived_ids
+
+
 class JobParserWorker:
     """Background worker processing inbox offers with DB-backed locking."""
 
@@ -241,8 +291,20 @@ class JobParserWorker:
 
     async def _run_loop(self) -> None:
         """Continuous polling loop fetching offers with FOR UPDATE SKIP LOCKED."""
+        last_archive_check = 0.0
         while self.is_running:
             try:
+                now_ts = asyncio.get_event_loop().time()
+                if now_ts - last_archive_check >= 60.0:
+                    last_archive_check = now_ts
+                    try:
+                        async with async_session_factory() as session:
+                            await auto_archive_expired_jobs(session)
+                    except Exception as arch_err:
+                        logger.warning(
+                            "Error running auto_archive_expired_jobs in worker: %s", arch_err
+                        )
+
                 processed = await self._process_next_job()
                 if not processed:
                     await asyncio.sleep(self.poll_interval)

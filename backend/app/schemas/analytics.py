@@ -56,6 +56,7 @@ class AnalyticsOverviewResponse(BaseModel):
     interview_count: int = Field(..., description="Offers in interview stage")
     offer_count: int = Field(..., description="Job offers received")
     rejected_count: int = Field(..., description="Offers rejected or closed")
+    archived_count: int = Field(..., description="Liczba ofert przeniesionych do archiwum")
     overall_response_rate: float = Field(
         ..., description="Percentage of applied offers that reached interviews or offers"
     )

@@ -56,6 +56,7 @@ class AnalyticsService:
         interview_count = 0
         offer_count = 0
         rejected_count = 0
+        archived_count = 0
 
         # Portals grouping
         portal_stats: dict[str, dict[str, int]] = {}
@@ -86,6 +87,8 @@ class AnalyticsService:
                 offer_count += 1
             elif st == "rejected":
                 rejected_count += 1
+            elif st == "archived":
+                archived_count += 1
 
             # Portals
             p = job.source_portal or "generic"
@@ -228,6 +231,7 @@ class AnalyticsService:
             interview_count=interview_count,
             offer_count=offer_count,
             rejected_count=rejected_count,
+            archived_count=archived_count,
             overall_response_rate=overall_response_rate,
             average_response_days=avg_response_days,
             ghosting_alert_count=sum(1 for a in stale_apps if a.is_ghosting_risk),

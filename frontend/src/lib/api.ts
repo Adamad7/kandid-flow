@@ -103,6 +103,7 @@ export const api = {
       salary_max?: number;
       tag?: string;
       search?: string;
+      archived?: boolean;
       limit?: number;
       offset?: number;
     }): Promise<JobOfferRead[]> => {
@@ -115,6 +116,7 @@ export const api = {
       if (params?.salary_max !== undefined) query.set("salary_max", String(params.salary_max));
       if (params?.tag) query.set("tag", params.tag);
       if (params?.search) query.set("search", params.search);
+      if (params?.archived !== undefined) query.set("archived", String(params.archived));
       if (params?.limit !== undefined) query.set("limit", String(params.limit));
       if (params?.offset !== undefined) query.set("offset", String(params.offset));
 

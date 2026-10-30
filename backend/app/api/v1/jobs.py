@@ -28,7 +28,7 @@ from app.schemas.job import (
 )
 from app.schemas.realtime import RealtimeEventPayload
 from app.services.events_broadcaster import events_broadcaster
-from app.services.job_parser import reparse_job_by_id
+from app.services.job_parser import auto_archive_expired_jobs, reparse_job_by_id
 from app.services.llm_client import llm_client
 
 logger = logging.getLogger(__name__)
@@ -43,6 +43,7 @@ router = APIRouter(prefix="/jobs", tags=["Jobs"])
 )
 async def list_jobs(
     status_filter: JobStatusType | None = Query(default=None, alias="status"),
+    archived: bool = Query(default=False, description="Filtruj aktywne lub zarchiwizowane oferty"),
     work_model: WorkModelType | None = Query(default=None),
     source_portal: JobPortalType | None = Query(default=None),
     language: JobLanguageType | None = Query(default=None),
@@ -55,10 +56,17 @@ async def list_jobs(
     db: AsyncSession = Depends(get_db_session),
 ) -> list[JobOfferRead]:
     """Retrieve tracked job offers filtered by status, work model, or salary."""
+    await auto_archive_expired_jobs(db)
+
     stmt = select(JobOffer).order_by(JobOffer.created_at.desc())
 
     if status_filter:
         stmt = stmt.where(JobOffer.status == status_filter)
+    else:
+        if archived:
+            stmt = stmt.where(JobOffer.status == "archived")
+        else:
+            stmt = stmt.where(JobOffer.status != "archived")
     if work_model:
         stmt = stmt.where(JobOffer.work_model == work_model)
     if source_portal:
@@ -111,10 +119,36 @@ async def batch_update_job_status(
     db: AsyncSession = Depends(get_db_session),
 ) -> JobBatchResult:
     """Batch update pipeline status for specified job offer UUIDs."""
+    pre_app_statuses = {"inbox", "parsing", "failed_parsing", "ready"}
+    if payload.status in pre_app_statuses:
+        today = datetime.now(UTC).date()
+        check_stmt = select(JobOffer.id).where(
+            JobOffer.id.in_(payload.job_ids),
+            JobOffer.status == "archived",
+            JobOffer.application_deadline.is_not(None),
+            JobOffer.application_deadline < today,
+            JobOffer.applied_at.is_(None),
+        )
+        invalid_res = await db.execute(check_stmt)
+        invalid_ids = list(invalid_res.scalars().all())
+        if invalid_ids:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=(
+                    "Nie można przywrócić oferty do etapu przygotowania (ready/inbox) po "
+                    "upływie terminu zgłoszeń, jeśli nie złożono aplikacji. Wybierz status "
+                    "'Zaaplikowano' lub dalszy."
+                ),
+            )
+
+    update_values = {"status": payload.status, "updated_at": func.now()}
+    if payload.status == "applied":
+        update_values["applied_at"] = func.coalesce(JobOffer.applied_at, func.now())
+
     stmt = (
         update(JobOffer)
         .where(JobOffer.id.in_(payload.job_ids))
-        .values(status=payload.status, updated_at=func.now())
+        .values(**update_values)
         .returning(JobOffer.id)
     )
     result = await db.execute(stmt)
@@ -206,6 +240,26 @@ async def update_job_by_id(
         )
 
     update_dict = update_data.model_dump(exclude_unset=True)
+
+    # Business rule: block restoring to pre-application stage if deadline expired
+    target_status = update_dict.get("status")
+    if target_status:
+        pre_app_statuses = {"inbox", "parsing", "failed_parsing", "ready"}
+        if job.status == "archived" and target_status in pre_app_statuses:
+            today = datetime.now(UTC).date()
+            if (
+                job.application_deadline is not None
+                and job.application_deadline < today
+                and job.applied_at is None
+            ):
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=(
+                        "Nie można przywrócić oferty do etapu przygotowania (ready/inbox) po "
+                        "upływie terminu zgłoszeń, jeśli nie złożono aplikacji. Wybierz status "
+                        "'Zaaplikowano' lub dalszy."
+                    ),
+                )
 
     # Automatically set applied_at if transitioned to 'applied' and not previously set
     if (

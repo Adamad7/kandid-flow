@@ -7,6 +7,7 @@ import {
   Briefcase,
   List,
   BarChart3,
+  Archive,
 } from "lucide-react";
 import type {
   CVVersionRead,
@@ -26,7 +27,7 @@ import { ThemeToggle } from "./components/ui/ThemeToggle";
 import { api } from "./lib/api";
 import { useRealtime } from "./hooks/useRealtime";
 
-type ActiveTab = "list" | "kanban" | "analytics" | "profile" | "presets" | "settings";
+type ActiveTab = "list" | "kanban" | "archive" | "analytics" | "profile" | "presets" | "settings";
 
 export const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState<ActiveTab>("list");
@@ -242,6 +243,19 @@ export const App: React.FC = () => {
 
               <button
                 type="button"
+                onClick={() => setActiveTab("archive")}
+                className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold transition-colors ${
+                  activeTab === "archive"
+                    ? "bg-slate-900 text-white shadow-xs dark:bg-slate-100 dark:text-slate-900"
+                    : "text-slate-600 hover:text-slate-900 hover:bg-slate-100 dark:text-slate-300 dark:hover:text-white dark:hover:bg-slate-800"
+                }`}
+              >
+                <Archive className="h-4 w-4" />
+                <span className="hidden sm:inline">Archiwum</span>
+              </button>
+
+              <button
+                type="button"
                 onClick={() => setActiveTab("analytics")}
                 className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold transition-colors ${
                   activeTab === "analytics"
@@ -327,6 +341,17 @@ export const App: React.FC = () => {
 
         <div className={activeTab === "list" ? "block" : "hidden"}>
           <JobListView
+            isArchive={false}
+            onSelectJob={handleSelectJob}
+            onGenerateCV={handleOpenCVGenerator}
+            refreshTrigger={refreshTrigger}
+            onSwitchView={(v) => setActiveTab(v)}
+          />
+        </div>
+
+        <div className={activeTab === "archive" ? "block" : "hidden"}>
+          <JobListView
+            isArchive={true}
             onSelectJob={handleSelectJob}
             onGenerateCV={handleOpenCVGenerator}
             refreshTrigger={refreshTrigger}

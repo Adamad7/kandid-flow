@@ -14,6 +14,7 @@ export const STATUS_LABELS: Record<JobStatusType, string> = {
   interview: "Rozmowy rekrutacyjne",
   offer: "Oferta pracy",
   rejected: "Odrzucone",
+  archived: "Zarchiwizowane",
 };
 
 export const STATUS_COLORS: Record<
@@ -28,6 +29,11 @@ export const STATUS_COLORS: Record<
   interview: { bg: "bg-purple-50 dark:bg-purple-950/60", text: "text-purple-700 dark:text-purple-300", border: "border-purple-300 dark:border-purple-800" },
   offer: { bg: "bg-emerald-50 dark:bg-emerald-950/60", text: "text-emerald-700 dark:text-emerald-300", border: "border-emerald-300 dark:border-emerald-800" },
   rejected: { bg: "bg-zinc-100 dark:bg-zinc-800/80", text: "text-zinc-600 dark:text-zinc-400", border: "border-zinc-300 dark:border-zinc-700" },
+  archived: {
+    bg: "bg-stone-100 dark:bg-stone-800/80",
+    text: "text-stone-700 dark:text-stone-300",
+    border: "border-stone-300 dark:border-stone-700",
+  },
 };
 
 export const WORK_MODEL_LABELS: Record<WorkModelType, string> = {

@@ -64,7 +64,7 @@ Stores imported job postings and recruitment pipeline statuses.
 * `source_portal`: `VARCHAR(50)` (`justjoin`, `pracuj`, `nofluffjobs`, `linkedin`, `generic`)
 * `company_name`: `VARCHAR(255)`
 * `role_title`: `VARCHAR(255)`
-* `status`: `VARCHAR(50) NOT NULL DEFAULT 'inbox'` (`inbox`, `parsing`, `failed_parsing`, `ready`, `applied`, `interview`, `rejected`, `offer`)
+* `status`: `VARCHAR(50) NOT NULL DEFAULT 'inbox'` (`inbox`, `parsing`, `failed_parsing`, `ready`, `applied`, `interview`, `rejected`, `offer`, `archived`)
 * `error_message`: `TEXT NULL` (populated if AI parsing fails)
 * `language`: `VARCHAR(10) NOT NULL DEFAULT 'pl'` (`pl`, `en`)
 * `work_model`: `VARCHAR(50)` (`remote`, `hybrid`, `onsite`)
@@ -185,6 +185,7 @@ Runtime application configuration (Non-secret settings only; all API keys and to
      * Mobile view: automatic tab switching (*Edycja* vs *Podgląd*) for ergonomic mobile editing.
   5. **Candidate Knowledge Base:** Modular block management (education, certificates, projects, experience) supporting flexible date expressions (`YYYY`, `YYYY-MM`, `YYYY-MM-DD`, `present`).
   6. **Base CV Presets / Archetypes Manager:** Management workspace (`/api/v1/presets`) for creating, editing, live-previewing (via Typst SVG), and deleting role archetype presets.
+  7. **Archived Offers (Archiwum):** Dedicated workspace presenting archived and expired job offers, featuring status restoration workflow, auto-archiving inspection, and batch restoration/deletion.
 
 ---
 

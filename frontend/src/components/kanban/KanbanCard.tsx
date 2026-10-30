@@ -15,6 +15,7 @@ import {
   Users,
   Award,
   CheckCircle,
+  Archive,
 } from "lucide-react";
 import type { JobOfferRead, JobStatusType } from "../../types";
 import {
@@ -212,9 +213,21 @@ export const KanbanCard: React.FC<KanbanCardProps> = ({
                   <option value="interview">Rozmowy</option>
                   <option value="offer">Oferta</option>
                   <option value="rejected">Odrzucone</option>
+                  <option value="archived">Zarchiwizowane</option>
                 </select>
               </div>
               <div className="my-1 border-t border-slate-100 dark:border-slate-700" />
+              <button
+                type="button"
+                onClick={() => {
+                  setShowMenu(false);
+                  onStatusChange(job, "archived");
+                }}
+                className="w-full px-3 py-1.5 text-left text-xs text-stone-600 dark:text-stone-300 hover:bg-stone-50 dark:hover:bg-slate-700 flex items-center gap-2"
+              >
+                <Archive className="h-3.5 w-3.5 text-stone-500" />
+                Zarchiwizuj
+              </button>
               <button
                 type="button"
                 onClick={() => {
