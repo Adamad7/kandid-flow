@@ -11,6 +11,108 @@ from app.schemas.candidate import CandidateContactInfo, CandidateSectionBlock
 TailoringModeType = Literal["targeted_summary_keywords", "full"]
 
 
+class CVElementStyle(BaseModel):
+    """Typography and styling configuration for an individual CV element."""
+
+    font_family: str | None = Field(default=None, description="Element font family")
+    font_size_pt: float | None = Field(default=None, description="Font size in pt")
+    font_weight: str | None = Field(
+        default=None, description="Font weight: regular, medium, semibold, bold"
+    )
+
+    model_config = ConfigDict(extra="ignore")
+
+
+class CVStyling(BaseModel):
+    """Global styling and typography configuration for CV compilation."""
+
+    document_font_family: str = Field(
+        default="Liberation Sans", description="Global document font family"
+    )
+    full_name: CVElementStyle = Field(
+        default_factory=lambda: CVElementStyle(
+            font_family="Liberation Sans", font_size_pt=18.0, font_weight="bold"
+        ),
+        description="Full name typography style",
+    )
+    job_title: CVElementStyle = Field(
+        default_factory=lambda: CVElementStyle(
+            font_family="Liberation Sans", font_size_pt=11.0, font_weight="semibold"
+        ),
+        description="Job title typography style",
+    )
+    contact_info: CVElementStyle = Field(
+        default_factory=lambda: CVElementStyle(
+            font_family="Liberation Sans", font_size_pt=8.5, font_weight="regular"
+        ),
+        description="Contact information typography style",
+    )
+    section_headings: CVElementStyle = Field(
+        default_factory=lambda: CVElementStyle(
+            font_family="Liberation Sans", font_size_pt=11.0, font_weight="bold"
+        ),
+        description="Section headings typography style",
+    )
+    section_text: CVElementStyle = Field(
+        default_factory=lambda: CVElementStyle(
+            font_family="Liberation Sans", font_size_pt=9.5, font_weight="regular"
+        ),
+        description="Section text typography style",
+    )
+    clause: CVElementStyle = Field(
+        default_factory=lambda: CVElementStyle(
+            font_family="Liberation Sans", font_size_pt=7.0, font_weight="regular"
+        ),
+        description="GDPR clause typography style",
+    )
+    heading_line_height_em: float = Field(
+        default=0.65, description="Heading line height / leading in em"
+    )
+    section_text_line_height_em: float = Field(
+        default=0.65, description="Section text line height / leading in em"
+    )
+    margin_x_cm: float = Field(default=1.8, description="Horizontal margin in cm")
+    margin_y_cm: float = Field(default=1.8, description="Vertical margin in cm")
+    section_spacing_em: float = Field(default=0.6, description="Spacing between sections in em")
+
+    model_config = ConfigDict(extra="ignore")
+
+    @field_validator(
+        "full_name",
+        "job_title",
+        "contact_info",
+        "section_headings",
+        "section_text",
+        "clause",
+        mode="before",
+    )
+    @classmethod
+    def handle_none_element_styles(cls, v: Any, info: Any) -> Any:
+        if v is None:
+            defaults = {
+                "full_name": CVElementStyle(
+                    font_family="Liberation Sans", font_size_pt=18.0, font_weight="bold"
+                ),
+                "job_title": CVElementStyle(
+                    font_family="Liberation Sans", font_size_pt=11.0, font_weight="semibold"
+                ),
+                "contact_info": CVElementStyle(
+                    font_family="Liberation Sans", font_size_pt=8.5, font_weight="regular"
+                ),
+                "section_headings": CVElementStyle(
+                    font_family="Liberation Sans", font_size_pt=11.0, font_weight="bold"
+                ),
+                "section_text": CVElementStyle(
+                    font_family="Liberation Sans", font_size_pt=9.5, font_weight="regular"
+                ),
+                "clause": CVElementStyle(
+                    font_family="Liberation Sans", font_size_pt=7.0, font_weight="regular"
+                ),
+            }
+            return defaults.get(info.field_name, CVElementStyle())
+        return v
+
+
 class CVLayoutSchema(BaseModel):
     """Normalized layout schema for CV compilation and rendering."""
 
@@ -29,14 +131,27 @@ class CVLayoutSchema(BaseModel):
     sections: list[CandidateSectionBlock] = Field(
         default_factory=list, description="Ordered list of resume sections"
     )
+    styling: CVStyling = Field(
+        default_factory=CVStyling, description="Styling and typography configuration"
+    )
 
     model_config = ConfigDict(extra="ignore")
+
+    @field_validator("styling", mode="before")
+    @classmethod
+    def handle_none_styling(cls, v: Any) -> Any:
+        if v is None:
+            return CVStyling()
+        return v
 
     @model_validator(mode="before")
     @classmethod
     def handle_raw(cls, data: Any) -> Any:
         if isinstance(data, list):
-            return {"sections": data}
+            return {"sections": data, "styling": CVStyling()}
+        if isinstance(data, dict) and data.get("styling") is None:
+            data = dict(data)
+            data["styling"] = CVStyling()
         return data
 
 

@@ -22,6 +22,7 @@ import {
   BookOpen,
   Trophy,
   Heart,
+  Palette,
 } from "lucide-react";
 import { api } from "../../lib/api";
 import { SUGGESTED_LANGUAGE_LEVELS } from "../../lib/constants";
@@ -61,6 +62,7 @@ import { Textarea } from "../ui/Textarea";
 import { Modal } from "../ui/Modal";
 import { DateInput } from "../ui/DateInput";
 import { CVLivePreview } from "./CVLivePreview";
+import { CVStylePanel, DEFAULT_CV_STYLING } from "./CVStylePanel";
 
 interface CommaSeparatedInputProps {
   label?: string;
@@ -139,14 +141,25 @@ export const CVEditor: React.FC<CVEditorProps> = ({
           ...initialVersion.layout_schema,
           job_title:
             initialVersion.layout_schema.job_title ?? job?.role_title ?? null,
+          styling: initialVersion.layout_schema.styling || DEFAULT_CV_STYLING,
         }
       : {
           full_name: "Jan Kowalski",
           job_title: job?.role_title ?? null,
           language: initialVersion.language || "pl",
           sections: [],
+          styling: DEFAULT_CV_STYLING,
         }
   );
+
+  // Left Panel Mode: "data" (Forms) or "style" (Typography, Margins, Spacing)
+  const [leftPanelMode, setLeftPanelMode] = useState<"data" | "style">("data");
+
+  // Collapsed / Expanded sections tracking (Default: all collapsed!)
+  const [expandedSectionIds, setExpandedSectionIds] = useState<Set<string>>(
+    new Set()
+  );
+  const [isHeaderExpanded, setIsHeaderExpanded] = useState<boolean>(true);
 
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
@@ -184,12 +197,14 @@ export const CVEditor: React.FC<CVEditorProps> = ({
             ...version.layout_schema,
             job_title:
               version.layout_schema.job_title ?? job?.role_title ?? null,
+            styling: version.layout_schema.styling || DEFAULT_CV_STYLING,
           }
         : {
             full_name: "Jan Kowalski",
             job_title: job?.role_title ?? null,
             language: version.language || "pl",
             sections: [],
+            styling: DEFAULT_CV_STYLING,
           }
     );
   };
@@ -559,6 +574,11 @@ export const CVEditor: React.FC<CVEditorProps> = ({
       ...prev,
       sections: prev.sections.filter((sec) => sec.id !== sectionId),
     }));
+    setExpandedSectionIds((prev) => {
+      const next = new Set(prev);
+      next.delete(sectionId);
+      return next;
+    });
   };
 
   const addCustomSection = () => {
@@ -574,6 +594,28 @@ export const CVEditor: React.FC<CVEditorProps> = ({
       ...prev,
       sections: [...prev.sections, newBlock],
     }));
+    setExpandedSectionIds((prev) => new Set(prev).add(newId));
+  };
+
+  const toggleSectionExpanded = (sectionId: string) => {
+    setExpandedSectionIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(sectionId)) {
+        next.delete(sectionId);
+      } else {
+        next.add(sectionId);
+      }
+      return next;
+    });
+  };
+
+  const expandAllSections = () => {
+    const allIds = layoutSchema.sections.map((s) => s.id).filter(Boolean);
+    setExpandedSectionIds(new Set(allIds));
+  };
+
+  const collapseAllSections = () => {
+    setExpandedSectionIds(new Set());
   };
 
   // ==========================================
@@ -2059,248 +2101,359 @@ export const CVEditor: React.FC<CVEditorProps> = ({
             mobileTab === "preview" ? "hidden lg:block" : "block"
           }`}
         >
-          {/* Candidate Full Name and Contact Info */}
-          <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-xs space-y-4 dark:border-slate-800 dark:bg-slate-900">
-            <div className="flex items-center gap-2 border-b border-slate-100 dark:border-slate-800 pb-2.5">
-              <User className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-              <h3 className="font-semibold text-sm text-slate-900 dark:text-slate-100">
-                Nagłówek dokumentu i dane kontaktowe
-              </h3>
-            </div>
-            <Input
-              label="Imię i nazwisko kandydata"
-              value={layoutSchema.full_name || ""}
-              onChange={(e) =>
-                setLayoutSchema({ ...layoutSchema, full_name: e.target.value })
-              }
-            />
-
-            <div className="space-y-1.5">
-              <Input
-                label="Stanowisko docelowe / Nagłówek zawodowy"
-                value={layoutSchema.job_title || ""}
-                onChange={(e) =>
-                  setLayoutSchema({
-                    ...layoutSchema,
-                    job_title: e.target.value,
-                  })
-                }
-                placeholder='np. "Flutter Developer", "Junior DevOps Engineer"'
-              />
-              {job?.role_title && layoutSchema.job_title !== job.role_title && (
-                <div className="flex items-center pt-0.5">
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setLayoutSchema({
-                        ...layoutSchema,
-                        job_title: job.role_title,
-                      })
-                    }
-                    className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-950/50 hover:bg-blue-100 dark:hover:bg-blue-900/60 rounded-md border border-blue-200 dark:border-blue-800 transition-colors cursor-pointer"
-                  >
-                    <Sparkles className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400" />
-                    <span>
-                      Użyj z oferty:{" "}
-                      <strong className="font-semibold">{job.role_title}</strong>
-                    </span>
-                  </button>
-                </div>
-              )}
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              <Input
-                label="Adres e-mail"
-                type="email"
-                value={layoutSchema.contact_info?.email || ""}
-                onChange={(e) => updateContactInfo("email", e.target.value)}
-                placeholder="np. jan.kowalski@example.com"
-              />
-              <Input
-                label="Numer telefonu"
-                value={layoutSchema.contact_info?.phone || ""}
-                onChange={(e) => updateContactInfo("phone", e.target.value)}
-                placeholder="np. +48 500 600 700"
-              />
-              <Input
-                label="Lokalizacja"
-                value={layoutSchema.contact_info?.location || ""}
-                onChange={(e) => updateContactInfo("location", e.target.value)}
-                placeholder="np. Warszawa, Polska"
-              />
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              <Input
-                label="Profil LinkedIn"
-                value={layoutSchema.contact_info?.linkedin || ""}
-                onChange={(e) => updateContactInfo("linkedin", e.target.value)}
-                placeholder="np. linkedin.com/in/jankowalski"
-              />
-              <Input
-                label="Profil GitHub"
-                value={layoutSchema.contact_info?.github || ""}
-                onChange={(e) => updateContactInfo("github", e.target.value)}
-                placeholder="np. github.com/jankowalski"
-              />
-              <Input
-                label="Portfolio / WWW"
-                value={layoutSchema.contact_info?.portfolio || ""}
-                onChange={(e) => updateContactInfo("portfolio", e.target.value)}
-                placeholder="np. jankowalski.dev"
-              />
-            </div>
+          {/* Segmented Mode Switcher: Data vs Style */}
+          <div className="flex items-center bg-slate-200/80 dark:bg-slate-800/80 p-1 rounded-xl border border-slate-200 dark:border-slate-700/60 shadow-2xs">
+            <button
+              type="button"
+              onClick={() => setLeftPanelMode("data")}
+              className={`flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                leftPanelMode === "data"
+                  ? "bg-white dark:bg-slate-900 text-blue-600 dark:text-blue-400 shadow-xs"
+                  : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200"
+              }`}
+            >
+              <FileText className="h-4 w-4" />
+              <span>Wprowadzanie danych</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setLeftPanelMode("style")}
+              className={`flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                leftPanelMode === "style"
+                  ? "bg-white dark:bg-slate-900 text-blue-600 dark:text-blue-400 shadow-xs"
+                  : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200"
+              }`}
+            >
+              <Palette className="h-4 w-4" />
+              <span>Stylizowanie</span>
+            </button>
           </div>
 
-          {/* Dynamic Sections Rendered in layoutSchema.sections Order */}
-          {layoutSchema.sections.map((sec, index) => {
-            if (sec.type === "pagebreak") {
-              return (
+          {leftPanelMode === "style" ? (
+            <CVStylePanel
+              styling={layoutSchema.styling || DEFAULT_CV_STYLING}
+              onChange={(newStyling) =>
+                setLayoutSchema((prev) => ({
+                  ...prev,
+                  styling: newStyling,
+                }))
+              }
+            />
+          ) : (
+            <>
+              {/* Candidate Full Name and Contact Info */}
+              <div className="rounded-xl border border-slate-200 bg-white shadow-xs dark:border-slate-800 dark:bg-slate-900">
                 <div
-                  key={sec.id || index}
-                  className="rounded-xl border-2 border-dashed border-amber-300 dark:border-amber-700/60 bg-amber-50/70 dark:bg-amber-950/30 p-4 flex items-center justify-between gap-3 shadow-xs transition-colors"
+                  className={`flex items-center justify-between p-5 cursor-pointer select-none ${
+                    isHeaderExpanded ? "border-b border-slate-100 dark:border-slate-800 pb-3" : ""
+                  }`}
+                  onClick={() => setIsHeaderExpanded(!isHeaderExpanded)}
                 >
-                  <div className="flex items-center gap-2 text-xs font-semibold text-amber-800 dark:text-amber-300">
-                    <SplitSquareVertical className="h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" />
-                    <span>Separator strony (wymuszenie nowej strony w Typst / PDF)</span>
+                  <div className="flex items-center gap-2">
+                    <User className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                    <h3 className="font-semibold text-sm text-slate-900 dark:text-slate-100">
+                      Nagłówek dokumentu i dane kontaktowe
+                    </h3>
+                    {!isHeaderExpanded && layoutSchema.full_name && (
+                      <span className="text-xs text-slate-500 dark:text-slate-400 font-normal truncate max-w-[200px]">
+                        — {layoutSchema.full_name}
+                      </span>
+                    )}
                   </div>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => removePageBreakAt(index)}
-                    className="text-xs h-7 text-rose-600 border-rose-200 hover:bg-rose-50 dark:border-rose-900/60 dark:text-rose-400 dark:hover:bg-rose-950/40"
-                    title="Usuń separator stron"
+                  <button
+                    type="button"
+                    className="p-1 rounded text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
+                    title={isHeaderExpanded ? "Zwiń nagłówek" : "Rozwiń nagłówek"}
                   >
-                    <Trash2 className="h-3 w-3 mr-1" />
-                    Usuń separator
-                  </Button>
+                    {isHeaderExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                  </button>
                 </div>
-              );
-            }
+                {isHeaderExpanded && (
+                  <div className="p-5 pt-3 space-y-4">
+                    <Input
+                      label="Imię i nazwisko kandydata"
+                      value={layoutSchema.full_name || ""}
+                      onChange={(e) =>
+                        setLayoutSchema({ ...layoutSchema, full_name: e.target.value })
+                      }
+                    />
 
-            const isCustomOrOther =
-              sec.type === "custom" ||
-              ![
-                "summary",
-                "skills",
-                "experience",
-                "projects",
-                "education",
-                "certificates",
-                "clause",
-              ].includes(sec.type);
+                    <div className="space-y-1.5">
+                      <Input
+                        label="Stanowisko docelowe / Nagłówek zawodowy"
+                        value={layoutSchema.job_title || ""}
+                        onChange={(e) =>
+                          setLayoutSchema({
+                            ...layoutSchema,
+                            job_title: e.target.value,
+                          })
+                        }
+                        placeholder='np. "Flutter Developer", "Junior DevOps Engineer"'
+                      />
+                      {job?.role_title && layoutSchema.job_title !== job.role_title && (
+                        <div className="flex items-center pt-0.5">
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setLayoutSchema({
+                                ...layoutSchema,
+                                job_title: job.role_title,
+                              })
+                            }
+                            className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-950/50 hover:bg-blue-100 dark:hover:bg-blue-900/60 rounded-md border border-blue-200 dark:border-blue-800 transition-colors cursor-pointer"
+                          >
+                            <Sparkles className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400" />
+                            <span>
+                              Użyj z oferty:{" "}
+                              <strong className="font-semibold">{job.role_title}</strong>
+                            </span>
+                          </button>
+                        </div>
+                      )}
+                    </div>
 
-            const hasNextSection = index < layoutSchema.sections.length - 1;
-            const nextSec = hasNextSection ? layoutSchema.sections[index + 1] : null;
-            const canShowAddPageBreak =
-              hasNextSection &&
-              sec.type !== "pagebreak" &&
-              nextSec?.type !== "pagebreak";
-
-            return (
-              <React.Fragment key={sec.id || index}>
-                <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-xs space-y-4 dark:border-slate-800 dark:bg-slate-900 transition-shadow">
-                  {/* Section Header */}
-                  <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2.5 gap-2">
-                    <div className="flex items-center gap-2 flex-1 min-w-0">
-                      {getSectionIcon(sec.type)}
-                      <input
-                        type="text"
-                        value={sec.title}
-                        onChange={(e) => updateSectionTitle(sec.id, e.target.value)}
-                        className="font-semibold text-sm text-slate-900 dark:text-slate-100 bg-transparent border-b border-transparent hover:border-slate-300 dark:hover:border-slate-700 focus:border-blue-500 focus:outline-none px-1 py-0.5 truncate max-w-[240px] sm:max-w-xs"
-                        title="Kliknij, aby edytować nagłówek sekcji"
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                      <Input
+                        label="Adres e-mail"
+                        type="email"
+                        value={layoutSchema.contact_info?.email || ""}
+                        onChange={(e) => updateContactInfo("email", e.target.value)}
+                        placeholder="np. jan.kowalski@example.com"
+                      />
+                      <Input
+                        label="Numer telefonu"
+                        value={layoutSchema.contact_info?.phone || ""}
+                        onChange={(e) => updateContactInfo("phone", e.target.value)}
+                        placeholder="np. +48 500 600 700"
+                      />
+                      <Input
+                        label="Lokalizacja"
+                        value={layoutSchema.contact_info?.location || ""}
+                        onChange={(e) => updateContactInfo("location", e.target.value)}
+                        placeholder="np. Warszawa, Polska"
                       />
                     </div>
 
-                    {/* Section Actions: Reorder, AI Refine, Delete */}
-                    <div className="flex items-center gap-1.5 shrink-0">
-                      {/* Reordering Up/Down */}
-                      <div className="flex items-center bg-slate-100 dark:bg-slate-800 rounded-md p-0.5 border border-slate-200 dark:border-slate-700">
-                        <button
-                          type="button"
-                          onClick={() => moveSectionUp(index)}
-                          disabled={index === 0}
-                          className="p-1 rounded text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white disabled:opacity-25 disabled:cursor-not-allowed hover:bg-white dark:hover:bg-slate-700 transition-colors"
-                          title="Przesuń sekcję w górę"
-                        >
-                          <ChevronUp className="h-3.5 w-3.5" />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => moveSectionDown(index)}
-                          disabled={index === layoutSchema.sections.length - 1}
-                          className="p-1 rounded text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white disabled:opacity-25 disabled:cursor-not-allowed hover:bg-white dark:hover:bg-slate-700 transition-colors"
-                          title="Przesuń sekcję w dół"
-                        >
-                          <ChevronDown className="h-3.5 w-3.5" />
-                        </button>
-                      </div>
-
-                      {/* AI Refine button (except for clause) */}
-                      {sec.type !== "clause" && (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => openRefineModal(sec.id)}
-                          className="text-xs h-7 text-indigo-600 border-indigo-200 hover:bg-indigo-50 dark:border-indigo-800 dark:text-indigo-400 dark:hover:bg-slate-800"
-                        >
-                          <Sparkles className="h-3 w-3 mr-1" />
-                          <span className="hidden sm:inline">Udoskonal z AI</span>
-                          <span className="sm:hidden">AI</span>
-                        </Button>
-                      )}
-
-                      {/* Remove button for custom sections */}
-                      {isCustomOrOther && (
-                        <button
-                          type="button"
-                          onClick={() => removeSection(sec.id)}
-                          className="p-1.5 text-slate-400 dark:text-slate-500 hover:text-rose-600 dark:hover:text-rose-400 rounded-md hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors"
-                          title="Usuń sekcję"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
-                      )}
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                      <Input
+                        label="Profil LinkedIn"
+                        value={layoutSchema.contact_info?.linkedin || ""}
+                        onChange={(e) => updateContactInfo("linkedin", e.target.value)}
+                        placeholder="np. linkedin.com/in/jankowalski"
+                      />
+                      <Input
+                        label="Profil GitHub"
+                        value={layoutSchema.contact_info?.github || ""}
+                        onChange={(e) => updateContactInfo("github", e.target.value)}
+                        placeholder="np. github.com/jankowalski"
+                      />
+                      <Input
+                        label="Portfolio / WWW"
+                        value={layoutSchema.contact_info?.portfolio || ""}
+                        onChange={(e) => updateContactInfo("portfolio", e.target.value)}
+                        placeholder="np. jankowalski.dev"
+                      />
                     </div>
                   </div>
-
-                  {/* Section Content Form based on sec.type */}
-                  {renderSectionForm(sec)}
-                </div>
-
-                {canShowAddPageBreak && (
-                  <div className="flex items-center justify-center py-0.5 group">
-                    <div className="h-px bg-slate-200 dark:bg-slate-800 flex-1 transition-colors group-hover:bg-blue-300 dark:group-hover:bg-blue-700" />
-                    <button
-                      type="button"
-                      onClick={() => addPageBreakAt(index + 1)}
-                      className="mx-3 inline-flex items-center gap-1.5 px-3 py-1 text-[11px] font-medium text-slate-500 hover:text-blue-600 dark:text-slate-400 dark:hover:text-blue-400 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-blue-300 dark:hover:border-blue-700 rounded-full shadow-2xs transition-all hover:scale-105"
-                      title="Wstaw podział na nową stronę w tym miejscu"
-                    >
-                      <Plus className="h-3 w-3" />
-                      <span>Dodaj separator stron</span>
-                    </button>
-                    <div className="h-px bg-slate-200 dark:bg-slate-800 flex-1 transition-colors group-hover:bg-blue-300 dark:group-hover:bg-blue-700" />
-                  </div>
                 )}
-              </React.Fragment>
-            );
-          })}
+              </div>
 
-          {/* Add Custom Section Button */}
-          <div className="flex justify-center pt-2 pb-6">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={addCustomSection}
-              className="border-dashed border-slate-300 dark:border-slate-700 hover:border-blue-500 dark:hover:border-blue-500 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50/50 dark:hover:bg-blue-950/20 py-3 text-xs w-full max-w-md"
-            >
-              <Plus className="h-3.5 w-3.5 mr-1.5" />
-              Dodaj własną sekcję do CV
-            </Button>
-          </div>
+              {/* Sections Header with Collapse/Expand Controls */}
+              <div className="flex items-center justify-between px-1 pt-1">
+                <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                  Sekcje CV ({layoutSchema.sections.length})
+                </span>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={expandAllSections}
+                    className="text-xs font-medium text-blue-600 dark:text-blue-400 hover:underline cursor-pointer"
+                  >
+                    Rozwiń wszystkie
+                  </button>
+                  <span className="text-slate-300 dark:text-slate-700">•</span>
+                  <button
+                    type="button"
+                    onClick={collapseAllSections}
+                    className="text-xs font-medium text-slate-600 dark:text-slate-400 hover:underline cursor-pointer"
+                  >
+                    Zwiń wszystkie
+                  </button>
+                </div>
+              </div>
+
+              {/* Dynamic Sections Rendered in layoutSchema.sections Order */}
+              {layoutSchema.sections.map((sec, index) => {
+                if (sec.type === "pagebreak") {
+                  return (
+                    <div
+                      key={sec.id || index}
+                      className="rounded-xl border-2 border-dashed border-amber-300 dark:border-amber-700/60 bg-amber-50/70 dark:bg-amber-950/30 p-4 flex items-center justify-between gap-3 shadow-xs transition-colors"
+                    >
+                      <div className="flex items-center gap-2 text-xs font-semibold text-amber-800 dark:text-amber-300">
+                        <SplitSquareVertical className="h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" />
+                        <span>Separator strony (wymuszenie nowej strony w Typst / PDF)</span>
+                      </div>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => removePageBreakAt(index)}
+                        className="text-xs h-7 text-rose-600 border-rose-200 hover:bg-rose-50 dark:border-rose-900/60 dark:text-rose-400 dark:hover:bg-rose-950/40"
+                        title="Usuń separator stron"
+                      >
+                        <Trash2 className="h-3 w-3 mr-1" />
+                        Usuń separator
+                      </Button>
+                    </div>
+                  );
+                }
+
+                const isCustomOrOther =
+                  sec.type === "custom" ||
+                  ![
+                    "summary",
+                    "skills",
+                    "experience",
+                    "projects",
+                    "education",
+                    "certificates",
+                    "clause",
+                  ].includes(sec.type);
+
+                const hasNextSection = index < layoutSchema.sections.length - 1;
+                const nextSec = hasNextSection ? layoutSchema.sections[index + 1] : null;
+                const canShowAddPageBreak =
+                  hasNextSection &&
+                  sec.type !== "pagebreak" &&
+                  nextSec?.type !== "pagebreak";
+
+                const isExpanded = expandedSectionIds.has(sec.id);
+
+                return (
+                  <React.Fragment key={sec.id || index}>
+                    <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900 transition-shadow">
+                      {/* Section Header */}
+                      <div
+                        className={`flex items-center justify-between gap-2 ${
+                          isExpanded ? "border-b border-slate-100 dark:border-slate-800 pb-2.5" : ""
+                        }`}
+                      >
+                        <div className="flex items-center gap-2 flex-1 min-w-0">
+                          <button
+                            type="button"
+                            onClick={() => toggleSectionExpanded(sec.id)}
+                            className="p-1 rounded text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer shrink-0"
+                            title={isExpanded ? "Zwiń sekcję" : "Rozwiń sekcję"}
+                          >
+                            {isExpanded ? (
+                              <ChevronUp className="h-4 w-4" />
+                            ) : (
+                              <ChevronDown className="h-4 w-4" />
+                            )}
+                          </button>
+                          <div className="shrink-0">{getSectionIcon(sec.type)}</div>
+                          <input
+                            type="text"
+                            value={sec.title}
+                            onChange={(e) => updateSectionTitle(sec.id, e.target.value)}
+                            className="font-semibold text-sm text-slate-900 dark:text-slate-100 bg-transparent border-b border-transparent hover:border-slate-300 dark:hover:border-slate-700 focus:border-blue-500 focus:outline-none px-1 py-0.5 truncate max-w-[240px] sm:max-w-xs"
+                            title="Kliknij, aby edytować nagłówek sekcji"
+                          />
+                        </div>
+
+                        {/* Section Actions: Reorder, AI Refine, Delete */}
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          {/* Reordering Up/Down */}
+                          <div className="flex items-center bg-slate-100 dark:bg-slate-800 rounded-md p-0.5 border border-slate-200 dark:border-slate-700">
+                            <button
+                              type="button"
+                              onClick={() => moveSectionUp(index)}
+                              disabled={index === 0}
+                              className="p-1 rounded text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white disabled:opacity-25 disabled:cursor-not-allowed hover:bg-white dark:hover:bg-slate-700 transition-colors"
+                              title="Przesuń sekcję w górę"
+                            >
+                              <ChevronUp className="h-3.5 w-3.5" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => moveSectionDown(index)}
+                              disabled={index === layoutSchema.sections.length - 1}
+                              className="p-1 rounded text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white disabled:opacity-25 disabled:cursor-not-allowed hover:bg-white dark:hover:bg-slate-700 transition-colors"
+                              title="Przesuń sekcję w dół"
+                            >
+                              <ChevronDown className="h-3.5 w-3.5" />
+                            </button>
+                          </div>
+
+                          {/* AI Refine button (except for clause) */}
+                          {sec.type !== "clause" && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => openRefineModal(sec.id)}
+                              className="text-xs h-7 text-indigo-600 border-indigo-200 hover:bg-indigo-50 dark:border-indigo-800 dark:text-indigo-400 dark:hover:bg-slate-800"
+                            >
+                              <Sparkles className="h-3 w-3 mr-1" />
+                              <span className="hidden sm:inline">Udoskonal z AI</span>
+                              <span className="sm:hidden">AI</span>
+                            </Button>
+                          )}
+
+                          {/* Remove button for custom sections */}
+                          {isCustomOrOther && (
+                            <button
+                              type="button"
+                              onClick={() => removeSection(sec.id)}
+                              className="p-1.5 text-slate-400 dark:text-slate-500 hover:text-rose-600 dark:hover:text-rose-400 rounded-md hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors"
+                              title="Usuń sekcję"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Section Content Form based on sec.type */}
+                      {isExpanded && (
+                        <div className="pt-2">
+                          {renderSectionForm(sec)}
+                        </div>
+                      )}
+                    </div>
+
+                    {canShowAddPageBreak && (
+                      <div className="flex items-center justify-center py-0.5 group">
+                        <div className="h-px bg-slate-200 dark:bg-slate-800 flex-1 transition-colors group-hover:bg-blue-300 dark:group-hover:bg-blue-700" />
+                        <button
+                          type="button"
+                          onClick={() => addPageBreakAt(index + 1)}
+                          className="mx-3 inline-flex items-center gap-1.5 px-3 py-1 text-[11px] font-medium text-slate-500 hover:text-blue-600 dark:text-slate-400 dark:hover:text-blue-400 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-blue-300 dark:hover:border-blue-700 rounded-full shadow-2xs transition-all hover:scale-105"
+                          title="Wstaw podział na nową stronę w tym miejscu"
+                        >
+                          <Plus className="h-3 w-3" />
+                          <span>Dodaj separator stron</span>
+                        </button>
+                        <div className="h-px bg-slate-200 dark:bg-slate-800 flex-1 transition-colors group-hover:bg-blue-300 dark:group-hover:bg-blue-700" />
+                      </div>
+                    )}
+                  </React.Fragment>
+                );
+              })}
+
+              {/* Add Custom Section Button */}
+              <div className="flex justify-center pt-2 pb-6">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={addCustomSection}
+                  className="border-dashed border-slate-300 dark:border-slate-700 hover:border-blue-500 dark:hover:border-blue-500 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50/50 dark:hover:bg-blue-950/20 py-3 text-xs w-full max-w-md"
+                >
+                  <Plus className="h-3.5 w-3.5 mr-1.5" />
+                  Dodaj własną sekcję do CV
+                </Button>
+              </div>
+            </>
+          )}
         </div>
 
         {/* Right Pane: Live Typst SVG Preview */}

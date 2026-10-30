@@ -1,8 +1,4 @@
 // KandidFlow — ATS-Optimized Typst Resume Template (Single-Column)
-#set page(
-  paper: "a4",
-  margin: (x: 1.8cm, y: 1.8cm),
-)
 
 // Read raw data from sys.inputs or fallback to empty JSON
 #let raw_input = sys.inputs.at("cv_data", default: "{}")
@@ -14,12 +10,105 @@
 #let contact = cv_data.at("contact_info", default: cv_data.at("contact", default: (:)))
 #let lang = cv_data.at("language", default: "pl")
 
+// Styling & Typography Configuration
+#let styling_raw = cv_data.at("styling", default: (:))
+#let styling = if type(styling_raw) == dictionary { styling_raw } else { (:) }
+
+// Style helper routines
+#let get-elem-style(styling_map, key) = {
+  let val = styling_map.at(key, default: (:))
+  if type(val) == dictionary { val } else { (:) }
+}
+
+#let resolve-font(elem_style, fallback_family) = {
+  let fallback = if fallback_family != none and fallback_family != "" { fallback_family } else { "Liberation Sans" }
+  let f = elem_style.at("font_family", default: fallback)
+  let chosen = if f != none and f != "" { f } else { fallback }
+  
+  if chosen in ("Times New Roman", "Georgia", "Liberation Serif", "DejaVu Serif", "Noto Serif") {
+    (chosen, "Liberation Serif", "DejaVu Serif", "Noto Serif")
+  } else if chosen in ("Courier New", "Liberation Mono", "DejaVu Sans Mono", "Noto Mono") {
+    (chosen, "Liberation Mono", "DejaVu Sans Mono", "Noto Mono")
+  } else if chosen in ("Inter", "Roboto", "Open Sans", "Lato", "DejaVu Sans", "Noto Sans") {
+    (chosen, fallback, "Liberation Sans", "DejaVu Sans", "Noto Sans")
+  } else if chosen == "Arial" {
+    ("Arial", "Liberation Sans", "DejaVu Sans", "Noto Sans")
+  } else {
+    (chosen, fallback, "Liberation Sans", "DejaVu Sans", "Noto Sans")
+  }
+}
+
+#let resolve-size(elem_style, default_pt) = {
+  let s = elem_style.at("font_size_pt", default: default_pt)
+  let num = if s != none { s } else { default_pt }
+  float(num) * 1pt
+}
+
+#let resolve-weight(elem_style, default_weight) = {
+  let w = elem_style.at("font_weight", default: default_weight)
+  if w != none and w != "" { str(w) } else { default_weight }
+}
+
+// Margins
+#let margin_x_val = styling.at("margin_x_cm", default: 1.8)
+#let margin_y_val = styling.at("margin_y_cm", default: 1.8)
+#let margin_x = float(if margin_x_val != none { margin_x_val } else { 1.8 }) * 1cm
+#let margin_y = float(if margin_y_val != none { margin_y_val } else { 1.8 }) * 1cm
+
+#set page(
+  paper: "a4",
+  margin: (x: margin_x, y: margin_y),
+)
+
+// Global Document & Section Typography
+#let doc_font = styling.at("document_font_family", default: "Liberation Sans")
+#let doc_font_fallback = if doc_font != none and doc_font != "" { doc_font } else { "Liberation Sans" }
+
+#let sec_text_style = get-elem-style(styling, "section_text")
+#let sec_text_font = resolve-font(sec_text_style, doc_font_fallback)
+#let sec_text_size = resolve-size(sec_text_style, 9.5)
+#let sec_text_weight = resolve-weight(sec_text_style, "regular")
+#let sec_text_leading_val = styling.at("section_text_line_height_em", default: 0.65)
+#let sec_text_leading = float(if sec_text_leading_val != none { sec_text_leading_val } else { 0.65 }) * 1em
+
+#let sec_spacing_val = styling.at("section_spacing_em", default: 0.6)
+#let sec_spacing = float(if sec_spacing_val != none { sec_spacing_val } else { 0.6 }) * 1em
+
+#let heading_line_height_val = styling.at("heading_line_height_em", default: 0.65)
+#let heading_line_height = float(if heading_line_height_val != none { heading_line_height_val } else { 0.65 }) * 1em
+#let heading_style = get-elem-style(styling, "section_headings")
+#let heading_font = resolve-font(heading_style, doc_font_fallback)
+#let heading_size = resolve-size(heading_style, 11.0)
+#let heading_weight = resolve-weight(heading_style, "bold")
+
+#let full_name_style = get-elem-style(styling, "full_name")
+#let full_name_font = resolve-font(full_name_style, doc_font_fallback)
+#let full_name_size = resolve-size(full_name_style, 18.0)
+#let full_name_weight = resolve-weight(full_name_style, "bold")
+
+#let job_title_style = get-elem-style(styling, "job_title")
+#let job_title_font = resolve-font(job_title_style, doc_font_fallback)
+#let job_title_size = resolve-size(job_title_style, 11.0)
+#let job_title_weight = resolve-weight(job_title_style, "semibold")
+
+#let contact_style_raw = get-elem-style(styling, "contact_info")
+#let contact_style = if contact_style_raw.len() > 0 { contact_style_raw } else { get-elem-style(styling, "contact_items") }
+#let contact_font = resolve-font(contact_style, doc_font_fallback)
+#let contact_size = resolve-size(contact_style, 8.5)
+#let contact_weight = resolve-weight(contact_style, "regular")
+
+#let clause_style = get-elem-style(styling, "clause")
+#let clause_font = resolve-font(clause_style, doc_font_fallback)
+#let clause_size = resolve-size(clause_style, 7.0)
+#let clause_weight = resolve-weight(clause_style, "regular")
+
 #set text(
-  font: ("Liberation Sans", "DejaVu Sans", "Arial"),
-  size: 9.5pt,
+  font: sec_text_font,
+  size: sec_text_size,
+  weight: sec_text_weight,
   lang: lang,
 )
-#set par(justify: true, leading: 0.65em)
+#set par(justify: true, leading: sec_text_leading)
 
 // Localization Dictionary
 #let dict = (
@@ -56,8 +145,16 @@
 
 // Helper for section headings
 #let section-heading(title) = [
-  #v(0.6em)
-  #text(size: 11pt, weight: "bold", fill: rgb("#111827"))[#upper(title)]
+  #v(sec_spacing)
+  #block[
+    #set par(leading: heading_line_height)
+    #text(
+      font: heading_font,
+      size: heading_size,
+      weight: heading_weight,
+      fill: rgb("#111827"),
+    )[#upper(title)]
+  ]
   #v(-0.4em)
   #line(length: 100%, stroke: 0.5pt + rgb("#d1d5db"))
   #v(0.2em)
@@ -104,14 +201,29 @@
 
 // ---------------- HEADER ----------------
 #align(center)[
-  #text(size: 18pt, weight: "bold", fill: rgb("#111827"))[#full_name]\
+  #text(
+    font: full_name_font,
+    size: full_name_size,
+    weight: full_name_weight,
+    fill: rgb("#111827"),
+  )[#full_name]\
   #if job_title != none and job_title != "" [
     #v(-0.2em)
-    #text(size: 11pt, weight: "semibold", fill: rgb("#2563eb"))[#job_title]\
+    #text(
+      font: job_title_font,
+      size: job_title_size,
+      weight: job_title_weight,
+      fill: rgb("#2563eb"),
+    )[#job_title]\
   ]
   #if contact_items.len() > 0 [
     #v(0.2em)
-    #text(size: 8.5pt, fill: rgb("#4b5563"))[
+    #text(
+      font: contact_font,
+      size: contact_size,
+      weight: contact_weight,
+      fill: rgb("#4b5563"),
+    )[
       #contact_items.join("  |  ")
     ]
   ]
@@ -319,7 +431,12 @@
     #let custom_clause = sec.at("content", default: sec.at("text", default: i18n.clause))
     #v(1.2em)
     #align(bottom + center)[
-      #text(size: 7pt, fill: rgb("#6b7280"))[#custom_clause]
+      #text(
+        font: clause_font,
+        size: clause_size,
+        weight: clause_weight,
+        fill: rgb("#6b7280"),
+      )[#custom_clause]
     ]
   ] else [
     #section-heading(sec_title)

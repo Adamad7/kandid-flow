@@ -42,12 +42,14 @@ from app.schemas.candidate import (
     TrainingsSectionBlock,
 )
 from app.schemas.cv import (
+    CVElementStyle,
     CVGenerateRequest,
     CVLayoutSchema,
     CVPreviewRequest,
     CVPreviewResponse,
     CVRefineBlockRequest,
     CVRefineBlockResponse,
+    CVStyling,
     CVVersionBase,
     CVVersionCreate,
     CVVersionRead,
@@ -134,6 +136,8 @@ __all__ = [
     "RecruitmentEventUpdate",
     "RecruitmentEventRead",
     # CV
+    "CVElementStyle",
+    "CVStyling",
     "CVLayoutSchema",
     "CVPreviewRequest",
     "CVPreviewResponse",

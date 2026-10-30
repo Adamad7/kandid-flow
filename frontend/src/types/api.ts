@@ -440,12 +440,36 @@ export interface RecruitmentEventRead extends RecruitmentEventBase {
 // CV Layout, Versions & Live Preview Schemas
 // ============================================================================
 
+export type FontWeight = "regular" | "medium" | "semibold" | "bold";
+
+export interface CVElementStyle {
+  font_family?: string | null;
+  font_size_pt?: number | null;
+  font_weight?: FontWeight | string | null;
+}
+
+export interface CVStyling {
+  document_font_family: string;
+  full_name: CVElementStyle;
+  job_title: CVElementStyle;
+  contact_info: CVElementStyle;
+  section_headings: CVElementStyle;
+  section_text: CVElementStyle;
+  clause: CVElementStyle;
+  heading_line_height_em: number;
+  section_text_line_height_em: number;
+  margin_x_cm: number;
+  margin_y_cm: number;
+  section_spacing_em: number;
+}
+
 export interface CVLayoutSchema {
   full_name?: string | null;
   job_title?: string | null;
   contact_info?: CandidateContactInfo | null;
   language: string;
   sections: CandidateSectionBlock[];
+  styling?: CVStyling;
 }
 
 export interface CVPreviewRequest {
