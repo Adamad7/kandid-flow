@@ -11,7 +11,7 @@ export interface InterestsSectionFormProps {
 export const InterestsSectionForm: React.FC<InterestsSectionFormProps> = React.memo(
   ({ block, onChange }) => {
     return (
-      <div className="space-y-3">
+      <div className="space-y-3" data-cv-field={`section-field:${block.id}:content`}>
         <CommaSeparatedInput
           label="Zainteresowania (rozdzielone przecinkami)"
           value={block.items || []}
@@ -24,6 +24,7 @@ export const InterestsSectionForm: React.FC<InterestsSectionFormProps> = React.m
           onChange={(e) => onChange({ ...block, content: e.target.value })}
           rows={2}
           placeholder="Krótki opis pasji..."
+          data-cv-field={`section-field:${block.id}:content`}
         />
       </div>
     );

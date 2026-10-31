@@ -75,6 +75,7 @@ export const CVHeaderCard: React.FC<CVHeaderCardProps> = React.memo(
                 label="Imię i nazwisko kandydata"
                 value={fullName || ""}
                 onChange={(e) => onUpdateFullName(e.target.value)}
+                data-cv-field="header:full_name"
               />
 
               <div className="space-y-1.5">
@@ -83,6 +84,7 @@ export const CVHeaderCard: React.FC<CVHeaderCardProps> = React.memo(
                   value={jobTitle || ""}
                   onChange={(e) => onUpdateJobTitle(e.target.value)}
                   placeholder='np. "Flutter Developer", "Junior DevOps Engineer"'
+                  data-cv-field="header:job_title"
                 />
                 {suggestedJobTitle && jobTitle !== suggestedJobTitle && (
                   <div className="flex items-center pt-0.5">
@@ -108,18 +110,21 @@ export const CVHeaderCard: React.FC<CVHeaderCardProps> = React.memo(
                   value={contactInfo?.email || ""}
                   onChange={(e) => onUpdateContactInfo("email", e.target.value)}
                   placeholder="np. jan.kowalski@example.com"
+                  data-cv-field="header:email"
                 />
                 <Input
                   label="Numer telefonu"
                   value={contactInfo?.phone || ""}
                   onChange={(e) => onUpdateContactInfo("phone", e.target.value)}
                   placeholder="np. +48 500 600 700"
+                  data-cv-field="header:phone"
                 />
                 <Input
                   label="Lokalizacja"
                   value={contactInfo?.location || ""}
                   onChange={(e) => onUpdateContactInfo("location", e.target.value)}
                   placeholder="np. Warszawa, Polska"
+                  data-cv-field="header:location"
                 />
               </div>
 
@@ -129,18 +134,21 @@ export const CVHeaderCard: React.FC<CVHeaderCardProps> = React.memo(
                   value={contactInfo?.linkedin || ""}
                   onChange={(e) => onUpdateContactInfo("linkedin", e.target.value)}
                   placeholder="np. linkedin.com/in/jankowalski"
+                  data-cv-field="header:linkedin"
                 />
                 <Input
                   label="Profil GitHub"
                   value={contactInfo?.github || ""}
                   onChange={(e) => onUpdateContactInfo("github", e.target.value)}
                   placeholder="np. github.com/jankowalski"
+                  data-cv-field="header:github"
                 />
                 <Input
                   label="Portfolio / WWW"
                   value={contactInfo?.portfolio || ""}
                   onChange={(e) => onUpdateContactInfo("portfolio", e.target.value)}
                   placeholder="np. jankowalski.dev"
+                  data-cv-field="header:portfolio"
                 />
               </div>
             </div>

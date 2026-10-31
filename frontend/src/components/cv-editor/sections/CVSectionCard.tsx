@@ -130,7 +130,10 @@ const CVSectionCardComponent: React.FC<CVSectionCardProps> = ({
   children,
 }) => {
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900 transition-shadow [contain:content]">
+    <div
+      data-cv-section-id={id}
+      className="rounded-xl border border-slate-200 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900 transition-shadow [contain:content]"
+    >
       {/* Section Header */}
       <div className="flex items-center justify-between gap-2 sm:gap-4">
         {/* Left: Section Icon + Editable Title */}
@@ -140,6 +143,7 @@ const CVSectionCardComponent: React.FC<CVSectionCardProps> = ({
           </div>
           <input
             type="text"
+            data-cv-field={`section-title:${id}`}
             value={title || ""}
             onChange={(e) => onUpdateTitle(id, e.target.value)}
             className="font-semibold text-sm text-slate-900 dark:text-slate-100 bg-transparent border-b border-transparent hover:border-slate-300 dark:hover:border-slate-700 focus:border-blue-500 focus:outline-none px-1 py-0.5 truncate w-full max-w-[160px] sm:max-w-xs transition-colors"

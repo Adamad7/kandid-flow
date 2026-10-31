@@ -3,6 +3,8 @@
 // Read raw data from sys.inputs or fallback to empty JSON
 #let raw_input = sys.inputs.at("cv_data", default: "{}")
 #let cv_data = json(bytes(raw_input))
+#let is_preview = sys.inputs.at("is_preview", default: "false") == "true"
+#let target-link(target_id, body) = if is_preview { link("kf-target:" + target_id, body) } else { body }
 
 // Candidate & Contact Details
 #let full_name = cv_data.at("full_name", default: cv_data.at("name", default: "Jan Kowalski"))
@@ -152,16 +154,21 @@
 #let i18n = dict.at(lang, default: dict.at("pl"))
 
 // Helper for section headings
-#let section-heading(title) = [
+#let section-heading(title, sec_id: none) = [
   #v(sec_spacing)
   #block[
     #set par(leading: heading_line_height)
-    #text(
+    #let heading_content = text(
       font: heading_font,
       size: heading_size,
       weight: heading_weight,
       fill: accent_color,
     )[#upper(title)]
+    #if sec_id != none [
+      #target-link("section-title:" + sec_id, heading_content)
+    ] else [
+      #heading_content
+    ]
   ]
   #v(-0.4em)
   #line(length: 100%, stroke: 0.75pt + accent_color)
@@ -188,22 +195,22 @@
 #let contact_items = ()
 #if type(contact) == dictionary {
   if contact.at("email", default: none) != none and contact.at("email") != "" {
-    contact_items.push(contact.at("email"))
+    contact_items.push(target-link("header:email", contact.at("email")))
   }
   if contact.at("phone", default: none) != none and contact.at("phone") != "" {
-    contact_items.push(contact.at("phone"))
+    contact_items.push(target-link("header:phone", contact.at("phone")))
   }
   if contact.at("location", default: none) != none and contact.at("location") != "" {
-    contact_items.push(contact.at("location"))
+    contact_items.push(target-link("header:location", contact.at("location")))
   }
   if contact.at("linkedin", default: none) != none and contact.at("linkedin") != "" {
-    contact_items.push(contact.at("linkedin"))
+    contact_items.push(target-link("header:linkedin", contact.at("linkedin")))
   }
   if contact.at("github", default: none) != none and contact.at("github") != "" {
-    contact_items.push(contact.at("github"))
+    contact_items.push(target-link("header:github", contact.at("github")))
   }
   if contact.at("portfolio", default: none) != none and contact.at("portfolio") != "" {
-    contact_items.push(contact.at("portfolio"))
+    contact_items.push(target-link("header:portfolio", contact.at("portfolio")))
   }
 }
 
@@ -214,7 +221,7 @@
     size: full_name_size,
     weight: full_name_weight,
     fill: rgb("#111827"),
-  )[#full_name]\
+  )[#target-link("header:full_name", full_name)]\
   #if job_title != none and job_title != "" [
     #v(-0.2em)
     #text(
@@ -222,7 +229,7 @@
       size: job_title_size,
       weight: job_title_weight,
       fill: accent_color,
-    )[#job_title]\
+    )[#target-link("header:job_title", job_title)]\
   ]
   #if contact_items.len() > 0 [
     #v(0.2em)
@@ -245,42 +252,48 @@
 
 #let has_clause = false
 
-#for sec in sections [
+#for (sec_idx, sec) in sections.enumerate() [
+  #let sec_id_raw = sec.at("id", default: none)
+  #let sec_id = if sec_id_raw != none and sec_id_raw != "" { str(sec_id_raw) } else { str(sec_idx) }
   #let sec_type = sec.at("type", default: sec.at("id", default: "generic"))
   #let sec_title = sec.at("title", default: i18n.at(sec_type, default: upper(sec_type)))
 
   #if sec_type == "summary" [
     #let summary_text = sec.at("content", default: sec.at("text", default: sec.at("summary", default: "")))
-    #if summary_text != "" [
-      #section-heading(sec_title)
-      #summary_text
+    #if summary_text != "" and summary_text != none [
+      #section-heading(sec_title, sec_id: sec_id)
+      #target-link("section-field:" + sec_id + ":content")[#block(width: 100%)[#summary_text]]
     ]
   ] else if sec_type == "skills" [
     #let items = sec.at("items", default: ())
-    #section-heading(sec_title)
+    #section-heading(sec_title, sec_id: sec_id)
     #if type(items) == array [
-      #for item in items [
-        #if type(item) == dictionary [
-          #let cat = item.at("category", default: item.at("name", default: ""))
-          #let skill_list = item.at("skills", default: item.at("items", default: ()))
-          #let skills_str = if type(skill_list) == array { skill_list.join(", ") } else { str(skill_list) }
-          #if cat != "" [
-            - *#cat:* #skills_str
-          ] else [
-            - #skills_str
+      #for (item_idx, item) in items.enumerate() [
+        #target-link("section-item:" + sec_id + ":" + str(item_idx))[
+          #block(width: 100%)[
+            #if type(item) == dictionary [
+              #let cat = item.at("category", default: item.at("name", default: ""))
+              #let skill_list = item.at("skills", default: item.at("items", default: ()))
+              #let skills_str = if type(skill_list) == array { skill_list.join(", ") } else { str(skill_list) }
+              #if cat != "" [
+                - *#cat:* #skills_str
+              ] else [
+                - #skills_str
+              ]
+            ] else [
+              - #item
+            ]
           ]
-        ] else [
-          - #item
         ]
       ]
     ] else if type(items) == str [
-      #items
+      #target-link("section-field:" + sec_id + ":content")[#block(width: 100%)[#items]]
     ]
   ] else if sec_type == "experience" [
     #let items = sec.at("items", default: ())
-    #section-heading(sec_title)
+    #section-heading(sec_title, sec_id: sec_id)
     #if type(items) == array [
-      #for exp in items [
+      #for (exp_idx, exp) in items.enumerate() [
         #if type(exp) == dictionary [
           #let pos = exp.at("position", default: exp.at("role", default: ""))
           #let comp = exp.at("company", default: "")
@@ -290,13 +303,22 @@
           #let date_str = format-dates(s_date, e_date)
           #let highlights = exp.at("highlights", default: exp.at("description", default: ()))
 
-          #text(weight: "bold")[#pos] #if comp != "" [| #text(fill: rgb("#374151"))[#comp]] #if loc != "" [| #text(style: "italic", fill: rgb("#6b7280"))[#loc]] #h(1fr) #text(size: 8.5pt, fill: rgb("#4b5563"))[#date_str]\
-          #if type(highlights) == array [
-            #for h_item in highlights [
-              - #h_item
+          #target-link("section-item:" + sec_id + ":" + str(exp_idx))[
+            #block(width: 100%)[
+              #text(weight: "bold")[#pos] #if comp != "" [| #text(fill: rgb("#374151"))[#comp]] #if loc != "" [| #text(style: "italic", fill: rgb("#6b7280"))[#loc]] #h(1fr) #text(size: 8.5pt, fill: rgb("#4b5563"))[#date_str]\
+              #if type(highlights) == array [
+                #for h_item in highlights [
+                  - #h_item
+                ]
+              ] else if type(highlights) == str and highlights != "" [
+                - #highlights
+              ]
             ]
-          ] else if type(highlights) == str and highlights != "" [
-            - #highlights
+          ]
+          #v(0.3em)
+        ] else [
+          #target-link("section-item:" + sec_id + ":" + str(exp_idx))[
+            #block(width: 100%)[#str(exp)]
           ]
           #v(0.3em)
         ]
@@ -304,9 +326,9 @@
     ]
   ] else if sec_type == "projects" [
     #let items = sec.at("items", default: ())
-    #section-heading(sec_title)
+    #section-heading(sec_title, sec_id: sec_id)
     #if type(items) == array [
-      #for proj in items [
+      #for (proj_idx, proj) in items.enumerate() [
         #if type(proj) == dictionary [
           #let name = proj.at("name", default: proj.at("title", default: ""))
           #let role = proj.at("role", default: "")
@@ -318,12 +340,21 @@
           #let techs = proj.at("technologies", default: proj.at("skills", default: ()))
           #let tech_str = if type(techs) == array { techs.join(", ") } else { str(techs) }
 
-          #text(weight: "bold")[#name] #if role != "" [| #text(fill: rgb("#374151"))[#role]] #if url != "" [| #text(size: 8pt, fill: rgb("#2563eb"))[#url]] #h(1fr) #text(size: 8.5pt, fill: rgb("#4b5563"))[#date_str]\
-          #if desc != "" [
-            #desc\
+          #target-link("section-item:" + sec_id + ":" + str(proj_idx))[
+            #block(width: 100%)[
+              #text(weight: "bold")[#name] #if role != "" [| #text(fill: rgb("#374151"))[#role]] #if url != "" [| #text(size: 8pt, fill: rgb("#2563eb"))[#url]] #h(1fr) #text(size: 8.5pt, fill: rgb("#4b5563"))[#date_str]\
+              #if desc != "" [
+                #desc\
+              ]
+              #if tech_str != "" [
+                #text(size: 8.5pt, style: "italic", fill: rgb("#4b5563"))[Stack: #tech_str]\
+              ]
+            ]
           ]
-          #if tech_str != "" [
-            #text(size: 8.5pt, style: "italic", fill: rgb("#4b5563"))[Stack: #tech_str]\
+          #v(0.3em)
+        ] else [
+          #target-link("section-item:" + sec_id + ":" + str(proj_idx))[
+            #block(width: 100%)[#str(proj)]
           ]
           #v(0.3em)
         ]
@@ -331,9 +362,9 @@
     ]
   ] else if sec_type == "education" [
     #let items = sec.at("items", default: ())
-    #section-heading(sec_title)
+    #section-heading(sec_title, sec_id: sec_id)
     #if type(items) == array [
-      #for edu in items [
+      #for (edu_idx, edu) in items.enumerate() [
         #if type(edu) == dictionary [
           #let inst = edu.at("institution", default: edu.at("school", default: ""))
           #let deg = edu.at("degree", default: "")
@@ -342,81 +373,122 @@
           #let e_date = edu.at("end_date", default: "")
           #let date_str = format-dates(s_date, e_date)
 
-          #text(weight: "bold")[#deg] #if field != "" [– #field] #if inst != "" [| #text(fill: rgb("#374151"))[#inst]] #h(1fr) #text(size: 8.5pt, fill: rgb("#4b5563"))[#date_str]\
+          #target-link("section-item:" + sec_id + ":" + str(edu_idx))[
+            #block(width: 100%)[
+              #text(weight: "bold")[#deg] #if field != "" [– #field] #if inst != "" [| #text(fill: rgb("#374151"))[#inst]] #h(1fr) #text(size: 8.5pt, fill: rgb("#4b5563"))[#date_str]
+            ]
+          ]
+          #v(0.2em)
+        ] else [
+          #target-link("section-item:" + sec_id + ":" + str(edu_idx))[
+            #block(width: 100%)[#str(edu)]
+          ]
           #v(0.2em)
         ]
       ]
     ]
   ] else if sec_type == "certificates" [
     #let items = sec.at("items", default: ())
-    #section-heading(sec_title)
+    #section-heading(sec_title, sec_id: sec_id)
     #if type(items) == array [
-      #for cert in items [
+      #for (cert_idx, cert) in items.enumerate() [
         #if type(cert) == dictionary [
           #let name = cert.at("name", default: cert.at("title", default: ""))
           #let issuer = cert.at("issuer", default: "")
           #let i_date = cert.at("issue_date", default: cert.at("date", default: ""))
 
-          - *#name* #if issuer != "" [– #issuer] #h(1fr) #text(size: 8.5pt, fill: rgb("#4b5563"))[#i_date]
+          #target-link("section-item:" + sec_id + ":" + str(cert_idx))[
+            #block(width: 100%)[
+              - *#name* #if issuer != "" [– #issuer] #h(1fr) #text(size: 8.5pt, fill: rgb("#4b5563"))[#i_date]
+            ]
+          ]
         ] else [
-          - #cert
+          #target-link("section-item:" + sec_id + ":" + str(cert_idx))[
+            #block(width: 100%)[
+              - #str(cert)
+            ]
+          ]
         ]
       ]
       #v(0.2em)
     ]
   ] else if sec_type == "languages" [
     #let items = sec.at("items", default: ())
-    #section-heading(sec_title)
+    #section-heading(sec_title, sec_id: sec_id)
     #if type(items) == array [
-      #for lang_item in items [
+      #for (lang_idx, lang_item) in items.enumerate() [
         #if type(lang_item) == dictionary [
           #let l_name = lang_item.at("name", default: lang_item.at("language", default: ""))
           #let l_level = lang_item.at("level", default: lang_item.at("proficiency", default: ""))
-          - *#l_name* #if l_level != "" [– #l_level]
+          #target-link("section-item:" + sec_id + ":" + str(lang_idx))[
+            #block(width: 100%)[
+              - *#l_name* #if l_level != "" [– #l_level]
+            ]
+          ]
         ] else [
-          - #lang_item
+          #target-link("section-item:" + sec_id + ":" + str(lang_idx))[
+            #block(width: 100%)[
+              - #str(lang_item)
+            ]
+          ]
         ]
       ]
       #v(0.2em)
     ]
   ] else if sec_type == "trainings" [
     #let items = sec.at("items", default: ())
-    #section-heading(sec_title)
+    #section-heading(sec_title, sec_id: sec_id)
     #if type(items) == array [
-      #for trn in items [
+      #for (trn_idx, trn) in items.enumerate() [
         #if type(trn) == dictionary [
           #let t_name = trn.at("name", default: trn.at("title", default: ""))
           #let t_org = trn.at("organizer", default: trn.at("provider", default: trn.at("issuer", default: "")))
           #let t_date = trn.at("date", default: trn.at("completion_date", default: ""))
           #let t_desc = trn.at("description", default: "")
 
-          - *#t_name* #if t_org != "" [| #text(fill: rgb("#374151"))[#t_org]] #h(1fr) #text(size: 8.5pt, fill: rgb("#4b5563"))[#t_date]\
-          #if t_desc != "" [
-            #h(1.2em)#text(size: 8.5pt, fill: rgb("#4b5563"))[#t_desc]\
+          #target-link("section-item:" + sec_id + ":" + str(trn_idx))[
+            #block(width: 100%)[
+              - *#t_name* #if t_org != "" [| #text(fill: rgb("#374151"))[#t_org]] #h(1fr) #text(size: 8.5pt, fill: rgb("#4b5563"))[#t_date]\
+              #if t_desc != "" [
+                #h(1.2em)#text(size: 8.5pt, fill: rgb("#4b5563"))[#t_desc]\
+              ]
+            ]
           ]
         ] else [
-          - #trn
+          #target-link("section-item:" + sec_id + ":" + str(trn_idx))[
+            #block(width: 100%)[
+              - #str(trn)
+            ]
+          ]
         ]
       ]
       #v(0.2em)
     ]
   ] else if sec_type == "achievements" [
     #let items = sec.at("items", default: ())
-    #section-heading(sec_title)
+    #section-heading(sec_title, sec_id: sec_id)
     #if type(items) == array [
-      #for ach in items [
+      #for (ach_idx, ach) in items.enumerate() [
         #if type(ach) == dictionary [
           #let a_title = ach.at("title", default: ach.at("name", default: ""))
           #let a_issuer = ach.at("issuer", default: ach.at("organization", default: ""))
           #let a_date = ach.at("date", default: "")
           #let a_desc = ach.at("description", default: "")
 
-          - *#a_title* #if a_issuer != "" [| #text(fill: rgb("#374151"))[#a_issuer]] #h(1fr) #text(size: 8.5pt, fill: rgb("#4b5563"))[#a_date]\
-          #if a_desc != "" [
-            #h(1.2em)#text(size: 8.5pt, fill: rgb("#4b5563"))[#a_desc]\
+          #target-link("section-item:" + sec_id + ":" + str(ach_idx))[
+            #block(width: 100%)[
+              - *#a_title* #if a_issuer != "" [| #text(fill: rgb("#374151"))[#a_issuer]] #h(1fr) #text(size: 8.5pt, fill: rgb("#4b5563"))[#a_date]\
+              #if a_desc != "" [
+                #h(1.2em)#text(size: 8.5pt, fill: rgb("#4b5563"))[#a_desc]\
+              ]
+            ]
           ]
         ] else [
-          - #ach
+          #target-link("section-item:" + sec_id + ":" + str(ach_idx))[
+            #block(width: 100%)[
+              - #str(ach)
+            ]
+          ]
         ]
       ]
       #v(0.2em)
@@ -424,13 +496,19 @@
   ] else if sec_type == "interests" [
     #let items = sec.at("items", default: ())
     #let content = sec.at("content", default: sec.at("description", default: ""))
-    #section-heading(sec_title)
-    #if content != "" and content != none [
-      #content\
-    ]
-    #if type(items) == array and items.len() > 0 [
-      #let items_str = items.map(str).join("  •  ")
-      #items_str
+    #section-heading(sec_title, sec_id: sec_id)
+    #if (content != "" and content != none) or (type(items) == array and items.len() > 0) [
+      #target-link("section-field:" + sec_id + ":content")[
+        #block(width: 100%)[
+          #if content != "" and content != none [
+            #content\
+          ]
+          #if type(items) == array and items.len() > 0 [
+            #let items_str = items.map(str).join("  •  ")
+            #items_str
+          ]
+        ]
+      ]
     ]
     #v(0.2em)
   ] else if sec_type == "pagebreak" [
@@ -444,18 +522,28 @@
         size: clause_size,
         weight: clause_weight,
         fill: rgb("#6b7280"),
-      )[#custom_clause]
+      )[
+        #target-link("section-field:" + sec_id + ":content")[
+          #block(width: 100%)[#custom_clause]
+        ]
+      ]
     ]
   ] else [
-    #section-heading(sec_title)
+    #section-heading(sec_title, sec_id: sec_id)
     #let content = sec.at("content", default: sec.at("text", default: none))
     #let items = sec.at("items", default: none)
-    #if content != none [
-      #content\
-    ]
-    #if type(items) == array [
-      #for item in items [
-        - #if type(item) == dictionary { item.at("title", default: str(item)) } else { str(item) }
+    #if content != none or type(items) == array [
+      #target-link("section-field:" + sec_id + ":content")[
+        #block(width: 100%)[
+          #if content != none [
+            #content\
+          ]
+          #if type(items) == array [
+            #for item in items [
+              - #if type(item) == dictionary { item.at("title", default: str(item)) } else { str(item) }
+            ]
+          ]
+        ]
       ]
     ]
   ]

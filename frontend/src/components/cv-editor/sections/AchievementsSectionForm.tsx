@@ -52,6 +52,7 @@ export const AchievementsSectionForm: React.FC<AchievementsSectionFormProps> = R
         {items.map((ach, idx) => (
           <div
             key={idx}
+            data-cv-field={`section-item:${block.id}:${idx}`}
             className="p-3.5 bg-slate-50 dark:bg-slate-800/60 rounded-lg border border-slate-200 dark:border-slate-700/60 text-xs space-y-3"
           >
             <div className="flex items-center justify-between">

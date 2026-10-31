@@ -71,6 +71,7 @@ export const SkillsSectionForm: React.FC<SkillsSectionFormProps> = React.memo(
         {items.map((cat, catIdx) => (
           <div
             key={catIdx}
+            data-cv-field={`section-item:${block.id}:${catIdx}`}
             className="p-3 bg-slate-50/80 rounded-lg border border-slate-200/80 text-xs dark:bg-slate-800/60 dark:border-slate-800 space-y-2"
           >
             <div className="flex items-center justify-between gap-2">

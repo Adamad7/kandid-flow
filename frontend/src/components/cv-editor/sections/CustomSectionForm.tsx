@@ -29,6 +29,7 @@ export const CustomSectionForm: React.FC<CustomSectionFormProps> = React.memo(
           onChange={(e) => handleContentChange(e.target.value)}
           rows={2}
           placeholder="Opcjonalny tekst opisowy..."
+          data-cv-field={`section-field:${block.id}:content`}
         />
         <Textarea
           label="Punkty listy (jeden w nowym wierszu)"

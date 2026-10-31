@@ -492,6 +492,70 @@ export const CVEditor: React.FC<CVEditorProps> = ({
     setIsHeaderExpanded((prev) => !prev);
   }, []);
 
+  const handleTargetElementClick = useCallback(
+    (targetId: string) => {
+      // If mobile view is showing preview, switch to edit form
+      if (mobileTab === "preview") {
+        setMobileTab("edit");
+      }
+
+      // If left panel is on styling, switch to data editing
+      if (leftPanelMode === "style") {
+        setLeftPanelMode("data");
+      }
+
+      // Ensure header or section is expanded
+      let sectionId: string | undefined;
+      if (targetId.startsWith("header:")) {
+        setIsHeaderExpanded(true);
+      } else if (targetId.startsWith("section-")) {
+        const parts = targetId.split(":");
+        if (parts.length > 1) {
+          sectionId = parts[1];
+          setExpandedSectionIds((prev) => {
+            const next = new Set(prev);
+            next.add(sectionId!);
+            return next;
+          });
+        }
+      }
+
+      // Schedule DOM element lookup, smooth scroll into view, and focus with visual pulse
+      setTimeout(() => {
+        requestAnimationFrame(() => {
+          let el = document.querySelector(`[data-cv-field="${targetId}"]`) as HTMLElement | null;
+          if (!el && sectionId) {
+            el = document.querySelector(`[data-cv-section-id="${sectionId}"]`) as HTMLElement | null;
+          }
+
+          if (!el) return;
+
+          el.scrollIntoView({ behavior: "smooth", block: "center" });
+
+          const inputEl = (el.matches("input, textarea")
+            ? el
+            : el.querySelector("input, textarea")) as HTMLInputElement | HTMLTextAreaElement | null;
+
+          if (inputEl) {
+            inputEl.focus();
+            const pulseClasses = [
+              "ring-2",
+              "ring-blue-500",
+              "ring-offset-2",
+              "bg-blue-50/70",
+              "dark:bg-blue-950/50",
+            ];
+            inputEl.classList.add(...pulseClasses);
+            setTimeout(() => {
+              inputEl.classList.remove(...pulseClasses);
+            }, 1500);
+          }
+        });
+      }, 50);
+    },
+    [mobileTab, leftPanelMode]
+  );
+
   const renderSectionForm = (sec: CandidateSectionBlock) => {
     switch (sec.type) {
       case "summary":
@@ -922,6 +986,7 @@ export const CVEditor: React.FC<CVEditorProps> = ({
             layoutSchema={debouncedLayoutSchema}
             jobOfferId={job.id}
             language={layoutSchema.language || currentVersion.language || "pl"}
+            onElementClick={handleTargetElementClick}
           />
         </div>
       </div>

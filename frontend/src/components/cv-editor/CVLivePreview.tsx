@@ -14,15 +14,33 @@ interface CVLivePreviewProps {
   language?: string;
   onExportPdf?: () => void;
   isExportingPdf?: boolean;
+  onElementClick?: (targetId: string) => void;
 }
 
 const A4_WIDTH_PX = 793.7;
 const A4_HEIGHT_PX = 1122.52;
 
+const enhancePreviewSvg = (svg: string): string => {
+  return svg.replace(
+    /(<a\b[^>]*\b(?:href|xlink:href)="kf-target:[^"]*"[^>]*>\s*<rect\b)([^>]*?)width="([0-9.]+)"\s+height="([0-9.]+)"([^>]*?\/>\s*<\/a>)/gi,
+    (_, prefix, mid, wStr, hStr, suffix) => {
+      if (mid.includes('x="') || suffix.includes('x="')) {
+        return `${prefix}${mid}width="${wStr}" height="${hStr}"${suffix}`;
+      }
+      const w = parseFloat(wStr);
+      const h = parseFloat(hStr);
+      const padX = 5;
+      const padY = 3.5;
+      return `${prefix}${mid}x="-${padX}" y="-${padY}" width="${(w + padX * 2).toFixed(2)}" height="${(h + padY * 2).toFixed(2)}" rx="4" ry="4"${suffix}`;
+    }
+  );
+};
+
 const CVLivePreviewComponent: React.FC<CVLivePreviewProps> = ({
   layoutSchema,
   jobOfferId,
   language = "pl",
+  onElementClick,
 }) => {
   const [svgPages, setSvgPages] = useState<string[]>([]);
   const [isCompiling, setIsCompiling] = useState(false);
@@ -31,6 +49,31 @@ const CVLivePreviewComponent: React.FC<CVLivePreviewProps> = ({
 
   const previewContainerRef = useRef<HTMLDivElement>(null);
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const currentHoverTargetRef = useRef<string | null>(null);
+
+  const clearHovered = () => {
+    if (currentHoverTargetRef.current && previewContainerRef.current) {
+      const prevLinks = previewContainerRef.current.querySelectorAll(
+        ".kf-hovered, .typst-hover-active"
+      );
+      prevLinks.forEach((el) => {
+        el.classList.remove("kf-hovered", "typst-hover-active");
+      });
+      currentHoverTargetRef.current = null;
+    }
+  };
+
+  // Clear hovered highlight when svg pages update
+  useEffect(() => {
+    clearHovered();
+  }, [svgPages]);
+
+  // Clean up hovered highlights on unmount
+  useEffect(() => {
+    return () => {
+      clearHovered();
+    };
+  }, []);
 
   const triggerPreview = async () => {
     try {
@@ -44,7 +87,7 @@ const CVLivePreviewComponent: React.FC<CVLivePreviewProps> = ({
         layout_schema: layoutSchema,
       });
 
-      setSvgPages(res.svg_pages || []);
+      setSvgPages((res.svg_pages || []).map(enhancePreviewSvg));
     } catch {
       setCompileError(
         "Błąd kompilacji podglądu Typst. Sprawdź poprawność wprowadzonych danych."
@@ -94,8 +137,95 @@ const CVLivePreviewComponent: React.FC<CVLivePreviewProps> = ({
     };
   }, []);
 
+  const handlePreviewClick = (e: React.MouseEvent) => {
+    const target = e.target as Element | null;
+    if (!target) return;
+    const link =
+      target.closest('a[href^="kf-target:"], a[xlink\\:href^="kf-target:"]') ||
+      target.closest("a");
+    if (link) {
+      const href =
+        link.getAttribute("href") || link.getAttribute("xlink:href") || "";
+      if (href.startsWith("kf-target:")) {
+        e.preventDefault();
+        const targetId = href.slice("kf-target:".length);
+        if (targetId && onElementClick) {
+          onElementClick(targetId);
+        }
+      }
+    }
+  };
+
+  const handlePreviewMouseOver = (e: React.MouseEvent) => {
+    const target = e.target as Element | null;
+    if (!target) return;
+    const link =
+      target.closest('a[href^="kf-target:"], a[xlink\\:href^="kf-target:"]') ||
+      target.closest("a");
+
+    const href =
+      link?.getAttribute("href") || link?.getAttribute("xlink:href") || null;
+    const targetId = href && href.startsWith("kf-target:") ? href : null;
+
+    if (link && targetId && !link.hasAttribute("title")) {
+      link.setAttribute("title", "Kliknij, aby edytować");
+    }
+
+    if (currentHoverTargetRef.current !== targetId) {
+      if (currentHoverTargetRef.current && previewContainerRef.current) {
+        const prevLinks = previewContainerRef.current.querySelectorAll(
+          ".kf-hovered, .typst-hover-active"
+        );
+        prevLinks.forEach((el) => {
+          el.classList.remove("kf-hovered", "typst-hover-active");
+        });
+      }
+
+      currentHoverTargetRef.current = targetId;
+
+      if (targetId && previewContainerRef.current) {
+        const safeTarget = targetId.replace(/["\\]/g, "\\$&");
+        const matchingLinks = previewContainerRef.current.querySelectorAll(
+          `a[href="${safeTarget}"], a[xlink\\:href="${safeTarget}"]`
+        );
+        matchingLinks.forEach((el) => {
+          el.classList.add("kf-hovered", "typst-hover-active");
+        });
+      }
+    }
+  };
+
+  const handlePreviewMouseOut = (e: React.MouseEvent) => {
+    const relatedTarget = e.relatedTarget as Node | null;
+    if (!relatedTarget || !previewContainerRef.current?.contains(relatedTarget)) {
+      clearHovered();
+    }
+  };
+
   return (
     <div className="relative flex flex-col h-full w-full bg-slate-100/90 dark:bg-slate-950/50 overflow-hidden">
+      <style>{`
+        .typst-page-svg a[href^="kf-target:"],
+        .typst-page-svg a[xlink\\:href^="kf-target:"] {
+          cursor: pointer;
+        }
+        .typst-page-svg a[href^="kf-target:"] rect,
+        .typst-page-svg a[xlink\\:href^="kf-target:"] rect {
+          transition: fill 0.15s ease-in-out, stroke 0.15s ease-in-out;
+          rx: 4px;
+          ry: 4px;
+        }
+        .typst-page-svg a[href^="kf-target:"]:hover rect,
+        .typst-page-svg a[href^="kf-target:"].kf-hovered rect,
+        .typst-page-svg a[href^="kf-target:"].typst-hover-active rect,
+        .typst-page-svg a[xlink\\:href^="kf-target:"]:hover rect,
+        .typst-page-svg a[xlink\\:href^="kf-target:"].kf-hovered rect,
+        .typst-page-svg a[xlink\\:href^="kf-target:"].typst-hover-active rect {
+          fill: rgba(59, 130, 246, 0.18) !important;
+          stroke: rgba(59, 130, 246, 0.5) !important;
+          stroke-width: 1.5px !important;
+        }
+      `}</style>
       {/* Discreet compilation indicator */}
       {isCompiling && (
         <div className="absolute top-4 right-4 z-20 flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/90 dark:bg-slate-800/90 backdrop-blur-sm border border-slate-200 dark:border-slate-700 shadow-sm text-xs font-medium text-blue-600 dark:text-blue-400 select-none animate-pulse">
@@ -133,7 +263,14 @@ const CVLivePreviewComponent: React.FC<CVLivePreviewProps> = ({
       </div>
 
       {/* Pages Canvas */}
-      <div ref={previewContainerRef} className="flex-1 overflow-auto p-6">
+      <div
+        ref={previewContainerRef}
+        onClick={handlePreviewClick}
+        onMouseOver={handlePreviewMouseOver}
+        onMouseOut={handlePreviewMouseOut}
+        onMouseLeave={clearHovered}
+        className="flex-1 overflow-auto p-6"
+      >
         <div className="min-w-full w-fit flex flex-col items-center gap-8 pb-8">
           {compileError && (
             <div className="w-full max-w-xl rounded-lg bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/50 p-3 text-xs text-rose-700 dark:text-rose-400 flex items-center gap-2">

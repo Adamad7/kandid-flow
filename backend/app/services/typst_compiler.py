@@ -2,6 +2,7 @@
 
 import json
 import logging
+import re
 from pathlib import Path
 from typing import Any
 
@@ -11,6 +12,29 @@ from pydantic import BaseModel
 logger = logging.getLogger(__name__)
 
 DEFAULT_TEMPLATE_PATH = Path(__file__).resolve().parent.parent / "templates" / "cv_base.typ"
+
+TARGET_RECT_PATTERN = re.compile(
+    r'(<a\b[^>]*\b(?:href|xlink:href)="kf-target:[^"]*"[^>]*>\s*<rect\b)'
+    r'([^>]*?)width="([0-9.]+)"\s+height="([0-9.]+)"([^>]*?/>\s*</a>)',
+    re.IGNORECASE,
+)
+
+
+def _expand_preview_target_rect(match: re.Match[str]) -> str:
+    """Expand interactive preview link target rect with symmetric padding and rounded corners."""
+    prefix = match.group(1)
+    mid = match.group(2)
+    w = float(match.group(3))
+    h = float(match.group(4))
+    suffix = match.group(5)
+    pad_x = 5.0
+    pad_y = 3.5
+    new_w = w + 2 * pad_x
+    new_h = h + 2 * pad_y
+    return (
+        f'{prefix}{mid}x="{-pad_x}" y="{-pad_y}" '
+        f'width="{new_w:.2f}" height="{new_h:.2f}" rx="4" ry="4"{suffix}'
+    )
 
 
 class TypstCompilationError(Exception):
@@ -69,18 +93,23 @@ class TypstCompilerService:
             result = typst.compile(
                 str(tpl),
                 format="svg",
-                sys_inputs={"cv_data": json_input},
+                sys_inputs={"cv_data": json_input, "is_preview": "true"},
             )
             if isinstance(result, list):
-                return [
+                raw_pages = [
                     page.decode("utf-8") if isinstance(page, bytes) else str(page)
                     for page in result
                 ]
-            if isinstance(result, bytes):
-                return [result.decode("utf-8")]
-            if isinstance(result, str):
-                return [result]
-            return [str(result)]
+            elif isinstance(result, bytes):
+                raw_pages = [result.decode("utf-8")]
+            elif isinstance(result, str):
+                raw_pages = [result]
+            else:
+                raw_pages = [str(result)]
+
+            return [
+                TARGET_RECT_PATTERN.sub(_expand_preview_target_rect, page) for page in raw_pages
+            ]
         except typst.TypstError as err:
             logger.error("Typst compilation to SVG failed: %s", err)
             raise TypstCompilationError(
@@ -122,7 +151,7 @@ class TypstCompilerService:
             result = typst.compile(
                 str(tpl),
                 format="pdf",
-                sys_inputs={"cv_data": json_input},
+                sys_inputs={"cv_data": json_input, "is_preview": "false"},
             )
             if isinstance(result, bytes):
                 return result

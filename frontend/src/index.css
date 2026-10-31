@@ -100,3 +100,28 @@ body {
   display: block;
 }
 
+/* Typst interactive preview hover links */
+.typst-page-svg a[href^="kf-target:"],
+.typst-page-svg a[xlink\:href^="kf-target:"] {
+  cursor: pointer;
+}
+
+.typst-page-svg a[href^="kf-target:"] rect,
+.typst-page-svg a[xlink\:href^="kf-target:"] rect {
+  transition: fill 0.15s ease-in-out, stroke 0.15s ease-in-out;
+  rx: 4px;
+  ry: 4px;
+}
+
+.typst-page-svg a[href^="kf-target:"]:hover rect,
+.typst-page-svg a[href^="kf-target:"].kf-hovered rect,
+.typst-page-svg a[href^="kf-target:"].typst-hover-active rect,
+.typst-page-svg a[xlink\:href^="kf-target:"]:hover rect,
+.typst-page-svg a[xlink\:href^="kf-target:"].kf-hovered rect,
+.typst-page-svg a[xlink\:href^="kf-target:"].typst-hover-active rect {
+  fill: rgba(59, 130, 246, 0.18) !important;
+  stroke: rgba(59, 130, 246, 0.5) !important;
+  stroke-width: 1.5px !important;
+}
+
+
