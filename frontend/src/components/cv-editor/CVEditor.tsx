@@ -2206,9 +2206,7 @@ export const CVEditor: React.FC<CVEditorProps> = ({
               {/* Candidate Full Name and Contact Info */}
               <div className="rounded-xl border border-slate-200 bg-white shadow-xs dark:border-slate-800 dark:bg-slate-900">
                 <div
-                  className={`flex items-center justify-between p-5 cursor-pointer select-none ${
-                    isHeaderExpanded ? "border-b border-slate-100 dark:border-slate-800 pb-3" : ""
-                  }`}
+                  className="flex items-center justify-between p-5 cursor-pointer select-none"
                   onClick={() => setIsHeaderExpanded(!isHeaderExpanded)}
                 >
                   <div className="flex items-center gap-2">
@@ -2224,100 +2222,116 @@ export const CVEditor: React.FC<CVEditorProps> = ({
                   </div>
                   <button
                     type="button"
-                    className="p-1 rounded text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setIsHeaderExpanded(!isHeaderExpanded);
+                    }}
+                    className="px-3.5 py-1.5 h-8 min-w-[48px] rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white transition-all cursor-pointer flex items-center justify-center shrink-0"
                     title={isHeaderExpanded ? "Zwiń nagłówek" : "Rozwiń nagłówek"}
                   >
-                    {isHeaderExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                    <ChevronDown
+                      className={`h-5 w-5 transition-transform duration-300 ${
+                        isHeaderExpanded ? "rotate-180" : ""
+                      }`}
+                    />
                   </button>
                 </div>
-                {isHeaderExpanded && (
-                  <div className="p-5 pt-3 space-y-4">
-                    <Input
-                      label="Imię i nazwisko kandydata"
-                      value={layoutSchema.full_name || ""}
-                      onChange={(e) =>
-                        setLayoutSchema({ ...layoutSchema, full_name: e.target.value })
-                      }
-                    />
-
-                    <div className="space-y-1.5">
+                <div
+                  className={`grid transition-[grid-template-rows,opacity] duration-300 ease-in-out ${
+                    isHeaderExpanded
+                      ? "grid-rows-[1fr] opacity-100"
+                      : "grid-rows-[0fr] opacity-0 pointer-events-none"
+                  }`}
+                >
+                  <div className="overflow-hidden min-h-0">
+                    <div className="border-t border-slate-100 dark:border-slate-800 p-5 pt-4 space-y-4">
                       <Input
-                        label="Stanowisko docelowe / Nagłówek zawodowy"
-                        value={layoutSchema.job_title || ""}
+                        label="Imię i nazwisko kandydata"
+                        value={layoutSchema.full_name || ""}
                         onChange={(e) =>
-                          setLayoutSchema({
-                            ...layoutSchema,
-                            job_title: e.target.value,
-                          })
+                          setLayoutSchema({ ...layoutSchema, full_name: e.target.value })
                         }
-                        placeholder='np. "Flutter Developer", "Junior DevOps Engineer"'
                       />
-                      {job?.role_title && layoutSchema.job_title !== job.role_title && (
-                        <div className="flex items-center pt-0.5">
-                          <button
-                            type="button"
-                            onClick={() =>
-                              setLayoutSchema({
-                                ...layoutSchema,
-                                job_title: job.role_title,
-                              })
-                            }
-                            className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-950/50 hover:bg-blue-100 dark:hover:bg-blue-900/60 rounded-md border border-blue-200 dark:border-blue-800 transition-colors cursor-pointer"
-                          >
-                            <Sparkles className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400" />
-                            <span>
-                              Użyj z oferty:{" "}
-                              <strong className="font-semibold">{job.role_title}</strong>
-                            </span>
-                          </button>
-                        </div>
-                      )}
-                    </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                      <Input
-                        label="Adres e-mail"
-                        type="email"
-                        value={layoutSchema.contact_info?.email || ""}
-                        onChange={(e) => updateContactInfo("email", e.target.value)}
-                        placeholder="np. jan.kowalski@example.com"
-                      />
-                      <Input
-                        label="Numer telefonu"
-                        value={layoutSchema.contact_info?.phone || ""}
-                        onChange={(e) => updateContactInfo("phone", e.target.value)}
-                        placeholder="np. +48 500 600 700"
-                      />
-                      <Input
-                        label="Lokalizacja"
-                        value={layoutSchema.contact_info?.location || ""}
-                        onChange={(e) => updateContactInfo("location", e.target.value)}
-                        placeholder="np. Warszawa, Polska"
-                      />
-                    </div>
+                      <div className="space-y-1.5">
+                        <Input
+                          label="Stanowisko docelowe / Nagłówek zawodowy"
+                          value={layoutSchema.job_title || ""}
+                          onChange={(e) =>
+                            setLayoutSchema({
+                              ...layoutSchema,
+                              job_title: e.target.value,
+                            })
+                          }
+                          placeholder='np. "Flutter Developer", "Junior DevOps Engineer"'
+                        />
+                        {job?.role_title && layoutSchema.job_title !== job.role_title && (
+                          <div className="flex items-center pt-0.5">
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setLayoutSchema({
+                                  ...layoutSchema,
+                                  job_title: job.role_title,
+                                })
+                              }
+                              className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-950/50 hover:bg-blue-100 dark:hover:bg-blue-900/60 rounded-md border border-blue-200 dark:border-blue-800 transition-colors cursor-pointer"
+                            >
+                              <Sparkles className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400" />
+                              <span>
+                                Użyj z oferty:{" "}
+                                <strong className="font-semibold">{job.role_title}</strong>
+                              </span>
+                            </button>
+                          </div>
+                        )}
+                      </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                      <Input
-                        label="Profil LinkedIn"
-                        value={layoutSchema.contact_info?.linkedin || ""}
-                        onChange={(e) => updateContactInfo("linkedin", e.target.value)}
-                        placeholder="np. linkedin.com/in/jankowalski"
-                      />
-                      <Input
-                        label="Profil GitHub"
-                        value={layoutSchema.contact_info?.github || ""}
-                        onChange={(e) => updateContactInfo("github", e.target.value)}
-                        placeholder="np. github.com/jankowalski"
-                      />
-                      <Input
-                        label="Portfolio / WWW"
-                        value={layoutSchema.contact_info?.portfolio || ""}
-                        onChange={(e) => updateContactInfo("portfolio", e.target.value)}
-                        placeholder="np. jankowalski.dev"
-                      />
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        <Input
+                          label="Adres e-mail"
+                          type="email"
+                          value={layoutSchema.contact_info?.email || ""}
+                          onChange={(e) => updateContactInfo("email", e.target.value)}
+                          placeholder="np. jan.kowalski@example.com"
+                        />
+                        <Input
+                          label="Numer telefonu"
+                          value={layoutSchema.contact_info?.phone || ""}
+                          onChange={(e) => updateContactInfo("phone", e.target.value)}
+                          placeholder="np. +48 500 600 700"
+                        />
+                        <Input
+                          label="Lokalizacja"
+                          value={layoutSchema.contact_info?.location || ""}
+                          onChange={(e) => updateContactInfo("location", e.target.value)}
+                          placeholder="np. Warszawa, Polska"
+                        />
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        <Input
+                          label="Profil LinkedIn"
+                          value={layoutSchema.contact_info?.linkedin || ""}
+                          onChange={(e) => updateContactInfo("linkedin", e.target.value)}
+                          placeholder="np. linkedin.com/in/jankowalski"
+                        />
+                        <Input
+                          label="Profil GitHub"
+                          value={layoutSchema.contact_info?.github || ""}
+                          onChange={(e) => updateContactInfo("github", e.target.value)}
+                          placeholder="np. github.com/jankowalski"
+                        />
+                        <Input
+                          label="Portfolio / WWW"
+                          value={layoutSchema.contact_info?.portfolio || ""}
+                          onChange={(e) => updateContactInfo("portfolio", e.target.value)}
+                          placeholder="np. jankowalski.dev"
+                        />
+                      </div>
                     </div>
                   </div>
-                )}
+                </div>
               </div>
 
               {/* Sections Header with Collapse/Expand Controls */}
@@ -2395,67 +2409,56 @@ export const CVEditor: React.FC<CVEditorProps> = ({
                   <React.Fragment key={sec.id || index}>
                     <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900 transition-shadow">
                       {/* Section Header */}
-                      <div
-                        className={`flex items-center justify-between gap-2 ${
-                          isExpanded ? "border-b border-slate-100 dark:border-slate-800 pb-2.5" : ""
-                        }`}
-                      >
-                        <div className="flex items-center gap-2 flex-1 min-w-0">
-                          <button
-                            type="button"
-                            onClick={() => toggleSectionExpanded(sec.id)}
-                            className="p-1 rounded text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer shrink-0"
-                            title={isExpanded ? "Zwiń sekcję" : "Rozwiń sekcję"}
-                          >
-                            {isExpanded ? (
-                              <ChevronUp className="h-4 w-4" />
-                            ) : (
-                              <ChevronDown className="h-4 w-4" />
-                            )}
-                          </button>
-                          <div className="shrink-0">{getSectionIcon(sec.type)}</div>
+                      <div className="flex items-center justify-between gap-2 sm:gap-4">
+                        {/* Left: Section Icon + Editable Title */}
+                        <div className="flex items-center gap-2.5 min-w-0 sm:flex-1">
+                          <div className="shrink-0 text-blue-600 dark:text-blue-400">
+                            {getSectionIcon(sec.type)}
+                          </div>
                           <input
                             type="text"
                             value={sec.title}
                             onChange={(e) => updateSectionTitle(sec.id, e.target.value)}
-                            className="font-semibold text-sm text-slate-900 dark:text-slate-100 bg-transparent border-b border-transparent hover:border-slate-300 dark:hover:border-slate-700 focus:border-blue-500 focus:outline-none px-1 py-0.5 truncate max-w-[240px] sm:max-w-xs"
+                            className="font-semibold text-sm text-slate-900 dark:text-slate-100 bg-transparent border-b border-transparent hover:border-slate-300 dark:hover:border-slate-700 focus:border-blue-500 focus:outline-none px-1 py-0.5 truncate w-full max-w-[160px] sm:max-w-xs transition-colors"
                             title="Kliknij, aby edytować nagłówek sekcji"
                           />
                         </div>
 
-                        {/* Section Actions: Reorder, AI Refine, Delete */}
-                        <div className="flex items-center gap-1.5 shrink-0">
-                          {/* Reordering Up/Down */}
-                          <div className="flex items-center bg-slate-100 dark:bg-slate-800 rounded-md p-0.5 border border-slate-200 dark:border-slate-700">
+                        {/* Center: Reorder Up / Down buttons */}
+                        <div className="flex items-center justify-center shrink-0">
+                          <div className="flex items-center bg-slate-100 dark:bg-slate-800 rounded-lg p-0.5 border border-slate-200 dark:border-slate-700 shadow-2xs">
                             <button
                               type="button"
                               onClick={() => moveSectionUp(index)}
                               disabled={index === 0}
-                              className="p-1 rounded text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white disabled:opacity-25 disabled:cursor-not-allowed hover:bg-white dark:hover:bg-slate-700 transition-colors"
+                              className="p-1.5 rounded-md text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white disabled:opacity-25 disabled:cursor-not-allowed hover:bg-white dark:hover:bg-slate-700 transition-colors cursor-pointer disabled:pointer-events-none"
                               title="Przesuń sekcję w górę"
                             >
-                              <ChevronUp className="h-3.5 w-3.5" />
+                              <ChevronUp className="h-4 w-4" />
                             </button>
                             <button
                               type="button"
                               onClick={() => moveSectionDown(index)}
                               disabled={index === layoutSchema.sections.length - 1}
-                              className="p-1 rounded text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white disabled:opacity-25 disabled:cursor-not-allowed hover:bg-white dark:hover:bg-slate-700 transition-colors"
+                              className="p-1.5 rounded-md text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white disabled:opacity-25 disabled:cursor-not-allowed hover:bg-white dark:hover:bg-slate-700 transition-colors cursor-pointer disabled:pointer-events-none"
                               title="Przesuń sekcję w dół"
                             >
-                              <ChevronDown className="h-3.5 w-3.5" />
+                              <ChevronDown className="h-4 w-4" />
                             </button>
                           </div>
+                        </div>
 
+                        {/* Right: Actions and Expand/Collapse Button */}
+                        <div className="flex items-center justify-end gap-1.5 sm:gap-2 shrink-0 sm:flex-1">
                           {/* AI Refine button (except for clause) */}
                           {sec.type !== "clause" && (
                             <Button
                               size="sm"
                               variant="outline"
                               onClick={() => openRefineModal(sec.id)}
-                              className="text-xs h-7 text-indigo-600 border-indigo-200 hover:bg-indigo-50 dark:border-indigo-800 dark:text-indigo-400 dark:hover:bg-slate-800"
+                              className="text-xs h-8 text-indigo-600 border-indigo-200 hover:bg-indigo-50 dark:border-indigo-800 dark:text-indigo-400 dark:hover:bg-slate-800"
                             >
-                              <Sparkles className="h-3 w-3 mr-1" />
+                              <Sparkles className="h-3.5 w-3.5 mr-1" />
                               <span className="hidden sm:inline">Udoskonal z AI</span>
                               <span className="sm:hidden">AI</span>
                             </Button>
@@ -2466,21 +2469,43 @@ export const CVEditor: React.FC<CVEditorProps> = ({
                             <button
                               type="button"
                               onClick={() => removeSection(sec.id)}
-                              className="p-1.5 text-slate-400 dark:text-slate-500 hover:text-rose-600 dark:hover:text-rose-400 rounded-md hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors"
+                              className="p-1.5 text-slate-400 dark:text-slate-500 hover:text-rose-600 dark:hover:text-rose-400 rounded-md hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors cursor-pointer"
                               title="Usuń sekcję"
                             >
                               <Trash2 className="h-4 w-4" />
                             </button>
                           )}
+
+                          {/* Expand/Collapse button placed at the far right corner */}
+                          <button
+                            type="button"
+                            onClick={() => toggleSectionExpanded(sec.id)}
+                            className="px-3.5 py-1.5 h-8 min-w-[48px] rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white transition-all cursor-pointer flex items-center justify-center shrink-0"
+                            title={isExpanded ? "Zwiń sekcję" : "Rozwiń sekcję"}
+                          >
+                            <ChevronDown
+                              className={`h-5 w-5 transition-transform duration-300 ${
+                                isExpanded ? "rotate-180" : ""
+                              }`}
+                            />
+                          </button>
                         </div>
                       </div>
 
                       {/* Section Content Form based on sec.type */}
-                      {isExpanded && (
-                        <div className="pt-2">
-                          {renderSectionForm(sec)}
+                      <div
+                        className={`grid transition-[grid-template-rows,opacity] duration-300 ease-in-out ${
+                          isExpanded
+                            ? "grid-rows-[1fr] opacity-100"
+                            : "grid-rows-[0fr] opacity-0 pointer-events-none"
+                        }`}
+                      >
+                        <div className="overflow-hidden min-h-0">
+                          <div className="border-t border-slate-100 dark:border-slate-800 mt-4 pt-4">
+                            {renderSectionForm(sec)}
+                          </div>
                         </div>
-                      )}
+                      </div>
                     </div>
 
                     {canShowAddPageBreak && (

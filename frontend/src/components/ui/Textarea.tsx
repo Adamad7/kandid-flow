@@ -24,6 +24,7 @@ export const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
       rows = 1,
       value,
       onInput,
+      onWheel,
       style,
       ...props
     },
@@ -117,6 +118,21 @@ export const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
       }
     };
 
+    const handleWheel = (e: React.WheelEvent<HTMLTextAreaElement>) => {
+      if (onWheel) {
+        onWheel(e);
+      }
+      const el = innerRef.current;
+      if (!el) return;
+      // If no internal vertical scrolling is needed
+      if (el.scrollHeight <= el.clientHeight) {
+        const scrollParent = el.closest(".overflow-y-auto, .overflow-auto") as HTMLElement | null;
+        if (scrollParent) {
+          scrollParent.scrollTop += e.deltaY;
+        }
+      }
+    };
+
     return (
       <div className="w-full space-y-1.5">
         {label && (
@@ -133,9 +149,10 @@ export const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
           rows={rows}
           value={value}
           onInput={handleInput}
+          onWheel={handleWheel}
           style={{ fieldSizing: "content", ...style } as React.CSSProperties}
           className={cn(
-            "flex w-full min-h-[42px] rounded-md border border-slate-300 bg-white px-3 py-2.5 text-sm leading-relaxed text-slate-900 shadow-sm transition-colors placeholder:text-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:border-blue-500 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:placeholder:text-slate-500 resize-none overflow-hidden",
+            "flex w-full min-h-[42px] rounded-md border border-slate-300 bg-white px-3 py-2.5 text-sm leading-relaxed text-slate-900 shadow-sm transition-colors placeholder:text-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:border-blue-500 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:placeholder:text-slate-500 resize-none overflow-clip",
             error && "border-rose-500 focus-visible:ring-rose-500 dark:border-rose-500",
             className
           )}
