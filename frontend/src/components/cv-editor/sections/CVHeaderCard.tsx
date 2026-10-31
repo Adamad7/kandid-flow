@@ -70,40 +70,40 @@ export const CVHeaderCard: React.FC<CVHeaderCardProps> = React.memo(
           }`}
         >
           <div className="overflow-hidden min-h-0">
-            <div className="border-t border-slate-100 dark:border-slate-800 p-5 pt-4 space-y-4">
-              <Input
-                label="Imię i nazwisko kandydata"
-                value={fullName || ""}
-                onChange={(e) => onUpdateFullName(e.target.value)}
-                data-cv-field="header:full_name"
-              />
-
-              <div className="space-y-1.5">
+            <div className="border-t border-slate-100 dark:border-slate-800 p-5 pt-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <Input
-                  label="Stanowisko docelowe / Nagłówek zawodowy"
-                  value={jobTitle || ""}
-                  onChange={(e) => onUpdateJobTitle(e.target.value)}
-                  placeholder='np. "Flutter Developer", "Junior DevOps Engineer"'
-                  data-cv-field="header:job_title"
+                  label="Imię i nazwisko kandydata"
+                  value={fullName || ""}
+                  onChange={(e) => onUpdateFullName(e.target.value)}
+                  data-cv-field="header:full_name"
                 />
-                {suggestedJobTitle && jobTitle !== suggestedJobTitle && (
-                  <div className="flex items-center pt-0.5">
-                    <button
-                      type="button"
-                      onClick={onApplySuggestedJobTitle}
-                      className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-950/50 hover:bg-blue-100 dark:hover:bg-blue-900/60 rounded-md border border-blue-200 dark:border-blue-800 transition-colors cursor-pointer"
-                    >
-                      <Sparkles className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400" />
-                      <span>
-                        Użyj z oferty:{" "}
-                        <strong className="font-semibold">{suggestedJobTitle}</strong>
-                      </span>
-                    </button>
-                  </div>
-                )}
-              </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className="space-y-1.5">
+                  <Input
+                    label="Stanowisko docelowe / Nagłówek zawodowy"
+                    value={jobTitle || ""}
+                    onChange={(e) => onUpdateJobTitle(e.target.value)}
+                    placeholder='np. "Flutter Developer", "Junior DevOps Engineer"'
+                    data-cv-field="header:job_title"
+                  />
+                  {suggestedJobTitle && jobTitle !== suggestedJobTitle && (
+                    <div className="flex items-center pt-0.5">
+                      <button
+                        type="button"
+                        onClick={onApplySuggestedJobTitle}
+                        className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-950/50 hover:bg-blue-100 dark:hover:bg-blue-900/60 rounded-md border border-blue-200 dark:border-blue-800 transition-colors cursor-pointer"
+                      >
+                        <Sparkles className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400" />
+                        <span>
+                          Użyj z oferty:{" "}
+                          <strong className="font-semibold">{suggestedJobTitle}</strong>
+                        </span>
+                      </button>
+                    </div>
+                  )}
+                </div>
+
                 <Input
                   label="Adres e-mail"
                   type="email"
@@ -112,6 +112,7 @@ export const CVHeaderCard: React.FC<CVHeaderCardProps> = React.memo(
                   placeholder="np. jan.kowalski@example.com"
                   data-cv-field="header:email"
                 />
+
                 <Input
                   label="Numer telefonu"
                   value={contactInfo?.phone || ""}
@@ -119,6 +120,7 @@ export const CVHeaderCard: React.FC<CVHeaderCardProps> = React.memo(
                   placeholder="np. +48 500 600 700"
                   data-cv-field="header:phone"
                 />
+
                 <Input
                   label="Lokalizacja"
                   value={contactInfo?.location || ""}
@@ -126,16 +128,7 @@ export const CVHeaderCard: React.FC<CVHeaderCardProps> = React.memo(
                   placeholder="np. Warszawa, Polska"
                   data-cv-field="header:location"
                 />
-              </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <Input
-                  label="Profil LinkedIn"
-                  value={contactInfo?.linkedin || ""}
-                  onChange={(e) => onUpdateContactInfo("linkedin", e.target.value)}
-                  placeholder="np. linkedin.com/in/jankowalski"
-                  data-cv-field="header:linkedin"
-                />
                 <Input
                   label="Profil GitHub"
                   value={contactInfo?.github || ""}
@@ -143,6 +136,15 @@ export const CVHeaderCard: React.FC<CVHeaderCardProps> = React.memo(
                   placeholder="np. github.com/jankowalski"
                   data-cv-field="header:github"
                 />
+
+                <Input
+                  label="Profil LinkedIn"
+                  value={contactInfo?.linkedin || ""}
+                  onChange={(e) => onUpdateContactInfo("linkedin", e.target.value)}
+                  placeholder="np. linkedin.com/in/jankowalski"
+                  data-cv-field="header:linkedin"
+                />
+
                 <Input
                   label="Portfolio / WWW"
                   value={contactInfo?.portfolio || ""}

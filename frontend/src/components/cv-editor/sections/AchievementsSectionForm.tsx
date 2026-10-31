@@ -69,18 +69,19 @@ export const AchievementsSectionForm: React.FC<AchievementsSectionFormProps> = R
               </button>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              <Input
-                label="Tytuł osiągnięcia"
-                value={ach.title}
-                onChange={(e) => handleUpdateItem(idx, "title", e.target.value)}
-                required
-              />
-              <Input
-                label="Instytucja / Konkurs"
-                value={ach.issuer}
-                onChange={(e) => handleUpdateItem(idx, "issuer", e.target.value)}
-              />
+            <Input
+              label="Tytuł osiągnięcia"
+              value={ach.title}
+              onChange={(e) => handleUpdateItem(idx, "title", e.target.value)}
+              required
+            />
+            <Input
+              label="Instytucja / Konkurs"
+              value={ach.issuer}
+              onChange={(e) => handleUpdateItem(idx, "issuer", e.target.value)}
+              placeholder="np. Tech Summit Polska, Uczelnia"
+            />
+            <div className="w-full sm:w-1/3">
               <DateInput
                 label="Data"
                 value={ach.date}

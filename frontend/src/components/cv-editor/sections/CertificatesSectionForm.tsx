@@ -105,23 +105,28 @@ export const CertificatesSectionForm: React.FC<CertificatesSectionFormProps> = R
               </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              <Input
-                label="Nazwa certyfikatu"
-                value={cert.name}
-                onChange={(e) => handleUpdateItem(idx, "name", e.target.value)}
-                required
-              />
-              <Input
-                label="Wydawca"
-                value={cert.issuer}
-                onChange={(e) => handleUpdateItem(idx, "issuer", e.target.value)}
-              />
-              <DateInput
-                label="Data wydania"
-                value={cert.issue_date}
-                onChange={(val) => handleUpdateItem(idx, "issue_date", val)}
-              />
+            <Input
+              label="Nazwa certyfikatu"
+              value={cert.name}
+              onChange={(e) => handleUpdateItem(idx, "name", e.target.value)}
+              required
+            />
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div className="sm:col-span-2">
+                <Input
+                  label="Wydawca"
+                  value={cert.issuer}
+                  onChange={(e) => handleUpdateItem(idx, "issuer", e.target.value)}
+                />
+              </div>
+              <div className="sm:col-span-1">
+                <DateInput
+                  label="Data wydania"
+                  value={cert.issue_date}
+                  onChange={(val) => handleUpdateItem(idx, "issue_date", val)}
+                />
+              </div>
             </div>
           </div>
         ))}

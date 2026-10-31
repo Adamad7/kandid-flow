@@ -111,13 +111,14 @@ export const ProjectsSectionForm: React.FC<ProjectsSectionFormProps> = React.mem
               </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              <Input
-                label="Nazwa projektu"
-                value={proj.name}
-                onChange={(e) => handleUpdateItem(idx, "name", e.target.value)}
-                required
-              />
+            <Input
+              label="Nazwa projektu"
+              value={proj.name}
+              onChange={(e) => handleUpdateItem(idx, "name", e.target.value)}
+              required
+            />
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <Input
                 label="Rola"
                 value={proj.role}
@@ -130,7 +131,7 @@ export const ProjectsSectionForm: React.FC<ProjectsSectionFormProps> = React.mem
               />
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <DateInput
                 label="Początek"
                 value={proj.start_date}

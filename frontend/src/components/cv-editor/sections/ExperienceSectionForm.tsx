@@ -109,7 +109,7 @@ export const ExperienceSectionForm: React.FC<ExperienceSectionFormProps> = React
               </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <Input
                 label="Stanowisko"
                 value={item.position}
@@ -126,19 +126,18 @@ export const ExperienceSectionForm: React.FC<ExperienceSectionFormProps> = React
                 value={item.location}
                 onChange={(e) => handleUpdateItem(idx, "location", e.target.value)}
               />
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <DateInput
-                label="Początek"
-                value={item.start_date}
-                onChange={(val) => handleUpdateItem(idx, "start_date", val)}
-              />
-              <DateInput
-                label="Koniec"
-                value={item.end_date}
-                onChange={(val) => handleUpdateItem(idx, "end_date", val)}
-              />
+              <div className="grid grid-cols-2 gap-2">
+                <DateInput
+                  label="Początek"
+                  value={item.start_date}
+                  onChange={(val) => handleUpdateItem(idx, "start_date", val)}
+                />
+                <DateInput
+                  label="Koniec"
+                  value={item.end_date}
+                  onChange={(val) => handleUpdateItem(idx, "end_date", val)}
+                />
+              </div>
             </div>
 
             <Textarea

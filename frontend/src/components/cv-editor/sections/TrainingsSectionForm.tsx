@@ -69,24 +69,31 @@ export const TrainingsSectionForm: React.FC<TrainingsSectionFormProps> = React.m
               </button>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              <Input
-                label="Nazwa szkolenia"
-                value={trn.name}
-                onChange={(e) => handleUpdateItem(idx, "name", e.target.value)}
-                required
-              />
-              <Input
-                label="Organizator"
-                value={trn.organizer}
-                onChange={(e) => handleUpdateItem(idx, "organizer", e.target.value)}
-              />
-              <DateInput
-                label="Data ukończenia"
-                value={trn.date}
-                onChange={(val) => handleUpdateItem(idx, "date", val)}
-              />
+            <Input
+              label="Nazwa szkolenia"
+              value={trn.name}
+              onChange={(e) => handleUpdateItem(idx, "name", e.target.value)}
+              required
+            />
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div className="sm:col-span-2">
+                <Input
+                  label="Organizator"
+                  value={trn.organizer}
+                  onChange={(e) => handleUpdateItem(idx, "organizer", e.target.value)}
+                  placeholder="np. Udemy, Sages, Coursera"
+                />
+              </div>
+              <div className="sm:col-span-1">
+                <DateInput
+                  label="Data ukończenia"
+                  value={trn.date}
+                  onChange={(val) => handleUpdateItem(idx, "date", val)}
+                />
+              </div>
             </div>
+
             <Textarea
               label="Opis"
               value={trn.description}
