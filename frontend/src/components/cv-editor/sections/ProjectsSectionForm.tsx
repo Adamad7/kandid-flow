@@ -149,7 +149,6 @@ export const ProjectsSectionForm: React.FC<ProjectsSectionFormProps> = React.mem
               value={proj.description}
               onChange={(e) => handleUpdateItem(idx, "description", e.target.value)}
               rows={2}
-              className="text-xs"
             />
 
             <CommaSeparatedInput

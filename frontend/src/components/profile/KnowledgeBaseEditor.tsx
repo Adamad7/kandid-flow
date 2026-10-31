@@ -1561,7 +1561,7 @@ export const KnowledgeBaseEditor: React.FC = () => {
                 type="text"
                 value={summarySection.title}
                 onChange={(e) => updateSectionTitle("summary", e.target.value)}
-                className="font-semibold text-slate-900 dark:text-slate-100 text-base bg-transparent border-b border-transparent hover:border-slate-300 dark:hover:border-slate-700 focus:border-blue-500 focus:outline-none px-1 py-0.5"
+                className="font-semibold text-slate-900 dark:text-slate-100 text-sm bg-transparent border-b border-transparent hover:border-slate-300 dark:hover:border-slate-700 focus:border-blue-500 focus:outline-none px-1 py-0.5"
                 placeholder="Tytuł sekcji"
               />
               <span className="text-xs text-slate-400 dark:text-slate-500 font-mono">(Summary)</span>
@@ -1591,7 +1591,7 @@ export const KnowledgeBaseEditor: React.FC = () => {
                 type="text"
                 value={skillsSection.title}
                 onChange={(e) => updateSectionTitle(skillsSection.id, e.target.value)}
-                className="font-semibold text-slate-900 dark:text-slate-100 text-base bg-transparent border-b border-transparent hover:border-slate-300 dark:hover:border-slate-700 focus:border-blue-500 focus:outline-none px-1 py-0.5"
+                className="font-semibold text-slate-900 dark:text-slate-100 text-sm bg-transparent border-b border-transparent hover:border-slate-300 dark:hover:border-slate-700 focus:border-blue-500 focus:outline-none px-1 py-0.5"
                 placeholder="Tytuł sekcji"
               />
               <span className="text-xs text-slate-400 dark:text-slate-500 font-mono">(Skills)</span>
@@ -1809,7 +1809,7 @@ export const KnowledgeBaseEditor: React.FC = () => {
                 type="text"
                 value={expSection.title}
                 onChange={(e) => updateSectionTitle(expSection.id, e.target.value)}
-                className="font-semibold text-slate-900 dark:text-slate-100 text-base bg-transparent border-b border-transparent hover:border-slate-300 dark:hover:border-slate-700 focus:border-blue-500 focus:outline-none px-1 py-0.5"
+                className="font-semibold text-slate-900 dark:text-slate-100 text-sm bg-transparent border-b border-transparent hover:border-slate-300 dark:hover:border-slate-700 focus:border-blue-500 focus:outline-none px-1 py-0.5"
                 placeholder="Tytuł sekcji"
               />
               <span className="text-xs text-slate-400 dark:text-slate-500 font-mono">(Experience)</span>
@@ -1919,7 +1919,7 @@ export const KnowledgeBaseEditor: React.FC = () => {
                 type="text"
                 value={projectsSection.title}
                 onChange={(e) => updateSectionTitle(projectsSection.id, e.target.value)}
-                className="font-semibold text-slate-900 dark:text-slate-100 text-base bg-transparent border-b border-transparent hover:border-slate-300 dark:hover:border-slate-700 focus:border-blue-500 focus:outline-none px-1 py-0.5"
+                className="font-semibold text-slate-900 dark:text-slate-100 text-sm bg-transparent border-b border-transparent hover:border-slate-300 dark:hover:border-slate-700 focus:border-blue-500 focus:outline-none px-1 py-0.5"
                 placeholder="Tytuł sekcji"
               />
               <span className="text-xs text-slate-400 dark:text-slate-500 font-mono">(Projects)</span>
@@ -2031,7 +2031,7 @@ export const KnowledgeBaseEditor: React.FC = () => {
                 type="text"
                 value={eduSection.title}
                 onChange={(e) => updateSectionTitle(eduSection.id, e.target.value)}
-                className="font-semibold text-slate-900 dark:text-slate-100 text-base bg-transparent border-b border-transparent hover:border-slate-300 dark:hover:border-slate-700 focus:border-blue-500 focus:outline-none px-1 py-0.5"
+                className="font-semibold text-slate-900 dark:text-slate-100 text-sm bg-transparent border-b border-transparent hover:border-slate-300 dark:hover:border-slate-700 focus:border-blue-500 focus:outline-none px-1 py-0.5"
                 placeholder="Tytuł sekcji"
               />
               <span className="text-xs text-slate-400 dark:text-slate-500 font-mono">(Education)</span>
@@ -2127,7 +2127,7 @@ export const KnowledgeBaseEditor: React.FC = () => {
                 type="text"
                 value={certsSection.title}
                 onChange={(e) => updateSectionTitle(certsSection.id, e.target.value)}
-                className="font-semibold text-slate-900 dark:text-slate-100 text-base bg-transparent border-b border-transparent hover:border-slate-300 dark:hover:border-slate-700 focus:border-blue-500 focus:outline-none px-1 py-0.5"
+                className="font-semibold text-slate-900 dark:text-slate-100 text-sm bg-transparent border-b border-transparent hover:border-slate-300 dark:hover:border-slate-700 focus:border-blue-500 focus:outline-none px-1 py-0.5"
                 placeholder="Tytuł sekcji"
               />
               <span className="text-xs text-slate-400 dark:text-slate-500 font-mono">(Certificates)</span>
@@ -2210,7 +2210,7 @@ export const KnowledgeBaseEditor: React.FC = () => {
                 type="text"
                 value={languagesSection.title}
                 onChange={(e) => updateSectionTitle(languagesSection.id, e.target.value)}
-                className="font-semibold text-slate-900 dark:text-slate-100 text-base bg-transparent border-b border-transparent hover:border-slate-300 dark:hover:border-slate-700 focus:border-blue-500 focus:outline-none px-1 py-0.5"
+                className="font-semibold text-slate-900 dark:text-slate-100 text-sm bg-transparent border-b border-transparent hover:border-slate-300 dark:hover:border-slate-700 focus:border-blue-500 focus:outline-none px-1 py-0.5"
                 placeholder="Tytuł sekcji"
               />
               <span className="text-xs text-slate-400 dark:text-slate-500 font-mono">(Languages)</span>
@@ -2292,7 +2292,7 @@ export const KnowledgeBaseEditor: React.FC = () => {
                 type="text"
                 value={trainingsSection.title}
                 onChange={(e) => updateSectionTitle(trainingsSection.id, e.target.value)}
-                className="font-semibold text-slate-900 dark:text-slate-100 text-base bg-transparent border-b border-transparent hover:border-slate-300 dark:hover:border-slate-700 focus:border-blue-500 focus:outline-none px-1 py-0.5"
+                className="font-semibold text-slate-900 dark:text-slate-100 text-sm bg-transparent border-b border-transparent hover:border-slate-300 dark:hover:border-slate-700 focus:border-blue-500 focus:outline-none px-1 py-0.5"
                 placeholder="Tytuł sekcji"
               />
               <span className="text-xs text-slate-400 dark:text-slate-500 font-mono">(Trainings)</span>
@@ -2378,7 +2378,7 @@ export const KnowledgeBaseEditor: React.FC = () => {
                 type="text"
                 value={achievementsSection.title}
                 onChange={(e) => updateSectionTitle(achievementsSection.id, e.target.value)}
-                className="font-semibold text-slate-900 dark:text-slate-100 text-base bg-transparent border-b border-transparent hover:border-slate-300 dark:hover:border-slate-700 focus:border-blue-500 focus:outline-none px-1 py-0.5"
+                className="font-semibold text-slate-900 dark:text-slate-100 text-sm bg-transparent border-b border-transparent hover:border-slate-300 dark:hover:border-slate-700 focus:border-blue-500 focus:outline-none px-1 py-0.5"
                 placeholder="Tytuł sekcji"
               />
               <span className="text-xs text-slate-400 dark:text-slate-500 font-mono">(Achievements)</span>
@@ -2461,7 +2461,7 @@ export const KnowledgeBaseEditor: React.FC = () => {
                 type="text"
                 value={interestsSection.title}
                 onChange={(e) => updateSectionTitle(interestsSection.id, e.target.value)}
-                className="font-semibold text-slate-900 dark:text-slate-100 text-base bg-transparent border-b border-transparent hover:border-slate-300 dark:hover:border-slate-700 focus:border-blue-500 focus:outline-none px-1 py-0.5"
+                className="font-semibold text-slate-900 dark:text-slate-100 text-sm bg-transparent border-b border-transparent hover:border-slate-300 dark:hover:border-slate-700 focus:border-blue-500 focus:outline-none px-1 py-0.5"
                 placeholder="Tytuł sekcji"
               />
               <span className="text-xs text-slate-400 dark:text-slate-500 font-mono">(Interests)</span>
@@ -2519,7 +2519,7 @@ export const KnowledgeBaseEditor: React.FC = () => {
                   value={cs.title}
                   onChange={(e) => updateSectionTitle(cs.id, e.target.value)}
                   placeholder="Wpisz nazwę sekcji (np. Języki obce, Zainteresowania, Publikacje)..."
-                  className="font-semibold text-slate-900 dark:text-slate-100 text-base bg-transparent border-b border-dashed border-slate-300 dark:border-slate-700 hover:border-blue-500 focus:border-blue-500 focus:outline-none px-1 py-0.5 w-full max-w-md"
+                  className="font-semibold text-slate-900 dark:text-slate-100 text-sm bg-transparent border-b border-dashed border-slate-300 dark:border-slate-700 hover:border-blue-500 focus:border-blue-500 focus:outline-none px-1 py-0.5 w-full max-w-md"
                 />
               </div>
               <button
@@ -2579,7 +2579,7 @@ export const KnowledgeBaseEditor: React.FC = () => {
                 type="text"
                 value={clauseSection.title}
                 onChange={(e) => updateSectionTitle(clauseSection.id, e.target.value)}
-                className="font-semibold text-slate-900 dark:text-slate-100 text-base bg-transparent border-b border-transparent hover:border-slate-300 dark:hover:border-slate-700 focus:border-blue-500 focus:outline-none px-1 py-0.5"
+                className="font-semibold text-slate-900 dark:text-slate-100 text-sm bg-transparent border-b border-transparent hover:border-slate-300 dark:hover:border-slate-700 focus:border-blue-500 focus:outline-none px-1 py-0.5"
                 placeholder="Tytuł sekcji"
               />
               <span className="text-xs text-slate-400 dark:text-slate-500 font-mono">(RODO / GDPR)</span>

@@ -80,7 +80,7 @@ export const SkillsSectionForm: React.FC<SkillsSectionFormProps> = React.memo(
                   value={cat.category}
                   onChange={(e) => handleUpdateCategoryName(catIdx, e.target.value)}
                   placeholder="Nazwa kategorii (np. Języki i Frameworki)"
-                  className="h-7 text-xs font-semibold"
+                  className="h-8 text-sm font-semibold"
                 />
               </div>
               <div className="flex items-center gap-1">

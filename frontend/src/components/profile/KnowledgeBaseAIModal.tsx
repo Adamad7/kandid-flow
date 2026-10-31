@@ -311,7 +311,7 @@ export const KnowledgeBaseAIModal: React.FC<KnowledgeBaseAIModalProps> = ({
                         const val = parseInt(e.target.value, 10);
                         setContextWindow(isNaN(val) ? 0 : val);
                       }}
-                      className="text-right font-mono text-xs h-8"
+                      className="text-right font-mono text-sm h-8"
                       placeholder="32768"
                     />
                   </div>

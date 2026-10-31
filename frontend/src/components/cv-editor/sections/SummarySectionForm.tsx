@@ -14,7 +14,6 @@ export const SummarySectionForm: React.FC<SummarySectionFormProps> = React.memo(
         value={block.content || ""}
         onChange={(e) => onChange({ ...block, content: e.target.value })}
         rows={4}
-        className="text-xs leading-relaxed"
         placeholder="Wprowadź treść podsumowania zawodowego..."
         data-cv-field={`section-field:${block.id}:content`}
       />

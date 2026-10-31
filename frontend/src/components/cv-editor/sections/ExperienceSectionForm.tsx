@@ -151,7 +151,6 @@ export const ExperienceSectionForm: React.FC<ExperienceSectionFormProps> = React
                 )
               }
               rows={3}
-              className="text-xs font-sans"
             />
           </div>
         ))}
