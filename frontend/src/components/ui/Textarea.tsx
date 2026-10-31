@@ -124,12 +124,43 @@ export const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
       }
       const el = innerRef.current;
       if (!el) return;
-      // If no internal vertical scrolling is needed
-      if (el.scrollHeight <= el.clientHeight) {
-        const scrollParent = el.closest(".overflow-y-auto, .overflow-auto") as HTMLElement | null;
-        if (scrollParent) {
-          scrollParent.scrollTop += e.deltaY;
+
+      const delta = e.deltaMode === 1 ? e.deltaY * 20 : e.deltaY;
+      if (delta === 0) return;
+
+      // Find nearest ancestor scroll container that actually has scrollable content
+      let scrollParent: HTMLElement | null = null;
+      let current = el.parentElement;
+
+      while (
+        current &&
+        current !== document.body &&
+        current !== document.documentElement
+      ) {
+        if (
+          current.matches(".overflow-y-auto, .overflow-auto") &&
+          current.scrollHeight > current.clientHeight
+        ) {
+          scrollParent = current;
+          break;
         }
+        current = current.parentElement;
+      }
+
+      if (scrollParent) {
+        const canScrollDown =
+          delta > 0 &&
+          scrollParent.scrollTop + scrollParent.clientHeight <
+            scrollParent.scrollHeight - 1;
+        const canScrollUp = delta < 0 && scrollParent.scrollTop > 0;
+
+        if (canScrollDown || canScrollUp) {
+          scrollParent.scrollTop += delta;
+        } else if (typeof window !== "undefined") {
+          window.scrollBy({ top: delta, left: 0, behavior: "auto" });
+        }
+      } else if (typeof window !== "undefined") {
+        window.scrollBy({ top: delta, left: 0, behavior: "auto" });
       }
     };
 
