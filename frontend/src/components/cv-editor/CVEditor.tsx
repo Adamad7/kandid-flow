@@ -8,6 +8,7 @@ import {
   FileText,
   Palette,
   Plus,
+  Download,
 } from "lucide-react";
 import { api } from "../../lib/api";
 import { useDebounce } from "../../hooks/useDebounce";
@@ -682,6 +683,17 @@ export const CVEditor: React.FC<CVEditorProps> = ({
             <Save className="h-3.5 w-3.5 mr-1" />
             Zapisz zmiany
           </Button>
+
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={handleExportPdf}
+            isLoading={isExportingPdf}
+            className="text-xs h-8"
+          >
+            <Download className="h-3.5 w-3.5 mr-1" />
+            Pobierz PDF
+          </Button>
         </div>
       </header>
 
@@ -902,7 +914,7 @@ export const CVEditor: React.FC<CVEditorProps> = ({
               ? { width: "calc(100% - var(--split-ratio, 50%))" }
               : undefined
           }
-          className={`w-full h-full p-4 ${
+          className={`w-full h-full overflow-hidden ${
             mobileTab === "edit" ? "hidden lg:block" : "block"
           } ${isDragging ? "pointer-events-none select-none" : ""}`}
         >
@@ -910,8 +922,6 @@ export const CVEditor: React.FC<CVEditorProps> = ({
             layoutSchema={debouncedLayoutSchema}
             jobOfferId={job.id}
             language={layoutSchema.language || currentVersion.language || "pl"}
-            onExportPdf={handleExportPdf}
-            isExportingPdf={isExportingPdf}
           />
         </div>
       </div>

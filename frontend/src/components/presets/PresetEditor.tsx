@@ -15,6 +15,7 @@ import {
   Plus,
   Trash2,
   Edit2,
+  Download,
 } from "lucide-react";
 import { api } from "../../lib/api";
 import type {
@@ -684,6 +685,17 @@ export const PresetEditor: React.FC<PresetEditorProps> = ({
             <Save className="h-3.5 w-3.5 mr-1.5" />
             Zapisz szablon
           </Button>
+
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={handleExportPdf}
+            isLoading={isExportingPdf}
+            className="text-xs h-8"
+          >
+            <Download className="h-3.5 w-3.5 mr-1.5" />
+            Pobierz PDF
+          </Button>
         </div>
       </header>
 
@@ -1292,7 +1304,7 @@ export const PresetEditor: React.FC<PresetEditorProps> = ({
 
         {/* Right Pane: Live Typst SVG Preview */}
         <div
-          className={`w-full lg:w-1/2 h-full p-4 ${
+          className={`w-full lg:w-1/2 h-full overflow-hidden ${
             mobileTab === "edit" ? "hidden lg:block" : "block"
           }`}
         >
@@ -1300,8 +1312,6 @@ export const PresetEditor: React.FC<PresetEditorProps> = ({
             layoutSchema={currentLayoutSchema}
             jobOfferId={null}
             language={language}
-            onExportPdf={handleExportPdf}
-            isExportingPdf={isExportingPdf}
           />
         </div>
       </div>

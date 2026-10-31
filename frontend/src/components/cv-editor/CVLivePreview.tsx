@@ -2,21 +2,17 @@ import React, { useEffect, useState, useRef } from "react";
 import {
   ZoomIn,
   ZoomOut,
-  RotateCcw,
-  Download,
-  FileText,
   AlertCircle,
   RefreshCw,
 } from "lucide-react";
 import { api } from "../../lib/api";
 import type { CVLayoutSchema } from "../../types";
-import { Button } from "../ui/Button";
 
 interface CVLivePreviewProps {
   layoutSchema: CVLayoutSchema;
   jobOfferId?: string | null;
   language?: string;
-  onExportPdf: () => void;
+  onExportPdf?: () => void;
   isExportingPdf?: boolean;
 }
 
@@ -27,8 +23,6 @@ const CVLivePreviewComponent: React.FC<CVLivePreviewProps> = ({
   layoutSchema,
   jobOfferId,
   language = "pl",
-  onExportPdf,
-  isExportingPdf = false,
 }) => {
   const [svgPages, setSvgPages] = useState<string[]>([]);
   const [isCompiling, setIsCompiling] = useState(false);
@@ -101,82 +95,41 @@ const CVLivePreviewComponent: React.FC<CVLivePreviewProps> = ({
   }, []);
 
   return (
-    <div className="flex flex-col h-full bg-slate-100/90 dark:bg-slate-900/50 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden">
-      {/* Top Preview Toolbar */}
-      <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-4 py-2.5">
-        <div className="flex items-center gap-2">
-          <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-700 dark:text-slate-200">
-            <FileText className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-            <span>Podgląd Typst (Na żywo)</span>
-          </div>
-
-          {isCompiling ? (
-            <span className="flex items-center gap-1 text-[11px] text-blue-600 dark:text-blue-400 font-medium animate-pulse ml-2">
-              <RefreshCw className="h-3 w-3 animate-spin" />
-              Kompilacja...
-            </span>
-          ) : (
-            <span className="text-[11px] text-slate-400 dark:text-slate-500 ml-2">
-              {svgPages.length} {svgPages.length === 1 ? "strona" : "strony"}
-            </span>
-          )}
+    <div className="relative flex flex-col h-full w-full bg-slate-100/90 dark:bg-slate-950/50 overflow-hidden">
+      {/* Discreet compilation indicator */}
+      {isCompiling && (
+        <div className="absolute top-4 right-4 z-20 flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/90 dark:bg-slate-800/90 backdrop-blur-sm border border-slate-200 dark:border-slate-700 shadow-sm text-xs font-medium text-blue-600 dark:text-blue-400 select-none animate-pulse">
+          <RefreshCw className="h-3.5 w-3.5 animate-spin" />
+          <span>Kompilacja...</span>
         </div>
+      )}
 
-        <div className="flex items-center gap-2">
-          {/* Zoom hint badge */}
-          <span
-            className="hidden sm:inline-block text-[10px] text-slate-400 dark:text-slate-500 font-normal select-none"
-            title="Przytrzymaj Ctrl i użyj kółka myszy, aby zmienić powiększenie"
-          >
-            Ctrl + kółko myszy = zoom
-          </span>
-
-          {/* Zoom Controls */}
-          <div
-            className="flex items-center bg-slate-100 dark:bg-slate-800 rounded-lg p-0.5 border border-slate-200 dark:border-slate-700"
-            title="Ctrl + kółko myszy = zoom"
-          >
-            <button
-              type="button"
-              onClick={() => setZoomScale((s) => Math.max(0.4, Math.round((s - 0.1) * 10) / 10))}
-              className="p-1 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white rounded cursor-pointer"
-              title="Oddal (Ctrl + scroll w dół)"
-            >
-              <ZoomOut className="h-3.5 w-3.5" />
-            </button>
-            <span className="text-[11px] font-mono px-1.5 text-slate-600 dark:text-slate-300 min-w-[42px] text-center select-none">
-              {Math.round(zoomScale * 100)}%
-            </span>
-            <button
-              type="button"
-              onClick={() => setZoomScale((s) => Math.min(2.0, Math.round((s + 0.1) * 10) / 10))}
-              className="p-1 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white rounded cursor-pointer"
-              title="Przybliż (Ctrl + scroll w górę)"
-            >
-              <ZoomIn className="h-3.5 w-3.5" />
-            </button>
-            <button
-              type="button"
-              onClick={() => setZoomScale(1.0)}
-              className="p-1 text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 rounded border-l border-slate-200 dark:border-slate-700 ml-0.5 cursor-pointer"
-              title="Resetuj zoom (100%)"
-            >
-              <RotateCcw className="h-3 w-3" />
-            </button>
-          </div>
-
-          {/* Download PDF Button */}
-          <Button
-            size="sm"
-            variant="primary"
-            onClick={onExportPdf}
-            isLoading={isExportingPdf}
-            className="text-xs h-8 shadow-xs"
-          >
-            <Download className="h-3.5 w-3.5 mr-1.5" />
-            Pobierz PDF
-          </Button>
-        </div>
+      {/* Floating vertical Zoom Controls in bottom-right corner */}
+      <div
+        className="absolute bottom-6 right-6 z-20 flex flex-col items-center bg-white/95 dark:bg-slate-800/95 backdrop-blur-sm border border-slate-200 dark:border-slate-700 rounded-xl shadow-md p-1 gap-1 select-none"
+        title="Ctrl + kółko myszy = zoom"
+      >
+        <button
+          type="button"
+          onClick={() => setZoomScale((s) => Math.max(0.4, Math.round((s - 0.1) * 100) / 100))}
+          className="p-2 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-700/60 rounded-lg cursor-pointer transition-colors"
+          title="Oddal (Ctrl + scroll w dół)"
+          aria-label="Oddal"
+        >
+          <ZoomOut className="h-4 w-4" />
+        </button>
+        <span className="text-xs font-mono px-1 py-0.5 text-slate-600 dark:text-slate-300 select-none min-w-[42px] text-center">
+          {Math.round(zoomScale * 100)}%
+        </span>
+        <button
+          type="button"
+          onClick={() => setZoomScale((s) => Math.min(2.0, Math.round((s + 0.1) * 100) / 100))}
+          className="p-2 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-700/60 rounded-lg cursor-pointer transition-colors"
+          title="Przybliż (Ctrl + scroll w górę)"
+          aria-label="Przybliż"
+        >
+          <ZoomIn className="h-4 w-4" />
+        </button>
       </div>
 
       {/* Pages Canvas */}
