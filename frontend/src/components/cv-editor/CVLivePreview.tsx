@@ -35,6 +35,7 @@ const CVLivePreviewComponent: React.FC<CVLivePreviewProps> = ({
   const [compileError, setCompileError] = useState<string | null>(null);
   const [zoomScale, setZoomScale] = useState(0.9);
 
+  const previewContainerRef = useRef<HTMLDivElement>(null);
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   const triggerPreview = async () => {
@@ -76,6 +77,29 @@ const CVLivePreviewComponent: React.FC<CVLivePreviewProps> = ({
     };
   }, [layoutSchema, jobOfferId, language]);
 
+  // Non-passive Ctrl + wheel event listener for zoom
+  useEffect(() => {
+    const container = previewContainerRef.current;
+    if (!container) return;
+
+    const handleWheel = (e: WheelEvent) => {
+      if (e.ctrlKey || e.metaKey) {
+        e.preventDefault();
+        const step = 0.05;
+        if (e.deltaY < 0) {
+          setZoomScale((prev) => Math.min(2.0, Math.round((prev + step) * 100) / 100));
+        } else if (e.deltaY > 0) {
+          setZoomScale((prev) => Math.max(0.4, Math.round((prev - step) * 100) / 100));
+        }
+      }
+    };
+
+    container.addEventListener("wheel", handleWheel, { passive: false });
+    return () => {
+      container.removeEventListener("wheel", handleWheel);
+    };
+  }, []);
+
   return (
     <div className="flex flex-col h-full bg-slate-100/90 dark:bg-slate-900/50 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden">
       {/* Top Preview Toolbar */}
@@ -99,31 +123,42 @@ const CVLivePreviewComponent: React.FC<CVLivePreviewProps> = ({
         </div>
 
         <div className="flex items-center gap-2">
+          {/* Zoom hint badge */}
+          <span
+            className="hidden sm:inline-block text-[10px] text-slate-400 dark:text-slate-500 font-normal select-none"
+            title="Przytrzymaj Ctrl i użyj kółka myszy, aby zmienić powiększenie"
+          >
+            Ctrl + kółko myszy = zoom
+          </span>
+
           {/* Zoom Controls */}
-          <div className="flex items-center bg-slate-100 dark:bg-slate-800 rounded-lg p-0.5 border border-slate-200 dark:border-slate-700">
+          <div
+            className="flex items-center bg-slate-100 dark:bg-slate-800 rounded-lg p-0.5 border border-slate-200 dark:border-slate-700"
+            title="Ctrl + kółko myszy = zoom"
+          >
             <button
               type="button"
-              onClick={() => setZoomScale((s) => Math.max(0.5, Math.round((s - 0.1) * 10) / 10))}
-              className="p-1 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white rounded"
-              title="Oddal"
+              onClick={() => setZoomScale((s) => Math.max(0.4, Math.round((s - 0.1) * 10) / 10))}
+              className="p-1 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white rounded cursor-pointer"
+              title="Oddal (Ctrl + scroll w dół)"
             >
               <ZoomOut className="h-3.5 w-3.5" />
             </button>
-            <span className="text-[11px] font-mono px-1.5 text-slate-600 dark:text-slate-300 min-w-[42px] text-center">
+            <span className="text-[11px] font-mono px-1.5 text-slate-600 dark:text-slate-300 min-w-[42px] text-center select-none">
               {Math.round(zoomScale * 100)}%
             </span>
             <button
               type="button"
               onClick={() => setZoomScale((s) => Math.min(2.0, Math.round((s + 0.1) * 10) / 10))}
-              className="p-1 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white rounded"
-              title="Przybliż"
+              className="p-1 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white rounded cursor-pointer"
+              title="Przybliż (Ctrl + scroll w górę)"
             >
               <ZoomIn className="h-3.5 w-3.5" />
             </button>
             <button
               type="button"
               onClick={() => setZoomScale(1.0)}
-              className="p-1 text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 rounded border-l border-slate-200 dark:border-slate-700 ml-0.5"
+              className="p-1 text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 rounded border-l border-slate-200 dark:border-slate-700 ml-0.5 cursor-pointer"
               title="Resetuj zoom (100%)"
             >
               <RotateCcw className="h-3 w-3" />
@@ -145,7 +180,7 @@ const CVLivePreviewComponent: React.FC<CVLivePreviewProps> = ({
       </div>
 
       {/* Pages Canvas */}
-      <div className="flex-1 overflow-auto p-6">
+      <div ref={previewContainerRef} className="flex-1 overflow-auto p-6">
         <div className="min-w-full w-fit flex flex-col items-center gap-8 pb-8">
           {compileError && (
             <div className="w-full max-w-xl rounded-lg bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/50 p-3 text-xs text-rose-700 dark:text-rose-400 flex items-center gap-2">

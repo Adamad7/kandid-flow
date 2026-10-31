@@ -63,6 +63,7 @@ import { Modal } from "../ui/Modal";
 import { DateInput } from "../ui/DateInput";
 import { CVLivePreview } from "./CVLivePreview";
 import { CVStylePanel, DEFAULT_CV_STYLING } from "./CVStylePanel";
+import { ThemeToggle } from "../ui/ThemeToggle";
 
 interface CommaSeparatedInputProps {
   label?: string;
@@ -173,6 +174,58 @@ export const CVEditor: React.FC<CVEditorProps> = ({
 
   // Responsive mobile view tab ("edit" | "preview")
   const [mobileTab, setMobileTab] = useState<"edit" | "preview">("edit");
+
+  // Draggable Split-View State (desktop)
+  const [splitRatio, setSplitRatio] = useState<number>(50);
+  const [isDragging, setIsDragging] = useState<boolean>(false);
+  const workspaceContainerRef = useRef<HTMLDivElement>(null);
+  const [isDesktop, setIsDesktop] = useState(() =>
+    typeof window !== "undefined" ? window.innerWidth >= 1024 : true
+  );
+
+  useEffect(() => {
+    const mq = window.matchMedia("(min-width: 1024px)");
+    const handler = (e: MediaQueryListEvent) => setIsDesktop(e.matches);
+    setIsDesktop(mq.matches);
+    mq.addEventListener("change", handler);
+    return () => mq.removeEventListener("change", handler);
+  }, []);
+
+  useEffect(() => {
+    if (!isDragging) return;
+
+    const handleMouseMove = (e: MouseEvent) => {
+      const container = workspaceContainerRef.current;
+      if (!container) return;
+
+      const rect = container.getBoundingClientRect();
+      const offsetX = e.clientX - rect.left;
+      const width = rect.width;
+
+      if (width > 0) {
+        const rawRatio = (offsetX / width) * 100;
+        const clampedRatio = Math.max(25, Math.min(75, rawRatio));
+        setSplitRatio(Math.round(clampedRatio * 10) / 10);
+      }
+    };
+
+    const handleMouseUp = () => {
+      setIsDragging(false);
+    };
+
+    window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("mouseup", handleMouseUp);
+
+    return () => {
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseup", handleMouseUp);
+    };
+  }, [isDragging]);
+
+  const handleSplitterMouseDown = (e: React.MouseEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
 
   useEffect(() => {
     loadVersions();
@@ -2046,6 +2099,9 @@ export const CVEditor: React.FC<CVEditorProps> = ({
             </select>
           </div>
 
+          {/* Theme Toggle */}
+          <ThemeToggle />
+
           {/* Mobile Edit/Preview Tabs (visible < lg) */}
           <div className="flex lg:hidden bg-slate-100 dark:bg-slate-800 rounded-lg p-0.5 border border-slate-200 dark:border-slate-700">
             <button
@@ -2094,10 +2150,16 @@ export const CVEditor: React.FC<CVEditorProps> = ({
       </header>
 
       {/* Main Split-View Workspace */}
-      <div className="flex-1 flex overflow-hidden">
+      <div
+        ref={workspaceContainerRef}
+        className={`flex-1 flex overflow-hidden relative ${
+          isDragging ? "select-none cursor-col-resize" : ""
+        }`}
+      >
         {/* Left Pane: Dynamic Block-Level Form Editor */}
         <div
-          className={`w-full lg:w-1/2 h-full overflow-y-auto p-6 space-y-6 ${
+          style={isDesktop ? { width: `${splitRatio}%` } : undefined}
+          className={`w-full h-full overflow-y-auto p-6 space-y-6 ${
             mobileTab === "preview" ? "hidden lg:block" : "block"
           }`}
         >
@@ -2456,9 +2518,31 @@ export const CVEditor: React.FC<CVEditorProps> = ({
           )}
         </div>
 
+        {/* Draggable Splitter Bar (desktop only) */}
+        <div
+          role="separator"
+          aria-orientation="vertical"
+          aria-valuenow={splitRatio}
+          aria-label="Zmień szerokość paneli"
+          onMouseDown={handleSplitterMouseDown}
+          className={`hidden lg:flex w-2.5 shrink-0 items-center justify-center cursor-col-resize hover:bg-blue-500/15 active:bg-blue-500/25 transition-colors z-20 group select-none border-x border-slate-200/60 dark:border-slate-800/60 bg-slate-100/60 dark:bg-slate-900/40 ${
+            isDragging ? "bg-blue-500/20 dark:bg-blue-900/30 ring-1 ring-blue-500/30" : ""
+          }`}
+          title="Przeciągnij, aby zmienić szerokość paneli"
+        >
+          <div
+            className={`w-0.5 h-12 rounded-full transition-colors ${
+              isDragging
+                ? "bg-blue-600 dark:bg-blue-400"
+                : "bg-slate-300 dark:bg-slate-700 group-hover:bg-blue-500 dark:group-hover:bg-blue-400"
+            }`}
+          />
+        </div>
+
         {/* Right Pane: Live Typst SVG Preview */}
         <div
-          className={`w-full lg:w-1/2 h-full p-4 ${
+          style={isDesktop ? { width: `${100 - splitRatio}%` } : undefined}
+          className={`w-full h-full p-4 ${
             mobileTab === "edit" ? "hidden lg:block" : "block"
           }`}
         >
