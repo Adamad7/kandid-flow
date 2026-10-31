@@ -2045,7 +2045,7 @@ export const CVEditor: React.FC<CVEditorProps> = ({
   };
 
   return (
-    <div className="flex flex-col h-[calc(100vh-4.5rem)] -m-6 bg-slate-50 dark:bg-slate-950 overflow-hidden">
+    <div className="flex flex-col h-full w-full bg-slate-50 dark:bg-slate-950 overflow-hidden">
       {/* Top Navbar */}
       <header className="border-b border-slate-200 bg-white px-6 py-3 shrink-0 flex items-center justify-between gap-4 shadow-xs dark:border-slate-800 dark:bg-slate-900">
         <div className="flex items-center gap-3 truncate">

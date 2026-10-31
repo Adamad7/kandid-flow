@@ -143,7 +143,7 @@ export const App: React.FC = () => {
   // If currently in Split-View CV Editor:
   if (editingCVVersion && editingCVJob) {
     return (
-      <div className="min-h-screen bg-slate-100 dark:bg-slate-950 flex flex-col p-6 transition-colors">
+      <div className="h-screen bg-slate-50 dark:bg-slate-950 flex flex-col transition-colors overflow-hidden">
         <CVEditor
           initialVersion={editingCVVersion}
           job={editingCVJob}
