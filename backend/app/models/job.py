@@ -62,6 +62,9 @@ class JobOffer(Base):
     salary_currency: Mapped[str | None] = mapped_column(
         String(10), nullable=True, default="PLN", server_default="PLN"
     )
+    salary_period: Mapped[str | None] = mapped_column(
+        String(20), nullable=True, default="month", server_default="month"
+    )
     contract_type: Mapped[str | None] = mapped_column(String(50), nullable=True)
     raw_payload: Mapped[dict[str, Any]] = mapped_column(
         JSONB,

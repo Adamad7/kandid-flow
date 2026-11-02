@@ -369,17 +369,19 @@ class JobParserWorker:
             title = job.role_title or raw_payload.get("title", "")
             company = job.company_name or raw_payload.get("company", "")
             requirements = raw_payload.get("requirements_raw", [])
+            tech_stack_raw = raw_payload.get("tech_stack_raw", [])
             company_label = company or "zespole IT"
             role_label = title or "Specjalisty"
 
             if mode == "traditional":
                 # Heuristic / traditional rule-based normalization without calling LLM
                 logger.info("Executing traditional (rule-based) parsing for job %s", job.id)
+                traditional_tech = tech_stack_raw if tech_stack_raw else [r for r in requirements if len(r) < 30][:8]
                 structured = StructuredJobData(
                     role_summary=f"Rola {role_label} w firmie {company_label}.",
                     must_have=requirements[:8] if requirements else ["Znajomość technologii IT"],
                     nice_to_have=requirements[8:16] if len(requirements) > 8 else [],
-                    tech_stack=[r for r in requirements if len(r) < 30][:8],
+                    tech_stack=traditional_tech,
                     benefits=[],
                     experience_level="Mid",
                 )
@@ -462,9 +464,14 @@ class JobParserWorker:
                     f"Initial Work Model Tag: {job.work_model or 'Not specified'} "
                     f"({job.work_model_details or ''})"
                 )
+                initial_tech_stack_info = (
+                    f"\nExplicit Portal Tech Stack:\n" + "\n".join(f"- {t}" for t in tech_stack_raw)
+                    if tech_stack_raw
+                    else ""
+                )
 
                 user_prompt = (
-                    f"Title: {title}\nCompany: {company}\n{initial_model_info}\nRequirements:\n"
+                    f"Title: {title}\nCompany: {company}\n{initial_model_info}{initial_tech_stack_info}\nRequirements:\n"
                     + "\n".join(f"- {r}" for r in requirements[:15])
                     + f"\n\nDescription:\n{raw_text[:8000]}\n\n"
                     + f"{work_model_rule}\n\n"
@@ -483,11 +490,17 @@ class JobParserWorker:
                     raise RuntimeError("Model AI zwrócił pustą lub niepoprawną odpowiedź")
 
                 # Normalize structured data with Pydantic
+                ai_tech = parsed_data.get("tech_stack") or []
+                final_tech = (
+                    list(dict.fromkeys(tech_stack_raw + ai_tech))
+                    if tech_stack_raw
+                    else ai_tech
+                )
                 structured = StructuredJobData(
                     role_summary=parsed_data.get("role_summary"),
                     must_have=parsed_data.get("must_have") or [],
                     nice_to_have=parsed_data.get("nice_to_have") or [],
-                    tech_stack=parsed_data.get("tech_stack") or [],
+                    tech_stack=final_tech,
                     benefits=parsed_data.get("benefits") or [],
                     experience_level=parsed_data.get("experience_level"),
                 )

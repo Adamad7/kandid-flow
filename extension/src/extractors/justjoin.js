@@ -14,7 +14,7 @@
 })(typeof self !== "undefined" ? self : this, function () {
   "use strict";
 
-  const VERSION = "1.3.3";
+  const VERSION = "1.4.0";
 
   const COMPANY_BLACKLIST_REGEX =
     /^(o nas|kariera|o nas i kariera|about us|career|zobacz profil firmy|opis|opis stanowiska|o firmie|tech stack|lokalizacja|wymagania|just join it|justjoin)$/i;
@@ -127,6 +127,7 @@
     let salaryMin = null;
     let salaryMax = null;
     let salaryCurrency = "PLN";
+    let salaryPeriod = "month";
 
     const salaryCandidates = [
       '[data-test-id="offer-salary"]',
@@ -138,11 +139,12 @@
       if (el && el.textContent.trim()) {
         const text = el.textContent.trim();
         if (/pln|zł|eur|usd|b2b|uop|net|gross|\d{3,}/i.test(text)) {
-          const parsed = utils.parseSalary ? utils.parseSalary(text) : { raw: text, min: null, max: null, currency: "PLN" };
+          const parsed = utils.parseSalary ? utils.parseSalary(text) : { raw: text, min: null, max: null, currency: "PLN", period: "month" };
           salaryRaw = parsed.raw;
           salaryMin = parsed.min;
           salaryMax = parsed.max;
           salaryCurrency = parsed.currency;
+          salaryPeriod = parsed.period || "month";
           matchedSelectors.push(sel);
           break;
         }
@@ -157,6 +159,9 @@
         salaryMax = parsedBs.max;
         salaryCurrency = parsedBs.currency || "PLN";
         salaryRaw = parsedBs.raw;
+        if (parsedBs.period) {
+          salaryPeriod = parsedBs.period;
+        }
       }
     }
 
@@ -251,25 +256,40 @@
 
     // 5. Tech Stack & Requirements
     const requirements = [];
+    const techStack = [];
 
     // Modern JustJoin Tech stack extraction
-    const headings = document.querySelectorAll('h3, h4');
+    const headings = document.querySelectorAll('h2, h3, h4');
     headings.forEach((h) => {
       const hText = (h.textContent || "").trim();
-      if (/tech stack/i.test(hText)) {
+      if (/tech\s*stack|stos\s+technologiczny/i.test(hText)) {
         matchedSelectors.push('h3:contains("Tech stack")');
         const container = h.parentElement || h.closest('section') || h.nextElementSibling;
         if (container) {
-          // Skills are represented with h4 (name) and optional span (level)
-          const skillItems = container.querySelectorAll('li, div[class*="MuiBox-root"]');
-          skillItems.forEach((item) => {
-            const nameEl = item.querySelector('h4, span[class*="name"]') || item.querySelector('h4');
-            const levelEl = item.querySelector('span[class*="MuiTypography-subtitle5"], span[class*="level"]');
+          // Skills are represented with h4/h5 (name) and optional span (level)
+          const skillCards = container.querySelectorAll('li, div[class*="MuiBox-root"]');
+          skillCards.forEach((card) => {
+            const nameEl = card.querySelector('h4, h5, span[class*="name"]') || (card.matches('h4, h5') ? card : null);
             if (nameEl) {
-              const sName = utils.cleanText(nameEl.textContent);
-              const sLevel = levelEl ? utils.cleanText(levelEl.textContent) : null;
-              if (sName && sName.length > 1 && sName.length < 50 && !/tech stack/i.test(sName)) {
+              const ariaName = (nameEl.getAttribute("aria-label") || "").trim();
+              const textName = utils.cleanText(nameEl.textContent);
+              const sName = ariaName || textName;
+              if (sName && sName.length > 0 && sName.length < 60 && !/tech\s*stack/i.test(sName)) {
+                // Find level span inside this card or sibling
+                const levelEl = card.querySelector(
+                  'span[class*="MuiTypography-root"], span[class*="subtitle5"], span[class*="level"], span'
+                );
+                let sLevel = null;
+                if (levelEl && levelEl !== nameEl) {
+                  const lText = utils.cleanText(levelEl.textContent);
+                  if (lText && lText !== sName && lText.length < 30) {
+                    sLevel = lText;
+                  }
+                }
                 const fullSkill = sLevel ? `${sName} (${sLevel})` : sName;
+                if (!techStack.includes(fullSkill)) {
+                  techStack.push(fullSkill);
+                }
                 if (!requirements.includes(fullSkill)) {
                   requirements.push(fullSkill);
                 }
@@ -289,8 +309,11 @@
       const levelEl = skill.querySelector('span[class*="level"], div[class*="level"]');
       const name = utils.cleanText(nameEl.textContent);
       const level = levelEl ? utils.cleanText(levelEl.textContent) : null;
-      if (name) {
+      if (name && !/tech\s*stack/i.test(name)) {
         const fullSkill = level ? `${name} (${level})` : name;
+        if (!techStack.includes(fullSkill)) {
+          techStack.push(fullSkill);
+        }
         if (!requirements.includes(fullSkill)) {
           requirements.push(fullSkill);
         }
@@ -301,13 +324,19 @@
     let descriptionHtml = null;
     let descriptionText = "";
 
-    // Find "Opis stanowiska" section
+    // Find "Opis stanowiska" / "Job description" section
     let opisContainer = null;
     headings.forEach((h) => {
       const hText = (h.textContent || "").trim();
-      if (/opis stanowiska/i.test(hText)) {
-        matchedSelectors.push('h3:contains("Opis stanowiska")');
-        opisContainer = h.nextElementSibling || h.parentElement;
+      if (
+        /^(?:opis\s+stanowiska|job\s+description|offer\s+description|description|o\s+ofercie|o\s+projekcie)$/i.test(hText) ||
+        /(?:opis\s+stanowiska|job\s+description)/i.test(hText)
+      ) {
+        matchedSelectors.push(`heading:contains("${hText}")`);
+        opisContainer =
+          h.nextElementSibling ||
+          (h.parentElement ? h.parentElement.nextElementSibling : null) ||
+          h.parentElement;
       }
     });
 
@@ -331,6 +360,7 @@
       const descCandidates = [
         '[data-test-id="offer-description"]',
         'div[class*="description"]',
+        'div[class*="offer-content"]',
         'main',
         'article',
       ];
@@ -373,9 +403,11 @@
       salary_min: salaryMin,
       salary_max: salaryMax,
       salary_currency: salaryCurrency,
+      salary_period: salaryPeriod,
       description_html: descriptionHtml,
       description_text: descriptionText,
       requirements_raw: requirements,
+      tech_stack_raw: techStack,
       application_deadline: applicationDeadline,
       custom_metadata: {
         page_title: document.title,

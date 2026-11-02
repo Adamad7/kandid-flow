@@ -6,7 +6,7 @@ from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
-from app.schemas.inbox import ExtractedJobPayload
+from app.schemas.inbox import ExtractedJobPayload, SalaryPeriodType
 
 
 def _validate_deadline(v: object) -> date | None:
@@ -115,6 +115,9 @@ class JobOfferBase(BaseModel):
     salary_currency: str | None = Field(
         default="PLN", description="Currency of salary range, defaults to PLN"
     )
+    salary_period: SalaryPeriodType | None = Field(
+        default="month", description="Compensation period: month, day, or hour"
+    )
     contract_type: str | None = Field(default=None, description="Type of contract: B2B, UoP, etc.")
     notes: str | None = Field(
         default=None, description="Personal candidate notes regarding this offer"
@@ -157,6 +160,7 @@ class JobOfferUpdate(BaseModel):
     salary_min: int | None = None
     salary_max: int | None = None
     salary_currency: str | None = None
+    salary_period: SalaryPeriodType | None = None
     contract_type: str | None = None
     structured_data: StructuredJobData | None = None
     notes: str | None = None

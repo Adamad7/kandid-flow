@@ -23,6 +23,7 @@ import {
   Award,
   Archive,
   ArchiveRestore,
+  HelpCircle,
 } from "lucide-react";
 import { api } from "../../lib/api";
 import type {
@@ -36,7 +37,12 @@ import {
   STATUS_COLORS,
   STATUS_LABELS,
 } from "../../lib/constants";
-import { formatDeadline, formatSalary, normalizeJobOfferUrl } from "../../lib/formatters";
+import {
+  formatDeadline,
+  formatSalary,
+  getSalaryPeriodLabel,
+  normalizeJobOfferUrl,
+} from "../../lib/formatters";
 import { cn } from "../../lib/utils";
 import { RecruitmentTimeline } from "../events/RecruitmentTimeline";
 import { Button } from "../ui/Button";
@@ -250,8 +256,16 @@ export const JobDetailsModal: React.FC<JobDetailsModalProps> = ({
               )}
 
               {salaryText && (
-                <span className="font-semibold text-emerald-700 bg-emerald-50 dark:text-emerald-300 dark:bg-emerald-950/60 px-2 py-0.5 rounded">
-                  {salaryText}
+                <span className="inline-flex items-center gap-1.5 font-semibold text-emerald-700 bg-emerald-50 dark:text-emerald-300 dark:bg-emerald-950/60 px-2 py-0.5 rounded">
+                  <span>{salaryText}</span>
+                  {job.salary_period && job.salary_period !== "month" && (
+                    <span
+                      title={getSalaryPeriodLabel(job.salary_period)}
+                      className="inline-flex items-center cursor-help"
+                    >
+                      <HelpCircle className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                    </span>
+                  )}
                 </span>
               )}
             </div>
@@ -703,23 +717,29 @@ export const JobDetailsModal: React.FC<JobDetailsModalProps> = ({
                 )}
 
                 {/* Tech Stack */}
-                {structured.tech_stack && structured.tech_stack.length > 0 && (
-                  <div>
-                    <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2">
-                      Stos technologiczny
-                    </h4>
-                    <div className="flex flex-wrap gap-1.5">
-                      {structured.tech_stack.map((tech, idx) => (
-                        <span
-                          key={idx}
-                          className="rounded-md bg-slate-100 px-2.5 py-1 text-xs font-mono font-medium text-slate-800 border border-slate-200 dark:bg-slate-800 dark:text-slate-200 dark:border-slate-700"
-                        >
-                          {tech}
-                        </span>
-                      ))}
+                {(() => {
+                  const techStackList = structured?.tech_stack?.length
+                    ? structured.tech_stack
+                    : job.raw_payload?.tech_stack_raw || [];
+                  if (!techStackList.length) return null;
+                  return (
+                    <div>
+                      <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2">
+                        Stos technologiczny
+                      </h4>
+                      <div className="flex flex-wrap gap-1.5">
+                        {techStackList.map((tech, idx) => (
+                          <span
+                            key={idx}
+                            className="rounded-md bg-slate-100 px-2.5 py-1 text-xs font-mono font-medium text-slate-800 border border-slate-200 dark:bg-slate-800 dark:text-slate-200 dark:border-slate-700"
+                          >
+                            {tech}
+                          </span>
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                )}
+                  );
+                })()}
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {/* Must Have */}

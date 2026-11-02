@@ -5,6 +5,9 @@ export function formatSalary(
 ): string | null {
   const curr = currency || "PLN";
   if (min !== undefined && min !== null && max !== undefined && max !== null) {
+    if (min === max) {
+      return `${min.toLocaleString("pl-PL")} ${curr}`;
+    }
     return `${min.toLocaleString("pl-PL")} - ${max.toLocaleString("pl-PL")} ${curr}`;
   }
   if (min !== undefined && min !== null) {
@@ -14,6 +17,16 @@ export function formatSalary(
     return `do ${max.toLocaleString("pl-PL")} ${curr}`;
   }
   return null;
+}
+
+export function getSalaryPeriodLabel(period?: string | null): string {
+  if (period === "hour") {
+    return "Stawka za godzinę (wynagrodzenie godzinowe)";
+  }
+  if (period === "day") {
+    return "Stawka za dzień (wynagrodzenie dzienne)";
+  }
+  return "Wynagrodzenie miesięczne";
 }
 
 export type DeadlineColor = "default" | "yellow" | "orange" | "red";

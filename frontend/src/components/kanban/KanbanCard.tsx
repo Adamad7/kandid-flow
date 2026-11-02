@@ -16,6 +16,7 @@ import {
   Award,
   CheckCircle,
   Archive,
+  HelpCircle,
 } from "lucide-react";
 import type { JobOfferRead, JobStatusType } from "../../types";
 import {
@@ -26,6 +27,7 @@ import {
   DEADLINE_BADGE_CLASSES,
   formatDeadline,
   formatSalary,
+  getSalaryPeriodLabel,
 } from "../../lib/formatters";
 import { cn } from "../../lib/utils";
 import { Badge } from "../ui/Badge";
@@ -305,8 +307,16 @@ export const KanbanCard: React.FC<KanbanCardProps> = ({
       {/* Salary & Locations */}
       <div className="space-y-1 text-xs mb-3">
         {salaryText ? (
-          <div className="font-semibold text-emerald-700 bg-emerald-50/80 dark:text-emerald-300 dark:bg-emerald-950/60 px-2 py-0.5 rounded-md inline-block">
-            {salaryText}
+          <div className="font-semibold text-emerald-700 bg-emerald-50/80 dark:text-emerald-300 dark:bg-emerald-950/60 px-2 py-0.5 rounded-md inline-flex items-center gap-1.5">
+            <span>{salaryText}</span>
+            {job.salary_period && job.salary_period !== "month" && (
+              <span
+                title={getSalaryPeriodLabel(job.salary_period)}
+                className="inline-flex items-center cursor-help"
+              >
+                <HelpCircle className="h-3 w-3 text-emerald-600 dark:text-emerald-400 shrink-0" />
+              </span>
+            )}
           </div>
         ) : (
           <div className="text-slate-400 dark:text-slate-500 italic">Wynagrodzenie: brak danych</div>
@@ -381,24 +391,30 @@ export const KanbanCard: React.FC<KanbanCardProps> = ({
         </div>
       )}
 
-      {/* Tech Stack Pills (if structured data parsed) */}
-      {job.structured_data?.tech_stack && job.structured_data.tech_stack.length > 0 && (
-        <div className="flex flex-wrap gap-1 mb-3">
-          {job.structured_data.tech_stack.slice(0, 4).map((tech, idx) => (
-            <span
-              key={idx}
-              className="inline-block rounded bg-slate-100 px-1.5 py-0.5 text-[10px] text-slate-600 font-mono dark:bg-slate-800 dark:text-slate-300"
-            >
-              {tech}
-            </span>
-          ))}
-          {job.structured_data.tech_stack.length > 4 && (
-            <span className="text-[10px] text-slate-400 dark:text-slate-500 self-center">
-              +{job.structured_data.tech_stack.length - 4}
-            </span>
-          )}
-        </div>
-      )}
+      {/* Tech Stack Pills (if structured data parsed or extracted from portal) */}
+      {(() => {
+        const techStackList = job.structured_data?.tech_stack?.length
+          ? job.structured_data.tech_stack
+          : job.raw_payload?.tech_stack_raw || [];
+        if (!techStackList.length) return null;
+        return (
+          <div className="flex flex-wrap gap-1 mb-3">
+            {techStackList.slice(0, 4).map((tech, idx) => (
+              <span
+                key={idx}
+                className="inline-block rounded bg-slate-100 px-1.5 py-0.5 text-[10px] text-slate-600 font-mono dark:bg-slate-800 dark:text-slate-300"
+              >
+                {tech}
+              </span>
+            ))}
+            {techStackList.length > 4 && (
+              <span className="text-[10px] text-slate-400 dark:text-slate-500 self-center">
+                +{techStackList.length - 4}
+              </span>
+            )}
+          </div>
+        );
+      })()}
 
       {/* Card Footer: Next Stage Progression & CV Action */}
       <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-2">

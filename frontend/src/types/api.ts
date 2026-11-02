@@ -18,6 +18,7 @@ export type SourcePortalType =
 export type JobPortalType = SourcePortalType;
 
 export type WorkModelType = "remote" | "hybrid" | "onsite";
+export type SalaryPeriodType = "month" | "day" | "hour";
 
 export type JobStatusType =
   | "inbox"
@@ -78,9 +79,11 @@ export interface ExtractedJobPayload {
   salary_min?: number | null;
   salary_max?: number | null;
   salary_currency?: string | null;
+  salary_period?: SalaryPeriodType | null;
   description_html?: string | null;
   description_text: string;
   requirements_raw: string[];
+  tech_stack_raw?: string[];
   application_deadline?: string | null;
   notes?: string | null;
   custom_metadata?: ExtractorDiagnosticMetadata | null;
@@ -347,6 +350,7 @@ export interface JobOfferBase {
   salary_min?: number | null;
   salary_max?: number | null;
   salary_currency?: string | null;
+  salary_period?: SalaryPeriodType | null;
   contract_type?: string | null;
   notes?: string | null;
 }
@@ -374,6 +378,7 @@ export interface JobOfferUpdate {
   salary_min?: number | null;
   salary_max?: number | null;
   salary_currency?: string | null;
+  salary_period?: SalaryPeriodType | null;
   contract_type?: string | null;
   structured_data?: StructuredJobData | null;
   notes?: string | null;

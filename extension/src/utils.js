@@ -321,9 +321,16 @@
    * @param {string} text - Raw salary text
    * @returns {{ raw: string, min: number | null, max: number | null, currency: string }}
    */
+  /**
+   * Parses compensation text into structured min/max/currency/period values.
+   * Supports Polish and international currency notations (e.g. 15 000 - 22 000 PLN, 5 000 – 7 000 zł, €4,000 - €6,000, 160 - 190 PLN/godz.).
+   *
+   * @param {string} text - Raw salary text
+   * @returns {{ raw: string | null, min: number | null, max: number | null, currency: string, period: 'month' | 'day' | 'hour' }}
+   */
   function parseSalary(text) {
     if (!text || typeof text !== "string") {
-      return { raw: null, min: null, max: null, currency: "PLN" };
+      return { raw: null, min: null, max: null, currency: "PLN", period: "month" };
     }
 
     const raw = cleanText(text);
@@ -335,6 +342,16 @@
     else if (/CHF/i.test(raw)) currency = "CHF";
     else if (/PLN|zł/i.test(raw)) currency = "PLN";
 
+    // Detect compensation period (hour, day, month)
+    let period = "month";
+    if (/(?:godz|\/h\b|\/hr\b|hour|na\s+godzin)/i.test(raw)) {
+      period = "hour";
+    } else if (/(?:dzień|dzien|\/d\b|day|na\s+dzień|na\s+dzien|dziennie)/i.test(raw)) {
+      period = "day";
+    } else if (/(?:mies|msc|\/mo\b|month|na\s+miesi|miesięczn)/i.test(raw)) {
+      period = "month";
+    }
+
     // Normalize dashes and thousands separators
     const normalized = raw
       .replace(/[\u2013\u2014]/g, "-")
@@ -344,24 +361,25 @@
     const matches = normalized.match(/\b\d{1,3}(?:[ ,.]\d{3})*\b|\b\d+\b/g);
 
     if (!matches || matches.length === 0) {
-      return { raw, min: null, max: null, currency };
+      return { raw, min: null, max: null, currency, period };
     }
 
+    const minThreshold = period === "hour" ? 15 : period === "day" ? 80 : 100;
     const numbers = matches
       .map((m) => parseInt(m.replace(/[ ,.]/g, ""), 10))
-      .filter((n) => !isNaN(n) && n > 100); // Filter out irrelevant small integers like hours/days
+      .filter((n) => !isNaN(n) && n >= minThreshold);
 
     if (numbers.length === 0) {
-      return { raw, min: null, max: null, currency };
+      return { raw, min: null, max: null, currency, period };
     }
 
     if (numbers.length === 1) {
-      return { raw, min: numbers[0], max: numbers[0], currency };
+      return { raw, min: numbers[0], max: numbers[0], currency, period };
     }
 
     const min = Math.min(numbers[0], numbers[1]);
     const max = Math.max(numbers[0], numbers[1]);
-    return { raw, min, max, currency };
+    return { raw, min, max, currency, period };
   }
 
   /**
@@ -467,6 +485,11 @@
       if (node.nodeType === Node.ELEMENT_NODE) {
         const tag = node.tagName.toLowerCase();
 
+        if (tag === "br") {
+          lines.push("\n");
+          return;
+        }
+
         if (tag === "li") {
           const bulletText = cleanText(node.textContent);
           if (bulletText) {
@@ -475,7 +498,7 @@
           return;
         }
 
-        if (tag === "h1" || tag === "h2" || tag === "h3" || tag === "h4") {
+        if (tag === "h1" || tag === "h2" || tag === "h3" || tag === "h4" || tag === "h5" || tag === "h6") {
           const headingText = cleanText(node.textContent);
           if (headingText) {
             lines.push(`\n\n### ${headingText}\n\n`);
@@ -484,6 +507,7 @@
         }
 
         if (tag === "p" || tag === "div" || tag === "section") {
+          lines.push("\n\n");
           for (const child of node.childNodes) {
             walk(child, isInsideList);
           }
@@ -706,15 +730,15 @@
   }
 
   /**
-   * Safely parses Schema.org baseSalary structure into min, max, currency, and clean raw string.
+   * Safely parses Schema.org baseSalary structure into min, max, currency, period, and clean raw string.
    * Handles quantitative values where value is an object { minValue, maxValue }.
    *
    * @param {object} baseSalary - Schema.org baseSalary object
-   * @returns {{ raw: string | null, min: number | null, max: number | null, currency: string }}
+   * @returns {{ raw: string | null, min: number | null, max: number | null, currency: string, period: 'month' | 'day' | 'hour' }}
    */
   function parseBaseSalary(baseSalary) {
     if (!baseSalary || typeof baseSalary !== "object") {
-      return { raw: null, min: null, max: null, currency: "PLN" };
+      return { raw: null, min: null, max: null, currency: "PLN", period: "month" };
     }
     const val = typeof baseSalary.value === "object" && baseSalary.value !== null ? baseSalary.value : {};
     let min = null;
@@ -730,6 +754,16 @@
 
     const currency = baseSalary.currency || val.unitText || "PLN";
 
+    let period = "month";
+    const rawUnit = String(val.unitText || baseSalary.unitText || "").toUpperCase();
+    if (rawUnit.includes("HOUR") || rawUnit === "HUR") {
+      period = "hour";
+    } else if (rawUnit.includes("DAY")) {
+      period = "day";
+    } else if (rawUnit.includes("MONTH") || rawUnit === "MON") {
+      period = "month";
+    }
+
     let raw = null;
     if (min && max && min !== max) {
       raw = `${min.toLocaleString("pl-PL")} - ${max.toLocaleString("pl-PL")} ${currency}`;
@@ -739,7 +773,7 @@
       raw = `${max.toLocaleString("pl-PL")} ${currency}`;
     }
 
-    return { raw, min, max, currency };
+    return { raw, min, max, currency, period };
   }
 
   /**

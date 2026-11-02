@@ -37,6 +37,7 @@ import {
   formatDeadline,
   formatRelativeCreatedDate,
   formatSalary,
+  getSalaryPeriodLabel,
   normalizeJobOfferUrl,
 } from "../../lib/formatters";
 import { cn } from "../../lib/utils";
@@ -139,13 +140,20 @@ export const JobListView: React.FC<JobListViewProps> = ({
     rect: DOMRect;
   } | null>(null);
 
-  // Close context menu & work model tooltip on scroll, resize, or outside click
+  // Salary period tooltip portal state
+  const [salaryTooltip, setSalaryTooltip] = useState<{
+    text: string;
+    rect: DOMRect;
+  } | null>(null);
+
+  // Close context menu & tooltips on scroll, resize, or outside click
   useEffect(() => {
-    if (!activeMenu && !workModelTooltip) return;
+    if (!activeMenu && !workModelTooltip && !salaryTooltip) return;
 
     const handleDismiss = () => {
       if (activeMenu) setActiveMenu(null);
       if (workModelTooltip) setWorkModelTooltip(null);
+      if (salaryTooltip) setSalaryTooltip(null);
     };
 
     const handlePointerDown = (e: MouseEvent) => {
@@ -168,7 +176,7 @@ export const JobListView: React.FC<JobListViewProps> = ({
       window.removeEventListener("resize", handleDismiss);
       document.removeEventListener("mousedown", handlePointerDown);
     };
-  }, [activeMenu, workModelTooltip]);
+  }, [activeMenu, workModelTooltip, salaryTooltip]);
 
   const fetchJobs = async () => {
     try {
@@ -1078,9 +1086,32 @@ export const JobListView: React.FC<JobListViewProps> = ({
                       {/* Zarobki */}
                       <div className="flex items-center">
                         {salaryText ? (
-                          <span className="font-semibold text-xs text-emerald-700 bg-emerald-50 dark:text-emerald-300 dark:bg-emerald-950/60 px-2.5 py-1 rounded-md">
-                            {salaryText}
-                          </span>
+                          (() => {
+                            const isNonMonthly = job.salary_period && job.salary_period !== "month";
+                            const periodLabel = getSalaryPeriodLabel(job.salary_period);
+                            if (!isNonMonthly) {
+                              return (
+                                <span className="font-semibold text-xs text-emerald-700 bg-emerald-50 dark:text-emerald-300 dark:bg-emerald-950/60 px-2.5 py-1 rounded-md">
+                                  {salaryText}
+                                </span>
+                              );
+                            }
+                            return (
+                              <span
+                                className="font-semibold text-xs text-emerald-700 bg-emerald-50 dark:text-emerald-300 dark:bg-emerald-950/60 px-2.5 py-1 rounded-md inline-flex items-center gap-1.5 cursor-help"
+                                onMouseEnter={(e) =>
+                                  setSalaryTooltip({
+                                    text: periodLabel,
+                                    rect: e.currentTarget.getBoundingClientRect(),
+                                  })
+                                }
+                                onMouseLeave={() => setSalaryTooltip(null)}
+                              >
+                                <span>{salaryText}</span>
+                                <HelpCircle className="h-3 w-3 inline-block shrink-0 text-emerald-600 dark:text-emerald-400 hover:text-emerald-800 dark:hover:text-emerald-200 transition-colors" />
+                              </span>
+                            );
+                          })()
                         ) : (
                           <span className="text-xs text-slate-400 dark:text-slate-500 italic">Brak danych</span>
                         )}
@@ -1404,6 +1435,47 @@ export const JobListView: React.FC<JobListViewProps> = ({
                 </div>
                 <p className="text-slate-600 dark:text-slate-300 leading-relaxed break-words whitespace-pre-wrap">
                   {workModelTooltip.text}
+                </p>
+              </div>
+            );
+          })(),
+          document.body
+        )}
+
+      {/* Salary Period Tooltip Portal */}
+      {salaryTooltip &&
+        createPortal(
+          (() => {
+            const rect = salaryTooltip.rect;
+            const tooltipWidth = 260;
+            const badgeCenter = rect.left + rect.width / 2;
+            let left = badgeCenter - tooltipWidth / 2;
+            if (left < 12) left = 12;
+            if (left + tooltipWidth > window.innerWidth - 12) {
+              left = Math.max(12, window.innerWidth - tooltipWidth - 12);
+            }
+
+            const fitsAbove = rect.top >= 90;
+
+            return (
+              <div
+                style={{
+                  position: "fixed",
+                  left: `${left}px`,
+                  width: `${tooltipWidth}px`,
+                  zIndex: 9999,
+                  ...(fitsAbove
+                    ? { bottom: `${window.innerHeight - rect.top + 6}px` }
+                    : { top: `${rect.bottom + 6}px` }),
+                }}
+                className="pointer-events-none rounded-lg border border-slate-200 bg-white p-2.5 text-xs shadow-xl dark:border-slate-700 dark:bg-slate-800 animate-in fade-in zoom-in-95 duration-100"
+              >
+                <div className="flex items-center gap-1.5 font-semibold text-slate-800 dark:text-slate-200 mb-1">
+                  <HelpCircle className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                  <span>Okres wynagrodzenia</span>
+                </div>
+                <p className="text-slate-600 dark:text-slate-300 leading-relaxed break-words whitespace-pre-wrap">
+                  {salaryTooltip.text}
                 </p>
               </div>
             );

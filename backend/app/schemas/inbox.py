@@ -8,6 +8,7 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 SourcePortalType = Literal["justjoin", "pracuj", "nofluffjobs", "linkedin", "generic"]
 WorkModelType = Literal["remote", "hybrid", "onsite"]
+SalaryPeriodType = Literal["month", "day", "hour"]
 
 
 class ExtractorDiagnosticMetadata(BaseModel):
@@ -55,6 +56,9 @@ class ExtractedJobPayload(BaseModel):
     salary_currency: str | None = Field(
         default="PLN", description="Currency symbol or code, defaults to PLN"
     )
+    salary_period: SalaryPeriodType | None = Field(
+        default="month", description="Compensation period: month, day, or hour"
+    )
     description_html: str | None = Field(
         default=None, description="Sanitized HTML snippet of the job description"
     )
@@ -63,6 +67,9 @@ class ExtractedJobPayload(BaseModel):
     )
     requirements_raw: list[str] = Field(
         default_factory=list, description="Extracted requirement bullet points"
+    )
+    tech_stack_raw: list[str] = Field(
+        default_factory=list, description="Extracted tech stack items from job board tags"
     )
     application_deadline: date | None = Field(
         default=None, description="Application submission deadline date"

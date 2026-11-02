@@ -124,6 +124,8 @@ async def ingest_job_offer(
             existing.salary_max = payload.salary_max
         if payload.salary_currency:
             existing.salary_currency = payload.salary_currency
+        if payload.salary_period:
+            existing.salary_period = payload.salary_period
         if payload.locations:
             existing.locations = payload.locations
         if payload.location_raw:
@@ -173,6 +175,7 @@ async def ingest_job_offer(
         salary_min=payload.salary_min,
         salary_max=payload.salary_max,
         salary_currency=payload.salary_currency or "PLN",
+        salary_period=payload.salary_period or "month",
         raw_payload=raw_dict,
         notes=payload.notes,
     )
