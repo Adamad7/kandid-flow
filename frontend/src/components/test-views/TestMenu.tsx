@@ -9,12 +9,12 @@ import {
 } from "lucide-react";
 
 interface TestMenuProps {
-  onSelectPage: (pageId: "test-page-1" | "test-page-2") => void;
+  onSelectPage: (pageId: "test-page-1" | "test-page-2" | "test-page-3") => void;
 }
 
 export const TestMenu: React.FC<TestMenuProps> = ({ onSelectPage }) => {
   return (
-    <div className="space-y-8 max-w-5xl mx-auto py-2">
+    <div className="space-y-8 max-w-6xl mx-auto py-2">
       {/* Hero / Header Card */}
       <div className="rounded-2xl border border-slate-200 bg-linear-to-r from-blue-50/60 via-indigo-50/40 to-white p-6 sm:p-8 shadow-xs dark:border-slate-800 dark:from-slate-900 dark:via-indigo-950/20 dark:to-slate-900">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
@@ -42,7 +42,7 @@ export const TestMenu: React.FC<TestMenuProps> = ({ onSelectPage }) => {
       </div>
 
       {/* Pages Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {/* Card: Test Page 1 (Requested by User) */}
         <div className="relative group rounded-2xl border-2 border-blue-500/40 hover:border-blue-500 bg-white dark:bg-slate-900 p-6 shadow-xs hover:shadow-md transition-all flex flex-col justify-between">
           <div className="space-y-4">
@@ -161,6 +161,67 @@ export const TestMenu: React.FC<TestMenuProps> = ({ onSelectPage }) => {
               className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-semibold text-sm transition-colors shadow-xs active:scale-[0.99] cursor-pointer dark:bg-slate-700 dark:hover:bg-slate-600"
             >
               <span>Otwórz test-page-2 (Styl Soft)</span>
+              <ArrowRight className="h-4 w-4" />
+            </button>
+          </div>
+        </div>
+
+        {/* Card: Test Page 3 (Flat Curves & Vivid Accents) */}
+        <div className="relative group rounded-2xl border-2 border-indigo-500/40 hover:border-indigo-500 bg-white dark:bg-slate-900 p-6 shadow-xs hover:shadow-md transition-all flex flex-col justify-between">
+          <div className="space-y-4">
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex items-center gap-2.5">
+                <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-indigo-600 text-white font-bold text-sm shadow-sm shadow-indigo-600/30">
+                  3
+                </span>
+                <div>
+                  <h2 className="text-lg font-bold text-slate-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
+                    test-page-3
+                  </h2>
+                  <span className="text-xs font-semibold text-indigo-600 dark:text-indigo-400">
+                    Nowoczesny Minimalizm (Flat Curves)
+                  </span>
+                </div>
+              </div>
+              <span className="px-2.5 py-1 rounded-full text-[11px] font-bold bg-indigo-50 text-indigo-700 dark:bg-indigo-950/80 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800">
+                Nowość
+              </span>
+            </div>
+
+            <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+              Nowoczesny minimalizm z gładkimi zaokrągleniami (rounded-2xl/xl/full) i żywymi,
+              nasyconymi akcentami (indygo, szmaragd, fiolet). Zredukowana liczba zagnieżdżonych
+              paneli oraz usunięte cienie dla maksymalnej czystości i przestrzeni.
+            </p>
+
+            <div className="space-y-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+              <div className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                Elementy demonstracyjne:
+              </div>
+              <div className="flex flex-wrap gap-1.5">
+                <span className="px-2 py-0.5 rounded text-[11px] font-medium bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
+                  Gładkie zaokrąglenia bez cieni
+                </span>
+                <span className="px-2 py-0.5 rounded text-[11px] font-medium bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
+                  Żywe kolory akcji (Indigo & Emerald)
+                </span>
+                <span className="px-2 py-0.5 rounded text-[11px] font-medium bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
+                  Zredukowane zagnieżdżenia (De-nested)
+                </span>
+                <span className="px-2 py-0.5 rounded text-[11px] font-medium bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
+                  Płaskie wiersze i karta detali
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div className="pt-6">
+            <button
+              type="button"
+              onClick={() => onSelectPage("test-page-3")}
+              className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-sm transition-colors shadow-xs active:scale-[0.99] cursor-pointer"
+            >
+              <span>Otwórz test-page-3 (Flat Curves)</span>
               <ArrowRight className="h-4 w-4" />
             </button>
           </div>

@@ -17,7 +17,7 @@ import { STATUS_LABELS } from "../../lib/constants";
 
 interface TestPageTwoProps {
   onBackToMenu: () => void;
-  onSwitchPage: (pageId: "test-page-1" | "test-page-2") => void;
+  onSwitchPage: (pageId: "test-page-1" | "test-page-2" | "test-page-3") => void;
 }
 
 export const TestPageTwo: React.FC<TestPageTwoProps> = ({
@@ -67,6 +67,13 @@ export const TestPageTwo: React.FC<TestPageTwoProps> = ({
               className="px-3 py-1 rounded-lg font-bold bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 shadow-xs cursor-pointer"
             >
               test-page-2
+            </button>
+            <button
+              type="button"
+              onClick={() => onSwitchPage("test-page-3")}
+              className="px-3 py-1 rounded-lg font-medium text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white cursor-pointer"
+            >
+              test-page-3
             </button>
           </div>
         </div>
