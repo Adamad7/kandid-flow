@@ -8,6 +8,7 @@ import {
   List,
   BarChart3,
   Archive,
+  Palette,
 } from "lucide-react";
 import type {
   CVVersionRead,
@@ -23,14 +24,19 @@ import { PresetsManager } from "./components/presets/PresetsManager";
 import { SettingsView } from "./components/settings/SettingsView";
 import { JobListView } from "./components/jobs/JobListView";
 import { AnalyticsDashboard } from "./components/analytics/AnalyticsDashboard";
+import { TestViewsContainer } from "./components/test-views/TestViewsContainer";
 import { ThemeToggle } from "./components/ui/ThemeToggle";
 import { api } from "./lib/api";
 import { useRealtime } from "./hooks/useRealtime";
 
-type ActiveTab = "list" | "kanban" | "archive" | "analytics" | "profile" | "presets" | "settings";
+type ActiveTab = "list" | "kanban" | "archive" | "analytics" | "profile" | "presets" | "settings" | "test-menu";
 
 export const App: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<ActiveTab>("list");
+  const [activeTab, setActiveTab] = useState<ActiveTab>(() =>
+    typeof window !== "undefined" && window.location.pathname === "/test-menu"
+      ? "test-menu"
+      : "list"
+  );
 
   // Selection & Modal States
   const [selectedJob, setSelectedJob] = useState<JobOfferRead | null>(null);
@@ -305,6 +311,20 @@ export const App: React.FC = () => {
                 <Settings className="h-4 w-4" />
                 <span className="hidden sm:inline">Ustawienia</span>
               </button>
+
+              <button
+                type="button"
+                onClick={() => setActiveTab("test-menu")}
+                className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold transition-colors ${
+                  activeTab === "test-menu"
+                    ? "bg-blue-600 text-white shadow-xs"
+                    : "text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/40"
+                }`}
+                title="Sandbox testowania stylów UI (/test-menu)"
+              >
+                <Palette className="h-4 w-4" />
+                <span className="hidden sm:inline">Testy UI</span>
+              </button>
             </nav>
 
             {/* Dark Mode Toggle on the right side */}
@@ -373,6 +393,10 @@ export const App: React.FC = () => {
 
         <div className={activeTab === "settings" ? "block" : "hidden"}>
           <SettingsView />
+        </div>
+
+        <div className={activeTab === "test-menu" ? "block" : "hidden"}>
+          <TestViewsContainer />
         </div>
       </main>
 
