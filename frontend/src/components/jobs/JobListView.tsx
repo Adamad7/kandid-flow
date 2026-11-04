@@ -960,12 +960,12 @@ export const JobListView: React.FC<JobListViewProps> = ({
                       {/* Stanowisko */}
                       <div className="min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
-                          <span className="font-semibold text-sm text-slate-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors truncate">
+                          <span className="font-semibold text-[0.8rem] text-slate-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors break-words">
                             {job.role_title || "Nieokreślone stanowisko"}
                           </span>
 
                           {job.source_portal && (
-                            <span className="text-[10px] py-0.5 px-2.5 rounded-full font-bold uppercase tracking-wider bg-slate-100 dark:bg-neutral-800 text-slate-600 dark:text-neutral-300 border border-slate-200/60 dark:border-neutral-700/60">
+                            <span className="shrink-0 text-[10px] py-0.5 px-2.5 rounded-full font-bold uppercase tracking-wider bg-slate-100 dark:bg-neutral-800 text-slate-600 dark:text-neutral-300 border border-slate-200/60 dark:border-neutral-700/60">
                               {PORTAL_LABELS[job.source_portal] || job.source_portal}
                             </span>
                           )}
@@ -986,16 +986,16 @@ export const JobListView: React.FC<JobListViewProps> = ({
                         )}
 
                         {/* Mobile-only company view */}
-                        <div className="md:hidden flex items-center gap-1.5 mt-1 text-xs text-slate-500 dark:text-neutral-400 font-medium">
-                          <Building className="h-3.5 w-3.5 text-indigo-500 shrink-0" />
-                          <span>{job.company_name || "Nieznana firma"}</span>
+                        <div className="md:hidden flex items-start gap-1.5 mt-1 text-xs text-slate-500 dark:text-neutral-400 font-medium">
+                          <Building className="h-3.5 w-3.5 text-indigo-500 shrink-0 mt-0.5" />
+                          <span className="break-words">{job.company_name || "Nieznana firma"}</span>
                         </div>
                       </div>
 
                       {/* Firma */}
-                      <div className="hidden md:flex items-center gap-1.5 text-xs text-slate-600 dark:text-neutral-400 font-medium min-w-0">
-                        <Building className="h-3.5 w-3.5 text-indigo-500 shrink-0" />
-                        <span className="truncate" title={job.company_name || undefined}>
+                      <div className="hidden md:flex items-start gap-1.5 text-xs text-slate-600 dark:text-neutral-400 font-medium min-w-0">
+                        <Building className="h-3.5 w-3.5 text-indigo-500 shrink-0 mt-0.5" />
+                        <span className="break-words" title={job.company_name || undefined}>
                           {job.company_name || "Nieznana firma"}
                         </span>
                       </div>
