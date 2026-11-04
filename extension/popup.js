@@ -1,16 +1,40 @@
 /**
  * KandidFlow — Browser Extension Popup Controller
  * Manages extraction display, duplicate checking, settings, and inbox submission.
+ * Strictly enforces supported portals whitelist (Pracuj.pl, Just Join IT).
  */
 
 document.addEventListener("DOMContentLoaded", async () => {
-  // DOM Elements — Header & Views
+  // Supported Job Boards Whitelist Configuration
+  const SUPPORTED_PORTALS = [
+    {
+      id: "pracuj",
+      name: "Pracuj.pl",
+      pattern: /(^|\.)pracuj\.pl$/i,
+      domainDisplay: "pracuj.pl",
+      url: "https://www.pracuj.pl",
+    },
+    {
+      id: "justjoin",
+      name: "Just Join IT",
+      pattern: /(^|\.)justjoin\.it$/i,
+      domainDisplay: "justjoin.it",
+      url: "https://justjoin.it",
+    },
+  ];
+
+  // DOM Elements — Header & Navigation
   const mainView = document.getElementById("main-view");
   const settingsView = document.getElementById("settings-view");
   const toggleSettingsBtn = document.getElementById("toggle-settings-btn");
   const backToMainBtn = document.getElementById("back-to-main-btn");
   const connectionIndicator = document.getElementById("connection-indicator");
   const indicatorText = connectionIndicator.querySelector(".indicator-text");
+
+  // DOM Elements — Views (Supported vs Unsupported)
+  const supportedContent = document.getElementById("supported-content");
+  const unsupportedView = document.getElementById("unsupported-view");
+  const currentDomainText = document.getElementById("current-domain-text");
 
   // DOM Elements — Offer Preview
   const portalBadge = document.getElementById("portal-badge");
@@ -47,9 +71,33 @@ document.addEventListener("DOMContentLoaded", async () => {
   // State
   let currentPayload = null;
   let activeTab = null;
+  let isCurrentPageSupported = false;
 
   const DEFAULT_BACKEND_URL = "http://localhost:8000";
   const DEFAULT_API_TOKEN = "kandid_dev_secret_token_replace_in_production_32chars";
+  const CURRENT_EXTRACTOR_VERSION = "1.3.1";
+
+  /**
+   * Extracts hostname from a given URL string safely.
+   */
+  function getTabDomain(urlStr) {
+    if (!urlStr) return "";
+    try {
+      const parsed = new URL(urlStr);
+      return parsed.hostname.toLowerCase();
+    } catch {
+      return "";
+    }
+  }
+
+  /**
+   * Matches URL hostname against configured supported portals.
+   */
+  function findSupportedPortal(urlStr) {
+    const domain = getTabDomain(urlStr);
+    if (!domain) return null;
+    return SUPPORTED_PORTALS.find((p) => p.pattern.test(domain)) || null;
+  }
 
   /**
    * Retrieves configured backend URL and API token from storage.
@@ -114,7 +162,66 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   }
 
-  const CURRENT_EXTRACTOR_VERSION = "1.3.1";
+  /**
+   * Checks basic connection to the KandidFlow backend (without offer duplicate check).
+   * Used when on unsupported or system pages to update the header status indicator.
+   */
+  async function checkBackendConnection() {
+    updateConnectionStatus("checking", "Weryfikacja...");
+    const { backendUrl, apiToken } = await getStoredConfig();
+
+    try {
+      const pingUrl = `${backendUrl}/api/v1/inbox/check?url=${encodeURIComponent("https://kandidflow.local/health-check")}`;
+      const response = await fetch(pingUrl, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${apiToken}`,
+          "X-API-Token": apiToken,
+        },
+      });
+
+      if (response.ok) {
+        updateConnectionStatus("connected", "Połączono");
+      } else if (response.status === 401) {
+        updateConnectionStatus("disconnected", "Błąd tokenu");
+      } else {
+        updateConnectionStatus("disconnected", `Błąd (${response.status})`);
+      }
+    } catch {
+      updateConnectionStatus("disconnected", "Brak połączenia");
+    }
+  }
+
+  /**
+   * Activates the Unsupported Page View and hides the extraction card & form.
+   */
+  function showUnsupportedView(tabUrl, isSystemPage) {
+    isCurrentPageSupported = false;
+    currentPayload = null;
+
+    supportedContent.classList.add("hidden");
+    unsupportedView.classList.remove("hidden");
+
+    if (isSystemPage) {
+      currentDomainText.textContent = "Strona systemowa przeglądarki";
+    } else {
+      const domain = getTabDomain(tabUrl) || tabUrl || "Nieznana domena";
+      currentDomainText.textContent = domain;
+    }
+
+    // Ensure save button is disabled
+    saveJobBtn.disabled = true;
+  }
+
+  /**
+   * Activates the Supported Page View and shows extraction components.
+   */
+  function showSupportedView() {
+    isCurrentPageSupported = true;
+    unsupportedView.classList.add("hidden");
+    supportedContent.classList.remove("hidden");
+  }
 
   /**
    * Injects content scripts into tab if not already present or outdated.
@@ -148,25 +255,10 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   /**
-   * Queries the active tab DOM for job offer data.
+   * Queries the active tab DOM for job offer data on supported portals.
    */
-  async function extractActiveTabData() {
+  async function extractSupportedTabData(tab) {
     try {
-      const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-      if (!tab || !tab.id) {
-        jobTitleEl.textContent = "Brak aktywnej karty przeglądarki.";
-        return;
-      }
-      activeTab = tab;
-
-      // Special URLs where content scripts cannot run
-      if (tab.url.startsWith("chrome://") || tab.url.startsWith("chrome-extension://") || tab.url.startsWith("edge://")) {
-        jobTitleEl.textContent = "Strony systemowe przeglądarki nie zawierają ofert pracy.";
-        portalBadge.textContent = "System";
-        portalBadge.className = "badge portal-generic";
-        return;
-      }
-
       await ensureContentScriptInjected(tab.id);
 
       const response = await chrome.tabs.sendMessage(tab.id, { action: "EXTRACT_PAGE_DATA" }).catch((err) => {
@@ -179,7 +271,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         currentPayload = {
           source_url: tab.url,
           source_portal: "generic",
-          title: tab.title || "Nieznana oferta",
+          title: tab.title || "Oferta pracy",
           company: null,
           locations: [],
           description_text: "",
@@ -356,7 +448,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     statusMessage.classList.add("hidden");
 
     const { backendUrl, apiToken } = await getStoredConfig();
-
     const notesValue = customNotesEl.value.trim();
 
     // Prepare complete payload conforming strictly to ExtractedJobPayload
@@ -404,7 +495,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         return;
       }
 
-      const resData = await response.json();
+      await response.json();
 
       statusMessage.textContent = "🎉 Zapisano pomyślnie! Oferta trafiła do kolejki KandidFlow.";
       statusMessage.className = "status-banner success";
@@ -425,7 +516,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   }
 
-  // Event Listeners — Main View
+  // Event Listeners — Main View Actions
   saveJobBtn.addEventListener("click", saveJobOffer);
 
   // Settings View Navigation
@@ -444,6 +535,23 @@ document.addEventListener("DOMContentLoaded", async () => {
   toggleSettingsBtn.addEventListener("click", showSettings);
   backToMainBtn.addEventListener("click", showMain);
 
+  // Portal cards click handler to open websites in new tabs
+  document.querySelectorAll(".portal-card").forEach((card) => {
+    const openUrl = () => {
+      const targetUrl = card.dataset.url;
+      if (targetUrl && typeof chrome !== "undefined" && chrome.tabs) {
+        chrome.tabs.create({ url: targetUrl });
+      }
+    };
+    card.addEventListener("click", openUrl);
+    card.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        openUrl();
+      }
+    });
+  });
+
   // Toggle Password Visibility
   toggleTokenVisibilityBtn.addEventListener("click", () => {
     if (apiTokenInput.type === "password") {
@@ -460,7 +568,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   backendUrlInput.value = currentConfig.backendUrl;
   apiTokenInput.value = currentConfig.apiToken;
 
-  // Test Connection Action
+  // Test Connection Action in Settings
   testConnectionBtn.addEventListener("click", async () => {
     const testUrl = backendUrlInput.value.trim().replace(/\/+$/, "");
     const testToken = apiTokenInput.value.trim();
@@ -470,7 +578,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     testConnectionResult.className = "test-result-text";
 
     try {
-      const response = await fetch(`${testUrl}/api/v1/inbox/check?url=${encodeURIComponent("https://example.com/test")}`, {
+      const response = await fetch(`${testUrl}/api/v1/inbox/check?url=${encodeURIComponent("https://kandidflow.local/health-check")}`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -491,7 +599,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         testConnectionResult.textContent = `✗ Błąd serwera (HTTP ${response.status})`;
         testConnectionResult.className = "test-result-text error";
       }
-    } catch (err) {
+    } catch {
       testSpinner.classList.add("hidden");
       testConnectionResult.textContent = "✗ Nie można połączyć";
       testConnectionResult.className = "test-result-text error";
@@ -512,15 +620,68 @@ document.addEventListener("DOMContentLoaded", async () => {
         setTimeout(() => {
           settingsStatus.classList.add("hidden");
           showMain();
-          // Re-trigger duplicate check with newly saved settings
-          if (currentPayload && currentPayload.source_url) {
+          // Refresh connection or duplicate check with updated settings
+          if (isCurrentPageSupported && currentPayload && currentPayload.source_url) {
             checkDuplicateOffer(currentPayload.source_url);
+          } else {
+            checkBackendConnection();
           }
-        }, 800);
+        }, 700);
       });
     }
   });
 
-  // Initialize Extraction
-  await extractActiveTabData();
+  // Main Initialization Workflow
+  async function initPopup() {
+    try {
+      if (typeof chrome === "undefined" || !chrome.tabs) {
+        showUnsupportedView("http://localhost", false);
+        await checkBackendConnection();
+        return;
+      }
+
+      const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+      activeTab = tab;
+
+      if (!tab || !tab.url) {
+        showUnsupportedView("", true);
+        await checkBackendConnection();
+        return;
+      }
+
+      const tabUrl = tab.url;
+      const isSystemPage =
+        tabUrl.startsWith("chrome://") ||
+        tabUrl.startsWith("chrome-extension://") ||
+        tabUrl.startsWith("edge://") ||
+        tabUrl.startsWith("about:") ||
+        tabUrl.startsWith("file://");
+
+      if (isSystemPage) {
+        showUnsupportedView(tabUrl, true);
+        await checkBackendConnection();
+        return;
+      }
+
+      const matchedPortal = findSupportedPortal(tabUrl);
+
+      if (!matchedPortal) {
+        // Domain is not on the supported job boards whitelist
+        showUnsupportedView(tabUrl, false);
+        await checkBackendConnection();
+        return;
+      }
+
+      // Domain IS supported — proceed to extraction and duplicate check
+      showSupportedView();
+      await extractSupportedTabData(tab);
+    } catch (err) {
+      console.error("[KandidFlow] Error during popup initialization:", err);
+      showUnsupportedView("", false);
+      await checkBackendConnection();
+    }
+  }
+
+  // Launch popup initialization
+  await initPopup();
 });
