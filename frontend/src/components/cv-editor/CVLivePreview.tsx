@@ -203,7 +203,7 @@ const CVLivePreviewComponent: React.FC<CVLivePreviewProps> = ({
   };
 
   return (
-    <div className="relative flex flex-col h-full w-full bg-slate-100/90 dark:bg-slate-950/50 overflow-hidden">
+    <div className="relative flex flex-col h-full w-full bg-slate-100/70 dark:bg-neutral-950 overflow-hidden">
       <style>{`
         .typst-page-svg a[href^="kf-target:"],
         .typst-page-svg a[xlink\\:href^="kf-target:"] {
@@ -221,14 +221,14 @@ const CVLivePreviewComponent: React.FC<CVLivePreviewProps> = ({
         .typst-page-svg a[xlink\\:href^="kf-target:"]:hover rect,
         .typst-page-svg a[xlink\\:href^="kf-target:"].kf-hovered rect,
         .typst-page-svg a[xlink\\:href^="kf-target:"].typst-hover-active rect {
-          fill: rgba(59, 130, 246, 0.18) !important;
-          stroke: rgba(59, 130, 246, 0.5) !important;
+          fill: rgba(99, 102, 241, 0.18) !important;
+          stroke: rgba(99, 102, 241, 0.6) !important;
           stroke-width: 1.5px !important;
         }
       `}</style>
       {/* Discreet compilation indicator */}
       {isCompiling && (
-        <div className="absolute top-4 right-4 z-20 flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/90 dark:bg-slate-800/90 backdrop-blur-sm border border-slate-200 dark:border-slate-700 shadow-sm text-xs font-medium text-blue-600 dark:text-blue-400 select-none animate-pulse">
+        <div className="absolute top-4 right-4 z-20 flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/95 dark:bg-neutral-900/95 backdrop-blur-sm border border-slate-200/80 dark:border-neutral-800 shadow-none text-xs font-semibold text-indigo-600 dark:text-indigo-400 select-none animate-pulse">
           <RefreshCw className="h-3.5 w-3.5 animate-spin" />
           <span>Kompilacja...</span>
         </div>
@@ -236,25 +236,25 @@ const CVLivePreviewComponent: React.FC<CVLivePreviewProps> = ({
 
       {/* Floating vertical Zoom Controls in bottom-right corner */}
       <div
-        className="absolute bottom-6 right-6 z-20 flex flex-col items-center bg-white/95 dark:bg-slate-800/95 backdrop-blur-sm border border-slate-200 dark:border-slate-700 rounded-xl shadow-md p-1 gap-1 select-none"
+        className="absolute bottom-6 right-6 z-20 flex flex-col items-center bg-white/95 dark:bg-neutral-900/95 backdrop-blur-sm border border-slate-200/80 dark:border-neutral-800 rounded-xl shadow-none p-1 gap-1 select-none"
         title="Ctrl + kółko myszy = zoom"
       >
         <button
           type="button"
           onClick={() => setZoomScale((s) => Math.max(0.4, Math.round((s - 0.1) * 100) / 100))}
-          className="p-2 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-700/60 rounded-lg cursor-pointer transition-colors"
+          className="p-2 text-slate-600 dark:text-neutral-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-neutral-800 rounded-lg cursor-pointer transition-colors"
           title="Oddal (Ctrl + scroll w dół)"
           aria-label="Oddal"
         >
           <ZoomOut className="h-4 w-4" />
         </button>
-        <span className="text-xs font-mono px-1 py-0.5 text-slate-600 dark:text-slate-300 select-none min-w-[42px] text-center">
+        <span className="text-xs font-mono px-1 py-0.5 text-slate-600 dark:text-neutral-300 select-none min-w-[42px] text-center font-medium">
           {Math.round(zoomScale * 100)}%
         </span>
         <button
           type="button"
           onClick={() => setZoomScale((s) => Math.min(2.0, Math.round((s + 0.1) * 100) / 100))}
-          className="p-2 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-700/60 rounded-lg cursor-pointer transition-colors"
+          className="p-2 text-slate-600 dark:text-neutral-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-neutral-800 rounded-lg cursor-pointer transition-colors"
           title="Przybliż (Ctrl + scroll w górę)"
           aria-label="Przybliż"
         >
@@ -273,18 +273,18 @@ const CVLivePreviewComponent: React.FC<CVLivePreviewProps> = ({
       >
         <div className="min-w-full w-fit flex flex-col items-center gap-8 pb-8">
           {compileError && (
-            <div className="w-full max-w-xl rounded-lg bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/50 p-3 text-xs text-rose-700 dark:text-rose-400 flex items-center gap-2">
+            <div className="w-full max-w-xl rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/50 p-3.5 text-xs text-rose-700 dark:text-rose-400 flex items-center gap-2">
               <AlertCircle className="h-4 w-4 shrink-0 text-rose-600 dark:text-rose-400" />
               <span>{compileError}</span>
             </div>
           )}
 
           {svgPages.length === 0 && isCompiling ? (
-            <div className="py-24 text-center text-sm text-slate-400 dark:text-slate-500 animate-pulse">
+            <div className="py-24 text-center text-sm text-slate-400 dark:text-neutral-500 animate-pulse">
               Inicjalizacja i kompilacja wektorowa Typst...
             </div>
           ) : svgPages.length === 0 ? (
-            <div className="py-24 text-center text-sm text-slate-400 dark:text-slate-500">
+            <div className="py-24 text-center text-sm text-slate-400 dark:text-neutral-500">
               Brak stron do wyświetlenia. Upewnij się, że wybrano aktywne sekcje.
             </div>
           ) : (
@@ -298,7 +298,7 @@ const CVLivePreviewComponent: React.FC<CVLivePreviewProps> = ({
                   className="relative shrink-0 flex flex-col items-center select-text"
                 >
                   <div
-                    className="bg-white shadow-xl rounded-xs overflow-hidden"
+                    className="bg-white shadow-lg dark:shadow-2xl dark:shadow-black/70 rounded-sm overflow-hidden border border-slate-200/60 dark:border-neutral-800"
                     style={{
                       width: `${scaledWidth}px`,
                       height: `${scaledHeight}px`,
@@ -309,7 +309,7 @@ const CVLivePreviewComponent: React.FC<CVLivePreviewProps> = ({
                       dangerouslySetInnerHTML={{ __html: pageSvg }}
                     />
                   </div>
-                  <div className="absolute -bottom-5 right-2 text-[10px] text-slate-400 dark:text-slate-500 font-mono select-none">
+                  <div className="absolute -bottom-5 right-2 text-[10px] text-slate-400 dark:text-neutral-500 font-mono select-none">
                     Strona {idx + 1} z {svgPages.length}
                   </div>
                 </div>

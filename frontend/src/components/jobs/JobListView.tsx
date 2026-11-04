@@ -557,16 +557,16 @@ export const JobListView: React.FC<JobListViewProps> = ({
     <div className="space-y-4">
       {/* Archive Header Banner */}
       {isArchive && (
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-xl border border-stone-200 bg-white p-5 shadow-xs dark:border-stone-800 dark:bg-stone-900/60">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-2xl border border-slate-200/80 bg-white p-5 shadow-none dark:border-neutral-800 dark:bg-neutral-900">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-stone-100 text-stone-700 dark:bg-stone-800 dark:text-stone-300">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-700 dark:bg-neutral-800 dark:text-neutral-300">
               <Archive className="h-5 w-5" />
             </div>
             <div>
-              <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">
+              <h2 className="text-lg font-bold text-slate-900 dark:text-white">
                 Archiwum ofert
               </h2>
-              <p className="text-xs text-slate-500 dark:text-slate-400">
+              <p className="text-xs text-slate-500 dark:text-neutral-400">
                 Przeglądaj zarchiwizowane i wygasłe oferty z możliwością ich przywrócenia
               </p>
             </div>
@@ -575,16 +575,16 @@ export const JobListView: React.FC<JobListViewProps> = ({
       )}
 
       {/* Control Bar: Search & Filters */}
-      <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-xs dark:border-slate-800 dark:bg-slate-900">
+      <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-none dark:border-neutral-800 dark:bg-neutral-900">
         <div className="flex items-center justify-between gap-3">
           <div className="flex flex-1 items-center gap-3 max-w-xl">
             <div className="relative flex-1">
-              <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400 dark:text-slate-500" />
+              <Search className="absolute left-3.5 top-2.5 h-4 w-4 text-indigo-500 dark:text-indigo-400" />
               <Input
                 placeholder="Szukaj po stanowisku, firmie, technologii..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-9 h-9 text-xs"
+                className="pl-10 h-9.5 text-xs"
               />
             </div>
 
@@ -592,12 +592,12 @@ export const JobListView: React.FC<JobListViewProps> = ({
               size="sm"
               variant={showFilters ? "primary" : "outline"}
               onClick={() => setShowFilters(!showFilters)}
-              className="text-xs shrink-0"
+              className="text-xs shrink-0 rounded-xl"
             >
               <Filter className="h-3.5 w-3.5 mr-1.5" />
               Filtry
               {(workModelFilter !== "all" || (!isArchive && statusFilter !== "all") || tagFilter !== "all") && (
-                <span className="ml-1.5 rounded-full bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300 px-1.5 py-0.2 text-[10px] font-bold">
+                <span className="ml-1.5 rounded-full bg-indigo-100 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300 px-1.5 py-0.2 text-[10px] font-bold">
                   !
                 </span>
               )}
@@ -608,7 +608,7 @@ export const JobListView: React.FC<JobListViewProps> = ({
               variant="outline"
               onClick={fetchJobs}
               isLoading={isLoading}
-              className="text-xs shrink-0"
+              className="text-xs shrink-0 rounded-xl"
               title="Odśwież listę ofert"
             >
               <RefreshCw className="h-3.5 w-3.5" />
@@ -618,15 +618,15 @@ export const JobListView: React.FC<JobListViewProps> = ({
 
         {/* Collapsible Filters */}
         {showFilters && (
-          <div className="mt-3 pt-3 border-t border-slate-100 dark:border-slate-800 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
+          <div className="mt-3 pt-3 border-t border-slate-100 dark:border-neutral-800/80 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
             <div>
-              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+              <label className="block text-xs font-semibold text-slate-700 dark:text-neutral-300 mb-1">
                 Tryb pracy:
               </label>
               <select
                 value={workModelFilter}
                 onChange={(e) => setWorkModelFilter(e.target.value)}
-                className="w-full text-xs rounded-md border border-slate-300 bg-white px-2.5 py-1.5 text-slate-800 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
+                className="w-full text-xs font-medium rounded-xl border border-slate-200 dark:border-neutral-700 bg-slate-50/60 dark:bg-neutral-950 px-2.5 py-2 text-slate-800 dark:text-neutral-200 focus:bg-white dark:focus:bg-neutral-900 focus:border-indigo-500 dark:focus:border-indigo-400 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none transition-all cursor-pointer"
               >
                 <option value="all">Wszystkie tryby</option>
                 <option value="remote">Tylko zdalnie</option>
@@ -637,13 +637,13 @@ export const JobListView: React.FC<JobListViewProps> = ({
 
             {!isArchive && (
               <div>
-                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                <label className="block text-xs font-semibold text-slate-700 dark:text-neutral-300 mb-1">
                   Status oferty:
                 </label>
                 <select
                   value={statusFilter}
                   onChange={(e) => setStatusFilter(e.target.value)}
-                  className="w-full text-xs rounded-md border border-slate-300 bg-white px-2.5 py-1.5 text-slate-800 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
+                  className="w-full text-xs font-medium rounded-xl border border-slate-200 dark:border-neutral-700 bg-slate-50/60 dark:bg-neutral-950 px-2.5 py-2 text-slate-800 dark:text-neutral-200 focus:bg-white dark:focus:bg-neutral-900 focus:border-indigo-500 dark:focus:border-indigo-400 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none transition-all cursor-pointer"
                 >
                   <option value="all">Wszystkie statusy</option>
                   <option value="inbox">Do przetworzenia</option>
@@ -657,13 +657,13 @@ export const JobListView: React.FC<JobListViewProps> = ({
             )}
 
             <div>
-              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+              <label className="block text-xs font-semibold text-slate-700 dark:text-neutral-300 mb-1">
                 Tag:
               </label>
               <select
                 value={tagFilter}
                 onChange={(e) => setTagFilter(e.target.value)}
-                className="w-full text-xs rounded-md border border-slate-300 bg-white px-2.5 py-1.5 text-slate-800 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
+                className="w-full text-xs font-medium rounded-xl border border-slate-200 dark:border-neutral-700 bg-slate-50/60 dark:bg-neutral-950 px-2.5 py-2 text-slate-800 dark:text-neutral-200 focus:bg-white dark:focus:bg-neutral-900 focus:border-indigo-500 dark:focus:border-indigo-400 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none transition-all cursor-pointer"
               >
                 <option value="all">Wszystkie tagi</option>
                 {availableTags.map((t) => (
@@ -684,7 +684,7 @@ export const JobListView: React.FC<JobListViewProps> = ({
                   setStatusFilter("all");
                   setTagFilter("all");
                 }}
-                className="text-xs w-full"
+                className="text-xs w-full rounded-xl"
               >
                 Wyczyść filtry
               </Button>
@@ -695,12 +695,12 @@ export const JobListView: React.FC<JobListViewProps> = ({
 
       {/* Bulk Actions Bar */}
       {selectedJobIds.size > 0 && (
-        <div className="rounded-xl border border-blue-200 bg-blue-50/90 p-3 shadow-xs dark:border-blue-900/60 dark:bg-blue-950/40 flex flex-wrap items-center justify-between gap-3 animate-in fade-in slide-in-from-top-2 duration-150">
+        <div className="rounded-2xl border-2 border-indigo-200 dark:border-indigo-900/60 bg-indigo-50/90 dark:bg-neutral-900 p-3.5 shadow-none flex flex-wrap items-center justify-between gap-3 animate-in fade-in slide-in-from-top-2 duration-150">
           <div className="flex items-center gap-2.5">
-            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-blue-600 text-xs font-bold text-white shadow-xs">
+            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-indigo-600 text-xs font-bold text-white shadow-none">
               {selectedJobIds.size}
             </span>
-            <span className="text-xs font-semibold text-blue-950 dark:text-blue-100">
+            <span className="text-xs font-semibold text-indigo-950 dark:text-neutral-100">
               Zaznaczono: {selectedJobIds.size}{" "}
               {selectedJobIds.size === 1
                 ? "ofertę"
@@ -708,7 +708,7 @@ export const JobListView: React.FC<JobListViewProps> = ({
                 ? "oferty"
                 : "ofert"}
               {visibleJobIds.length > 0 && (
-                <span className="font-normal text-blue-700 dark:text-blue-300 ml-1">
+                <span className="font-normal text-indigo-700 dark:text-indigo-300 ml-1">
                   (z {visibleJobIds.length} widocznych)
                 </span>
               )}
@@ -717,7 +717,7 @@ export const JobListView: React.FC<JobListViewProps> = ({
               type="button"
               onClick={() => setSelectedJobIds(new Set())}
               disabled={isBatchProcessing}
-              className="text-xs text-blue-600 dark:text-blue-400 hover:underline font-medium ml-2 disabled:opacity-50 cursor-pointer"
+              className="text-xs text-indigo-600 dark:text-indigo-400 hover:underline font-medium ml-2 disabled:opacity-50 cursor-pointer"
             >
               Odznacz wszystkie
             </button>
@@ -727,11 +727,11 @@ export const JobListView: React.FC<JobListViewProps> = ({
             {isArchive ? (
               <Button
                 size="sm"
-                variant="primary"
+                variant="success"
                 onClick={handleBatchRestore}
                 isLoading={isBatchProcessing}
                 disabled={isBatchProcessing}
-                className="h-8 text-xs gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white"
+                className="h-8.5 text-xs gap-1.5 rounded-xl font-semibold"
               >
                 <ArchiveRestore className="h-3.5 w-3.5" />
                 Przywróć zaznaczone ({selectedJobIds.size})
@@ -739,14 +739,14 @@ export const JobListView: React.FC<JobListViewProps> = ({
             ) : (
               <>
                 <div className="flex items-center gap-1.5">
-                  <span className="text-xs font-medium text-slate-700 dark:text-slate-300 hidden sm:inline">
+                  <span className="text-xs font-medium text-slate-700 dark:text-neutral-300 hidden sm:inline">
                     Zmień status:
                   </span>
                   <select
                     value={bulkStatus}
                     onChange={(e) => setBulkStatus(e.target.value as JobStatusType)}
                     disabled={isBatchProcessing}
-                    className="h-8 rounded-lg border border-slate-300 bg-white px-2.5 py-1 text-xs text-slate-800 shadow-2xs dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:opacity-50"
+                    className="h-8.5 rounded-xl border border-slate-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 px-3 py-1 text-xs text-slate-800 dark:text-neutral-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 disabled:opacity-50 cursor-pointer"
                   >
                     <option value="inbox">Do przetworzenia</option>
                     <option value="ready">Gotowe do aplikacji</option>
@@ -762,7 +762,7 @@ export const JobListView: React.FC<JobListViewProps> = ({
                     onClick={handleBatchStatusUpdate}
                     isLoading={isBatchProcessing}
                     disabled={isBatchProcessing}
-                    className="h-8 text-xs bg-white dark:bg-slate-800"
+                    className="h-8.5 text-xs rounded-xl"
                   >
                     Zastosuj status
                   </Button>
@@ -774,7 +774,7 @@ export const JobListView: React.FC<JobListViewProps> = ({
                   onClick={handleBatchArchive}
                   isLoading={isBatchProcessing}
                   disabled={isBatchProcessing}
-                  className="h-8 text-xs gap-1.5 bg-white dark:bg-slate-800 text-stone-700 dark:text-stone-300 border-stone-300 dark:border-stone-700"
+                  className="h-8.5 text-xs gap-1.5 rounded-xl"
                   title="Przenieś zaznaczone oferty do archiwum"
                 >
                   <Archive className="h-3.5 w-3.5" />
@@ -783,7 +783,7 @@ export const JobListView: React.FC<JobListViewProps> = ({
               </>
             )}
 
-            <div className="h-4 w-px bg-blue-200 dark:bg-blue-800/80 mx-1 hidden sm:block" />
+            <div className="h-4 w-px bg-indigo-200 dark:border-neutral-800 mx-1 hidden sm:block" />
 
             <Button
               size="sm"
@@ -791,7 +791,7 @@ export const JobListView: React.FC<JobListViewProps> = ({
               onClick={handleBatchDelete}
               isLoading={isBatchProcessing}
               disabled={isBatchProcessing}
-              className="h-8 text-xs gap-1.5"
+              className="h-8.5 text-xs gap-1.5 rounded-xl"
             >
               <Trash2 className="h-3.5 w-3.5" />
               {isArchive ? "Usuń trwale" : "Usuń zaznaczone"} ({selectedJobIds.size})
@@ -801,11 +801,11 @@ export const JobListView: React.FC<JobListViewProps> = ({
       )}
 
       {/* Main List Container */}
-      <div className="rounded-xl border border-slate-200 bg-white shadow-xs dark:border-slate-800 dark:bg-slate-900 overflow-hidden">
+      <div className="rounded-2xl border border-slate-200/80 bg-white shadow-none dark:border-neutral-800 dark:bg-neutral-900 overflow-hidden">
         <div className="overflow-x-auto min-w-full">
           <div className="md:min-w-[960px]">
             {/* Table / List Header */}
-            <div className="bg-slate-50 border-b border-slate-200 px-6 py-3.5 hidden md:grid md:grid-cols-[40px_minmax(50px,0.5fr)_minmax(180px,2.5fr)_minmax(110px,1.4fr)_minmax(120px,1.4fr)_minmax(95px,1.1fr)_minmax(110px,1.3fr)_minmax(130px,1.6fr)] gap-4 text-xs font-semibold text-slate-600 select-none dark:bg-slate-800/80 dark:border-slate-800 dark:text-slate-300">
+            <div className="bg-slate-50/80 border-b border-slate-200/80 px-6 py-3.5 hidden md:grid md:grid-cols-[40px_minmax(50px,0.5fr)_minmax(180px,2.5fr)_minmax(110px,1.4fr)_minmax(120px,1.4fr)_minmax(95px,1.1fr)_minmax(110px,1.3fr)_minmax(130px,1.6fr)] gap-4 text-xs font-semibold text-slate-600 select-none dark:bg-neutral-800/80 dark:border-neutral-800 dark:text-neutral-300">
               {/* Checkbox (zaznacz wszystkie) */}
               <div className="flex items-center justify-center">
                 <input
@@ -813,7 +813,7 @@ export const JobListView: React.FC<JobListViewProps> = ({
                   type="checkbox"
                   checked={allVisibleSelected}
                   onChange={handleToggleSelectAll}
-                  className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 dark:border-slate-700 dark:bg-slate-800 dark:ring-offset-slate-900 cursor-pointer"
+                  className="h-4 w-4 rounded-md border-slate-300 text-indigo-600 focus:ring-indigo-500 dark:border-neutral-700 dark:bg-neutral-950 cursor-pointer"
                   aria-label="Zaznacz wszystkie widoczne oferty"
                   title="Zaznacz wszystkie widoczne oferty"
                 />
@@ -917,8 +917,8 @@ export const JobListView: React.FC<JobListViewProps> = ({
                       key={job.id}
                       onClick={() => onSelectJob(job)}
                       className={cn(
-                        "group px-6 py-4 hover:bg-slate-50/80 dark:hover:bg-slate-800/60 transition-colors cursor-pointer grid grid-cols-1 md:grid-cols-[40px_minmax(50px,0.5fr)_minmax(180px,2.5fr)_minmax(110px,1.4fr)_minmax(120px,1.4fr)_minmax(95px,1.1fr)_minmax(110px,1.3fr)_minmax(130px,1.6fr)] gap-3 md:gap-4 items-center",
-                        isSelected && "bg-blue-50/40 dark:bg-blue-950/20"
+                        "group px-6 py-4 hover:bg-slate-50/80 dark:hover:bg-neutral-850 transition-colors cursor-pointer grid grid-cols-1 md:grid-cols-[40px_minmax(50px,0.5fr)_minmax(180px,2.5fr)_minmax(110px,1.4fr)_minmax(120px,1.4fr)_minmax(95px,1.1fr)_minmax(110px,1.3fr)_minmax(130px,1.6fr)] gap-3 md:gap-4 items-center",
+                        isSelected && "ring-2 ring-indigo-600 dark:ring-indigo-500 bg-indigo-50/20 dark:bg-neutral-900"
                       )}
                     >
                       {/* Checkbox (Kolumna 1) */}
@@ -931,43 +931,43 @@ export const JobListView: React.FC<JobListViewProps> = ({
                             type="checkbox"
                             checked={isSelected}
                             onChange={(e) => handleToggleSelectJob(job.id, e)}
-                            className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 dark:border-slate-700 dark:bg-slate-800 dark:ring-offset-slate-900 cursor-pointer"
+                            className="h-4 w-4 rounded-md border-slate-300 text-indigo-600 focus:ring-indigo-500 dark:border-neutral-700 dark:bg-neutral-950 cursor-pointer"
                             aria-label={`Wybierz ofertę ${job.role_title || ""}`}
                           />
-                          <span className="md:hidden text-xs font-medium text-slate-600 dark:text-slate-400">
+                          <span className="md:hidden text-xs font-medium text-slate-600 dark:text-neutral-400">
                             Zaznacz ofertę
                           </span>
                         </label>
                       </div>
 
                       {/* Dodano (narrow) - po lewej stronie */}
-                      <div className="flex items-center justify-center text-center text-xs text-slate-500 dark:text-slate-400">
+                      <div className="flex items-center justify-center text-center text-xs text-slate-500 dark:text-neutral-400">
                         {createdDateInfo ? (
                           <span
-                            className="cursor-help font-medium text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-colors"
+                            className="cursor-help font-medium text-slate-600 dark:text-neutral-300 hover:text-slate-900 dark:hover:text-white transition-colors"
                             title={`Dodano: ${createdDateInfo.fullDate}`}
                           >
-                            <span className="md:hidden text-slate-400 dark:text-slate-500 mr-1.5 font-normal">
+                            <span className="md:hidden text-slate-400 dark:text-neutral-500 mr-1.5 font-normal">
                               Dodano:
                             </span>
                             {createdDateInfo.text}
                           </span>
                         ) : (
-                          <span className="italic text-slate-400 dark:text-slate-500">—</span>
+                          <span className="italic text-slate-400 dark:text-neutral-500">—</span>
                         )}
                       </div>
 
                       {/* Stanowisko */}
                       <div className="min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
-                          <span className="font-semibold text-sm text-slate-900 dark:text-slate-100 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors truncate">
+                          <span className="font-semibold text-sm text-slate-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors truncate">
                             {job.role_title || "Nieokreślone stanowisko"}
                           </span>
 
                           {job.source_portal && (
-                            <Badge variant="secondary" className="text-[10px] py-0 px-1.5">
+                            <span className="text-[10px] py-0.5 px-2.5 rounded-full font-bold uppercase tracking-wider bg-slate-100 dark:bg-neutral-800 text-slate-600 dark:text-neutral-300 border border-slate-200/60 dark:border-neutral-700/60">
                               {PORTAL_LABELS[job.source_portal] || job.source_portal}
-                            </Badge>
+                            </span>
                           )}
                         </div>
 
@@ -977,7 +977,7 @@ export const JobListView: React.FC<JobListViewProps> = ({
                             {job.tags.map((t) => (
                               <span
                                 key={t}
-                                className="inline-flex items-center text-[10px] px-1.5 py-0.2 rounded bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300 font-mono"
+                                className="inline-flex items-center text-[10px] px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-600 dark:bg-neutral-800 dark:text-neutral-300 font-mono border border-transparent hover:border-indigo-300 dark:hover:border-indigo-700 transition-colors"
                               >
                                 #{t}
                               </span>
@@ -986,15 +986,15 @@ export const JobListView: React.FC<JobListViewProps> = ({
                         )}
 
                         {/* Mobile-only company view */}
-                        <div className="md:hidden flex items-center gap-1.5 mt-1 text-xs text-slate-500 dark:text-slate-400 font-medium">
-                          <Building className="h-3.5 w-3.5 text-slate-400 dark:text-slate-500 shrink-0" />
+                        <div className="md:hidden flex items-center gap-1.5 mt-1 text-xs text-slate-500 dark:text-neutral-400 font-medium">
+                          <Building className="h-3.5 w-3.5 text-indigo-500 shrink-0" />
                           <span>{job.company_name || "Nieznana firma"}</span>
                         </div>
                       </div>
 
                       {/* Firma */}
-                      <div className="hidden md:flex items-center gap-1.5 text-xs text-slate-600 dark:text-slate-400 font-medium min-w-0">
-                        <Building className="h-3.5 w-3.5 text-slate-400 dark:text-slate-500 shrink-0" />
+                      <div className="hidden md:flex items-center gap-1.5 text-xs text-slate-600 dark:text-neutral-400 font-medium min-w-0">
+                        <Building className="h-3.5 w-3.5 text-indigo-500 shrink-0" />
                         <span className="truncate" title={job.company_name || undefined}>
                           {job.company_name || "Nieznana firma"}
                         </span>
@@ -1003,19 +1003,25 @@ export const JobListView: React.FC<JobListViewProps> = ({
                       {/* Status */}
                       <div className="flex flex-col items-start gap-1">
                         {isReparsing ? (
-                          <span className="flex items-center gap-1 text-[11px] text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/60 px-2.5 py-0.5 rounded-full border border-blue-200 dark:border-blue-800 animate-pulse font-medium">
+                          <span className="flex items-center gap-1.5 text-[11px] text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-950/60 px-3 py-0.5 rounded-full border-2 border-indigo-400 dark:border-indigo-600 shadow-none font-semibold">
                             <RefreshCw className="h-3 w-3 animate-spin" />
                             Parsowanie...
                           </span>
                         ) : (
                           <span
                             className={cn(
-                              "inline-flex items-center text-[11px] font-semibold px-2.5 py-0.5 rounded-full border",
-                              STATUS_COLORS[job.status]?.bg || "bg-slate-100 dark:bg-slate-800",
-                              STATUS_COLORS[job.status]?.text || "text-slate-700 dark:text-slate-200",
-                              STATUS_COLORS[job.status]?.border || "border-slate-300 dark:border-slate-700"
+                              "inline-flex items-center gap-1.5 text-[11px] font-semibold px-3 py-0.5 rounded-full border-2 shadow-none",
+                              STATUS_COLORS[job.status]?.bg || "bg-slate-100 dark:bg-neutral-800",
+                              STATUS_COLORS[job.status]?.text || "text-slate-700 dark:text-neutral-300",
+                              STATUS_COLORS[job.status]?.border || "border-2 border-slate-300 dark:border-neutral-600"
                             )}
                           >
+                            <span
+                              className={cn(
+                                "h-1.5 w-1.5 rounded-full shrink-0",
+                                STATUS_COLORS[job.status]?.dot || "bg-indigo-600"
+                              )}
+                            />
                             {STATUS_LABELS[job.status] || job.status}
                           </span>
                         )}
@@ -1028,10 +1034,10 @@ export const JobListView: React.FC<JobListViewProps> = ({
                           return (
                             <span
                               className={cn(
-                                "inline-flex items-center gap-1 text-[10px] font-medium px-1.5 py-0.5 rounded",
+                                "inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full border-2 shadow-none",
                                 isGhosting
-                                  ? "text-amber-700 bg-amber-50 dark:text-amber-400 dark:bg-amber-950/60 font-semibold border border-amber-200 dark:border-amber-800"
-                                  : "text-slate-500 dark:text-slate-400"
+                                  ? "text-amber-700 bg-amber-50 dark:text-amber-300 dark:bg-amber-950/60 border-amber-400 dark:border-amber-600"
+                                  : "text-slate-500 bg-slate-50 dark:text-neutral-400 dark:bg-neutral-800/60 border-slate-200 dark:border-neutral-700"
                               )}
                               title={
                                 isGhosting
@@ -1039,7 +1045,7 @@ export const JobListView: React.FC<JobListViewProps> = ({
                                   : `Aplikacja wysłana: ${new Date(job.applied_at).toLocaleDateString("pl-PL")}`
                               }
                             >
-                              {isGhosting && <AlertTriangle className="h-3 w-3 text-amber-600 dark:text-amber-400 shrink-0" />}
+                              {isGhosting && <AlertTriangle className="h-3 w-3 text-amber-500 shrink-0" />}
                               <span>{days === 0 ? "Dzisiaj" : `${days} d. temu`}</span>
                             </span>
                           );
@@ -1079,7 +1085,7 @@ export const JobListView: React.FC<JobListViewProps> = ({
                             );
                           })()
                         ) : (
-                          <span className="text-xs text-slate-400 dark:text-slate-500 italic">Brak danych</span>
+                          <span className="text-xs text-slate-400 dark:text-neutral-500 italic">Brak danych</span>
                         )}
                       </div>
 
@@ -1091,14 +1097,14 @@ export const JobListView: React.FC<JobListViewProps> = ({
                             const periodLabel = getSalaryPeriodLabel(job.salary_period);
                             if (!isNonMonthly) {
                               return (
-                                <span className="font-semibold text-xs text-emerald-700 bg-emerald-50 dark:text-emerald-300 dark:bg-emerald-950/60 px-2.5 py-1 rounded-md">
+                                <span className="font-bold text-xs text-emerald-700 bg-emerald-50 dark:text-emerald-300 dark:bg-emerald-950/50 px-3 py-1 rounded-full border border-emerald-200/60 dark:border-emerald-800/60 inline-flex items-center gap-1.5">
                                   {salaryText}
                                 </span>
                               );
                             }
                             return (
                               <span
-                                className="font-semibold text-xs text-emerald-700 bg-emerald-50 dark:text-emerald-300 dark:bg-emerald-950/60 px-2.5 py-1 rounded-md inline-flex items-center gap-1.5 cursor-help"
+                                className="font-bold text-xs text-emerald-700 bg-emerald-50 dark:text-emerald-300 dark:bg-emerald-950/50 px-3 py-1 rounded-full border border-emerald-200/60 dark:border-emerald-800/60 inline-flex items-center gap-1.5 cursor-help"
                                 onMouseEnter={(e) =>
                                   setSalaryTooltip({
                                     text: periodLabel,
@@ -1113,7 +1119,7 @@ export const JobListView: React.FC<JobListViewProps> = ({
                             );
                           })()
                         ) : (
-                          <span className="text-xs text-slate-400 dark:text-slate-500 italic">Brak danych</span>
+                          <span className="text-xs text-slate-400 dark:text-neutral-500 italic">Brak danych</span>
                         )}
                       </div>
 
@@ -1132,7 +1138,7 @@ export const JobListView: React.FC<JobListViewProps> = ({
                               <span>{deadlineInfo.text}</span>
                             </Badge>
                           ) : (
-                            <span className="text-xs text-slate-400 dark:text-slate-500 italic">Brak terminu</span>
+                            <span className="text-xs text-slate-400 dark:text-neutral-500 italic">Brak terminu</span>
                           )}
                         </div>
 
@@ -1153,7 +1159,7 @@ export const JobListView: React.FC<JobListViewProps> = ({
                                       onSelectJob(job);
                                     }}
                                     title="Termin zgłoszeń minął. Otwórz szczegóły oferty i wybierz status 'Zaaplikowano' lub dalszy, aby ją przywrócić."
-                                    className="p-1.5 rounded-lg text-slate-300 dark:text-slate-600 hover:text-amber-600 dark:hover:text-amber-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-help"
+                                    className="p-1.5 rounded-xl text-slate-300 dark:text-neutral-600 hover:text-amber-600 dark:hover:text-amber-400 hover:bg-slate-100 dark:hover:bg-neutral-800 transition-colors cursor-help"
                                   >
                                     <ArchiveRestore className="h-4 w-4" />
                                   </button>
@@ -1167,7 +1173,7 @@ export const JobListView: React.FC<JobListViewProps> = ({
                                     handleRestoreJob(job);
                                   }}
                                   title="Przywróć ofertę do gotowych do aplikacji"
-                                  className="p-1.5 rounded-lg text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/50 transition-colors cursor-pointer"
+                                  className="p-1.5 rounded-xl text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/50 transition-colors cursor-pointer"
                                 >
                                   <ArchiveRestore className="h-4 w-4" />
                                 </button>
@@ -1188,10 +1194,10 @@ export const JobListView: React.FC<JobListViewProps> = ({
                               }
                             }}
                             className={cn(
-                              "p-1.5 rounded-lg transition-colors cursor-pointer",
+                              "p-1.5 rounded-xl transition-colors cursor-pointer",
                               isMenuOpen
-                                ? "text-blue-600 bg-blue-50 dark:text-blue-400 dark:bg-slate-800"
-                                : "text-slate-400 hover:text-slate-700 hover:bg-slate-100 dark:text-slate-500 dark:hover:text-slate-300 dark:hover:bg-slate-800"
+                                ? "text-indigo-600 bg-indigo-50 dark:text-indigo-400 dark:bg-neutral-800"
+                                : "text-slate-400 hover:text-slate-700 hover:bg-slate-100 dark:text-neutral-500 dark:hover:text-neutral-300 dark:hover:bg-neutral-800"
                             )}
                             title="Opcje oferty"
                           >
@@ -1208,7 +1214,7 @@ export const JobListView: React.FC<JobListViewProps> = ({
         </div>
 
         {/* Footer info banner */}
-        <div className="bg-slate-50 border-t border-slate-200 px-6 py-3 flex items-center justify-between text-xs text-slate-500 rounded-b-xl dark:bg-slate-800/80 dark:border-slate-800 dark:text-slate-400">
+        <div className="bg-slate-50/80 border-t border-slate-200/80 px-6 py-3 flex items-center justify-between text-xs text-slate-500 rounded-b-2xl dark:bg-neutral-850 dark:border-neutral-800 dark:text-neutral-400">
           <span>
             Wyświetlono {filteredAndSortedJobs.length} z {jobs.length} ofert
           </span>
@@ -1231,7 +1237,7 @@ export const JobListView: React.FC<JobListViewProps> = ({
                 : { top: `${activeMenu.rect.bottom + 4}px` }),
               zIndex: 9999,
             }}
-            className="w-48 rounded-xl border border-slate-200 bg-white py-1.5 shadow-xl dark:border-slate-800 dark:bg-slate-800 animate-in fade-in zoom-in-95 duration-100"
+            className="w-52 rounded-2xl border border-slate-200/80 bg-white py-2 shadow-xl dark:border-neutral-800 dark:bg-neutral-900 animate-in fade-in zoom-in-95 duration-100"
             onClick={(e) => e.stopPropagation()}
           >
             {isArchive ? (
@@ -1248,7 +1254,7 @@ export const JobListView: React.FC<JobListViewProps> = ({
                           onSelectJob(currentJob);
                         }}
                         title="Termin zgłoszeń minął. Otwórz szczegóły oferty i wybierz status 'Zaaplikowano' lub dalszy, aby ją przywrócić."
-                        className="w-full px-3.5 py-2 text-left text-xs text-amber-700 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-slate-700 flex items-center gap-2 cursor-pointer font-medium"
+                        className="w-full px-4 py-2 text-left text-xs text-amber-700 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-neutral-800 flex items-center gap-2 cursor-pointer font-medium"
                       >
                         <ArchiveRestore className="h-3.5 w-3.5 text-amber-600 dark:text-amber-400" />
                         Przywróć (wymaga szczegółów)
@@ -1263,7 +1269,7 @@ export const JobListView: React.FC<JobListViewProps> = ({
                         setActiveMenu(null);
                         handleRestoreJob(currentJob);
                       }}
-                      className="w-full px-3.5 py-2 text-left text-xs text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-slate-700 flex items-center gap-2 font-medium cursor-pointer"
+                      className="w-full px-4 py-2 text-left text-xs text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-neutral-800 flex items-center gap-2 font-medium cursor-pointer"
                     >
                       <ArchiveRestore className="h-3.5 w-3.5" />
                       Przywróć do aktualnych
@@ -1278,7 +1284,7 @@ export const JobListView: React.FC<JobListViewProps> = ({
                     setActiveMenu(null);
                     onSelectJob(currentJob);
                   }}
-                  className="w-full px-3.5 py-2 text-left text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 flex items-center gap-2 cursor-pointer"
+                  className="w-full px-4 py-2 text-left text-xs text-slate-700 dark:text-neutral-200 hover:bg-slate-50 dark:hover:bg-neutral-800 flex items-center gap-2 cursor-pointer"
                 >
                   Szczegóły oferty
                 </button>
@@ -1292,7 +1298,7 @@ export const JobListView: React.FC<JobListViewProps> = ({
                     setActiveMenu(null);
                     onSelectJob(currentJob);
                   }}
-                  className="w-full px-3.5 py-2 text-left text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 flex items-center gap-2 cursor-pointer"
+                  className="w-full px-4 py-2 text-left text-xs text-slate-700 dark:text-neutral-200 hover:bg-slate-50 dark:hover:bg-neutral-800 flex items-center gap-2 cursor-pointer"
                 >
                   Szczegóły oferty
                 </button>
@@ -1304,9 +1310,9 @@ export const JobListView: React.FC<JobListViewProps> = ({
                     setActiveMenu(null);
                     onGenerateCV(currentJob);
                   }}
-                  className="w-full px-3.5 py-2 text-left text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 flex items-center gap-2 cursor-pointer"
+                  className="w-full px-4 py-2 text-left text-xs text-slate-700 dark:text-neutral-200 hover:bg-slate-50 dark:hover:bg-neutral-800 flex items-center gap-2 cursor-pointer"
                 >
-                  <Sparkles className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400" />
+                  <Sparkles className="h-3.5 w-3.5 text-indigo-600 dark:text-indigo-400" />
                   Generuj CV
                 </button>
 
@@ -1318,7 +1324,7 @@ export const JobListView: React.FC<JobListViewProps> = ({
                       setActiveMenu(null);
                       setFollowUpJob(currentJob);
                     }}
-                    className="w-full px-3.5 py-2 text-left text-xs text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-slate-700 flex items-center gap-2 font-medium cursor-pointer"
+                    className="w-full px-4 py-2 text-left text-xs text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-neutral-800 flex items-center gap-2 font-medium cursor-pointer"
                   >
                     <MessageSquare className="h-3.5 w-3.5" />
                     Generuj follow-up
@@ -1334,9 +1340,9 @@ export const JobListView: React.FC<JobListViewProps> = ({
                         setActiveMenu(null);
                         handleReparse(currentJob, "ai");
                       }}
-                      className="w-full px-3.5 py-2 text-left text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 flex items-center gap-2 cursor-pointer"
+                      className="w-full px-4 py-2 text-left text-xs text-slate-700 dark:text-neutral-200 hover:bg-slate-50 dark:hover:bg-neutral-800 flex items-center gap-2 cursor-pointer"
                     >
-                      <Sparkles className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400" />
+                      <Sparkles className="h-3.5 w-3.5 text-indigo-600 dark:text-indigo-400" />
                       Parsuj przez AI
                     </button>
 
@@ -1347,9 +1353,9 @@ export const JobListView: React.FC<JobListViewProps> = ({
                         setActiveMenu(null);
                         handleReparse(currentJob, "traditional");
                       }}
-                      className="w-full px-3.5 py-2 text-left text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 flex items-center gap-2 cursor-pointer"
+                      className="w-full px-4 py-2 text-left text-xs text-slate-700 dark:text-neutral-200 hover:bg-slate-50 dark:hover:bg-neutral-800 flex items-center gap-2 cursor-pointer"
                     >
-                      <Cpu className="h-3.5 w-3.5 text-slate-600 dark:text-slate-400" />
+                      <Cpu className="h-3.5 w-3.5 text-slate-600 dark:text-neutral-400" />
                       Auto-parsuj tradycyjne
                     </button>
                   </>
@@ -1362,7 +1368,7 @@ export const JobListView: React.FC<JobListViewProps> = ({
                     setActiveMenu(null);
                     handleArchiveJob(currentJob);
                   }}
-                  className="w-full px-3.5 py-2 text-left text-xs text-stone-600 dark:text-stone-300 hover:bg-stone-50 dark:hover:bg-slate-700 flex items-center gap-2 cursor-pointer"
+                  className="w-full px-4 py-2 text-left text-xs text-stone-600 dark:text-neutral-300 hover:bg-stone-50 dark:hover:bg-neutral-800 flex items-center gap-2 cursor-pointer"
                 >
                   <Archive className="h-3.5 w-3.5" />
                   Zarchiwizuj ofertę
@@ -1375,15 +1381,15 @@ export const JobListView: React.FC<JobListViewProps> = ({
                 href={normalizeJobOfferUrl(activeMenu.job.source_url)}
                 target="_blank"
                 rel="noreferrer"
-                className="w-full px-3.5 py-2 text-left text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 flex items-center gap-2 cursor-pointer"
+                className="w-full px-4 py-2 text-left text-xs text-slate-700 dark:text-neutral-200 hover:bg-slate-50 dark:hover:bg-neutral-800 flex items-center gap-2 cursor-pointer"
                 onClick={() => setActiveMenu(null)}
               >
-                <ExternalLink className="h-3.5 w-3.5 text-slate-400 dark:text-slate-500" />
+                <ExternalLink className="h-3.5 w-3.5 text-slate-400 dark:text-neutral-500" />
                 Otwórz ogłoszenie
               </a>
             )}
 
-            <div className="my-1 border-t border-slate-100 dark:border-slate-700" />
+            <div className="my-1.5 border-t border-slate-100 dark:border-neutral-800" />
 
             <button
               type="button"
@@ -1392,7 +1398,7 @@ export const JobListView: React.FC<JobListViewProps> = ({
                 setActiveMenu(null);
                 handleDelete(currentJob);
               }}
-              className="w-full px-3.5 py-2 text-left text-xs text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-slate-700 flex items-center gap-2 cursor-pointer"
+              className="w-full px-4 py-2 text-left text-xs text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 flex items-center gap-2 cursor-pointer font-medium"
             >
               <Trash2 className="h-3.5 w-3.5" />
               {isArchive ? "Usuń trwale" : "Usuń ofertę"}
@@ -1427,13 +1433,13 @@ export const JobListView: React.FC<JobListViewProps> = ({
                     ? { bottom: `${window.innerHeight - rect.top + 6}px` }
                     : { top: `${rect.bottom + 6}px` }),
                 }}
-                className="pointer-events-none rounded-lg border border-slate-200 bg-white p-2.5 text-xs shadow-xl dark:border-slate-700 dark:bg-slate-800 animate-in fade-in zoom-in-95 duration-100"
+                className="pointer-events-none rounded-2xl border border-slate-200/80 bg-white p-3 text-xs shadow-xl dark:border-neutral-800 dark:bg-neutral-900 animate-in fade-in zoom-in-95 duration-100"
               >
-                <div className="flex items-center gap-1.5 font-semibold text-slate-800 dark:text-slate-200 mb-1">
-                  <HelpCircle className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400 shrink-0" />
+                <div className="flex items-center gap-1.5 font-semibold text-slate-800 dark:text-neutral-200 mb-1">
+                  <HelpCircle className="h-3.5 w-3.5 text-indigo-600 dark:text-indigo-400 shrink-0" />
                   <span>Szczegóły trybu pracy</span>
                 </div>
-                <p className="text-slate-600 dark:text-slate-300 leading-relaxed break-words whitespace-pre-wrap">
+                <p className="text-slate-600 dark:text-neutral-300 leading-relaxed break-words whitespace-pre-wrap">
                   {workModelTooltip.text}
                 </p>
               </div>
@@ -1468,13 +1474,13 @@ export const JobListView: React.FC<JobListViewProps> = ({
                     ? { bottom: `${window.innerHeight - rect.top + 6}px` }
                     : { top: `${rect.bottom + 6}px` }),
                 }}
-                className="pointer-events-none rounded-lg border border-slate-200 bg-white p-2.5 text-xs shadow-xl dark:border-slate-700 dark:bg-slate-800 animate-in fade-in zoom-in-95 duration-100"
+                className="pointer-events-none rounded-2xl border border-slate-200/80 bg-white p-3 text-xs shadow-xl dark:border-neutral-800 dark:bg-neutral-900 animate-in fade-in zoom-in-95 duration-100"
               >
-                <div className="flex items-center gap-1.5 font-semibold text-slate-800 dark:text-slate-200 mb-1">
+                <div className="flex items-center gap-1.5 font-semibold text-slate-800 dark:text-neutral-200 mb-1">
                   <HelpCircle className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
                   <span>Okres wynagrodzenia</span>
                 </div>
-                <p className="text-slate-600 dark:text-slate-300 leading-relaxed break-words whitespace-pre-wrap">
+                <p className="text-slate-600 dark:text-neutral-300 leading-relaxed break-words whitespace-pre-wrap">
                   {salaryTooltip.text}
                 </p>
               </div>

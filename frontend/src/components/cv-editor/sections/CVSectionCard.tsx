@@ -132,13 +132,13 @@ const CVSectionCardComponent: React.FC<CVSectionCardProps> = ({
   return (
     <div
       data-cv-section-id={id}
-      className="rounded-xl border border-slate-200 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900 transition-shadow [contain:content]"
+      className="rounded-2xl border border-slate-200/80 bg-white p-5 sm:p-6 shadow-none dark:border-neutral-800 dark:bg-neutral-900 [contain:content]"
     >
       {/* Section Header */}
       <div className="flex items-center justify-between gap-2 sm:gap-4">
         {/* Left: Section Icon + Editable Title */}
         <div className="flex items-center gap-2.5 min-w-0 sm:flex-1">
-          <div className="shrink-0 text-blue-600 dark:text-blue-400">
+          <div className="shrink-0 text-indigo-600 dark:text-indigo-400">
             {getSectionIcon(type)}
           </div>
           <input
@@ -146,19 +146,19 @@ const CVSectionCardComponent: React.FC<CVSectionCardProps> = ({
             data-cv-field={`section-title:${id}`}
             value={title || ""}
             onChange={(e) => onUpdateTitle(id, e.target.value)}
-            className="font-semibold text-sm text-slate-900 dark:text-slate-100 bg-transparent border-b border-transparent hover:border-slate-300 dark:hover:border-slate-700 focus:border-blue-500 focus:outline-none px-1 py-0.5 truncate w-full max-w-[160px] sm:max-w-xs transition-colors"
+            className="font-semibold text-sm text-slate-900 dark:text-neutral-100 bg-transparent border-b border-transparent hover:border-slate-300 dark:hover:border-neutral-700 focus:border-indigo-500 focus:outline-none px-1 py-0.5 truncate w-full max-w-[160px] sm:max-w-xs transition-colors"
             title="Kliknij, aby edytować nagłówek sekcji"
           />
         </div>
 
         {/* Center: Reorder Up / Down buttons */}
         <div className="flex items-center justify-center shrink-0">
-          <div className="flex items-center bg-slate-100 dark:bg-slate-800 rounded-lg p-0.5 border border-slate-200 dark:border-slate-700 shadow-2xs">
+          <div className="flex items-center bg-slate-100 dark:bg-neutral-950 rounded-xl p-0.5 border border-slate-200 dark:border-neutral-800">
             <button
               type="button"
               onClick={() => onMoveUp(index)}
               disabled={isFirst}
-              className="p-1.5 rounded-md text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white disabled:opacity-25 disabled:cursor-not-allowed hover:bg-white dark:hover:bg-slate-700 transition-colors cursor-pointer disabled:pointer-events-none"
+              className="p-1.5 rounded-lg text-slate-500 hover:text-slate-900 dark:text-neutral-400 dark:hover:text-white disabled:opacity-25 disabled:cursor-not-allowed hover:bg-white dark:hover:bg-neutral-800 transition-colors cursor-pointer disabled:pointer-events-none"
               title="Przesuń sekcję w górę"
             >
               <ChevronUp className="h-4 w-4" />
@@ -167,7 +167,7 @@ const CVSectionCardComponent: React.FC<CVSectionCardProps> = ({
               type="button"
               onClick={() => onMoveDown(index)}
               disabled={isLast}
-              className="p-1.5 rounded-md text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white disabled:opacity-25 disabled:cursor-not-allowed hover:bg-white dark:hover:bg-slate-700 transition-colors cursor-pointer disabled:pointer-events-none"
+              className="p-1.5 rounded-lg text-slate-500 hover:text-slate-900 dark:text-neutral-400 dark:hover:text-white disabled:opacity-25 disabled:cursor-not-allowed hover:bg-white dark:hover:bg-neutral-800 transition-colors cursor-pointer disabled:pointer-events-none"
               title="Przesuń sekcję w dół"
             >
               <ChevronDown className="h-4 w-4" />
@@ -183,7 +183,7 @@ const CVSectionCardComponent: React.FC<CVSectionCardProps> = ({
               size="sm"
               variant="outline"
               onClick={() => onRefine(id)}
-              className="text-xs h-8 text-indigo-600 border-indigo-200 hover:bg-indigo-50 dark:border-indigo-800 dark:text-indigo-400 dark:hover:bg-slate-800"
+              className="text-xs h-8 text-indigo-600 border-2 border-indigo-200 hover:bg-indigo-50 dark:border-indigo-800/80 dark:text-indigo-400 dark:hover:bg-neutral-800 rounded-xl font-semibold shadow-none"
             >
               <Sparkles className="h-3.5 w-3.5 mr-1" />
               <span className="hidden sm:inline">Udoskonal z AI</span>
@@ -196,7 +196,7 @@ const CVSectionCardComponent: React.FC<CVSectionCardProps> = ({
             <button
               type="button"
               onClick={() => onRemove(id)}
-              className="p-1.5 text-slate-400 dark:text-slate-500 hover:text-rose-600 dark:hover:text-rose-400 rounded-md hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors cursor-pointer"
+              className="p-1.5 text-slate-400 dark:text-neutral-500 hover:text-rose-600 dark:hover:text-rose-400 rounded-xl hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors cursor-pointer"
               title="Usuń sekcję"
             >
               <Trash2 className="h-4 w-4" />
@@ -207,7 +207,7 @@ const CVSectionCardComponent: React.FC<CVSectionCardProps> = ({
           <button
             type="button"
             onClick={() => onToggleExpand(id)}
-            className="px-3.5 py-1.5 h-8 min-w-[48px] rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white transition-all cursor-pointer flex items-center justify-center shrink-0"
+            className="px-3.5 py-1.5 h-8 min-w-[48px] rounded-xl border border-slate-200 dark:border-neutral-700 bg-slate-50/60 hover:bg-slate-100 dark:bg-neutral-800 dark:hover:bg-neutral-700 text-slate-600 hover:text-slate-900 dark:text-neutral-300 dark:hover:text-white transition-all cursor-pointer flex items-center justify-center shrink-0 shadow-none"
             title={isExpanded ? "Zwiń sekcję" : "Rozwiń sekcję"}
           >
             <ChevronDown
@@ -228,7 +228,7 @@ const CVSectionCardComponent: React.FC<CVSectionCardProps> = ({
         }`}
       >
         <div className="overflow-hidden min-h-0">
-          <div className="border-t border-slate-100 dark:border-slate-800 mt-4 pt-4">
+          <div className="border-t border-slate-100 dark:border-neutral-800 mt-4 pt-4">
             {children}
           </div>
         </div>

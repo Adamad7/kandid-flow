@@ -1204,13 +1204,13 @@ export const KnowledgeBaseEditor: React.FC = () => {
     return (
       <div className="flex items-center gap-2">
         {isSuccessThis && (
-          <span className="flex items-center gap-1 text-xs font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-2 py-1 rounded border border-emerald-200 dark:border-emerald-900/50">
+          <span className="flex items-center gap-1.5 text-xs font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-2.5 py-0.5 rounded-full border-2 border-emerald-200 dark:border-emerald-800">
             <Check className="h-3.5 w-3.5" />
             Zapisano
           </span>
         )}
         {errorThis && (
-          <span className="flex items-center gap-1 text-xs font-semibold text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/40 px-2 py-1 rounded border border-rose-200 dark:border-rose-900/50">
+          <span className="flex items-center gap-1.5 text-xs font-semibold text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/40 px-2.5 py-0.5 rounded-full border-2 border-rose-200 dark:border-rose-800">
             <AlertCircle className="h-3.5 w-3.5" />
             {errorThis}
           </span>
@@ -1221,7 +1221,7 @@ export const KnowledgeBaseEditor: React.FC = () => {
           onClick={() => saveProfileData(sectionKey)}
           disabled={!isDirty || isSavingThis}
           isLoading={isSavingThis}
-          className="text-xs h-8 px-3 font-medium transition-all"
+          className="text-xs h-8 px-3.5 font-semibold rounded-xl shadow-none transition-all"
         >
           <Save className="h-3.5 w-3.5 mr-1.5" />
           Zapisz sekcję
@@ -1233,12 +1233,12 @@ export const KnowledgeBaseEditor: React.FC = () => {
   return (
     <div className="max-w-4xl mx-auto space-y-8 pb-16">
       {/* Top Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-2 border-b border-slate-200 dark:border-slate-800">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-slate-200 dark:border-neutral-800">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-neutral-100">
             Baza wiedzy o kandydacie
           </h1>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+          <p className="text-sm text-slate-500 dark:text-neutral-400 mt-1">
             Główny zasób Twoich doświadczeń, umiejętności i projektów, z którego AI generuje i dopasowuje CV
           </p>
         </div>
@@ -1247,7 +1247,7 @@ export const KnowledgeBaseEditor: React.FC = () => {
           <Button
             variant="destructive"
             onClick={() => setIsResetModalOpen(true)}
-            className="text-sm font-medium bg-rose-600 hover:bg-rose-700 text-white shadow-xs"
+            className="text-sm font-semibold bg-rose-600 hover:bg-rose-700 text-white rounded-xl shadow-none"
           >
             <RotateCcw className="h-4 w-4 mr-2" />
             Przywróć dane testowe
@@ -1256,14 +1256,14 @@ export const KnowledgeBaseEditor: React.FC = () => {
           <Button
             variant="outline"
             onClick={() => setIsAIModalOpen(true)}
-            className="text-sm font-medium border-blue-200 dark:border-blue-900/60 bg-blue-50/50 hover:bg-blue-100/70 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300 dark:hover:bg-blue-900/60 shadow-xs"
+            className="text-sm font-semibold border-2 border-indigo-600 text-indigo-600 hover:bg-indigo-50 dark:border-indigo-500 dark:text-indigo-400 dark:hover:bg-neutral-800 rounded-xl shadow-none"
           >
-            <Sparkles className="h-4 w-4 mr-2 text-blue-600 dark:text-blue-400" />
+            <Sparkles className="h-4 w-4 mr-2 text-indigo-600 dark:text-indigo-400" />
             Uzupełnij za pomocą AI
           </Button>
 
           {successSections["all"] && (
-            <span className="flex items-center gap-1 text-xs font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-2.5 py-1.5 rounded-lg border border-emerald-200 dark:border-emerald-900/50">
+            <span className="flex items-center gap-1.5 text-xs font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-3 py-1.5 rounded-full border-2 border-emerald-200 dark:border-emerald-800">
               <Check className="h-4 w-4" />
               Wszystko zapisane!
             </span>
@@ -1273,7 +1273,7 @@ export const KnowledgeBaseEditor: React.FC = () => {
             onClick={handleSaveAll}
             disabled={!isAnyDirty || !!savingSections["all"]}
             isLoading={!!savingSections["all"]}
-            className="text-sm font-semibold shadow-xs"
+            className="text-sm font-semibold rounded-xl shadow-none"
           >
             <Save className="h-4 w-4 mr-2" />
             Zapisz wszystkie zmiany
@@ -1282,7 +1282,7 @@ export const KnowledgeBaseEditor: React.FC = () => {
       </div>
 
       {feedbackMessage && (
-        <div className="rounded-xl bg-emerald-50 border border-emerald-200 p-4 text-sm text-emerald-800 dark:bg-emerald-950/40 dark:border-emerald-900/50 dark:text-emerald-300 flex items-center justify-between shadow-xs">
+        <div className="rounded-2xl bg-emerald-50 border-2 border-emerald-200/80 p-4 text-sm text-emerald-800 dark:bg-emerald-950/40 dark:border-emerald-800 dark:text-emerald-300 flex items-center justify-between shadow-none">
           <div className="flex items-center gap-2">
             <Check className="h-5 w-5 text-emerald-600 dark:text-emerald-400 shrink-0" />
             <span>{feedbackMessage}</span>
@@ -1290,7 +1290,7 @@ export const KnowledgeBaseEditor: React.FC = () => {
           <button
             type="button"
             onClick={() => setFeedbackMessage(null)}
-            className="text-emerald-600 hover:text-emerald-800 dark:text-emerald-400 dark:hover:text-emerald-200 text-xs font-semibold ml-4"
+            className="text-emerald-600 hover:text-emerald-800 dark:text-emerald-400 dark:hover:text-emerald-200 text-xs font-semibold ml-4 cursor-pointer"
           >
             Zamknij
           </button>
@@ -1298,11 +1298,11 @@ export const KnowledgeBaseEditor: React.FC = () => {
       )}
 
       {/* Basic Contact Info Block */}
-      <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-6 shadow-xs space-y-5">
-        <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+      <div className="bg-white dark:bg-neutral-900 rounded-2xl border border-slate-200/80 dark:border-neutral-800 p-5 sm:p-6 shadow-none space-y-5">
+        <div className="flex items-center justify-between border-b border-slate-100 dark:border-neutral-800 pb-3">
           <div className="flex items-center gap-2">
-            <User className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-            <h3 className="font-semibold text-slate-900 dark:text-slate-100">
+            <User className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
+            <h3 className="font-semibold text-slate-900 dark:text-neutral-100">
               Dane kontaktowe i identyfikacja
             </h3>
           </div>
@@ -1464,22 +1464,22 @@ export const KnowledgeBaseEditor: React.FC = () => {
               return (
                 <div
                   key={sec.id}
-                  className={`w-full flex flex-col sm:flex-row sm:items-center justify-between p-3 rounded-xl border transition-colors duration-150 gap-3 ${
+                  className={`w-full flex flex-col sm:flex-row sm:items-center justify-between p-3.5 rounded-xl border transition-colors duration-150 gap-3 ${
                     isOff
-                      ? "bg-slate-50/50 dark:bg-slate-900/30 border-slate-200/60 dark:border-slate-800/60 opacity-60"
+                      ? "bg-slate-50/50 dark:bg-neutral-950/40 border-slate-200/60 dark:border-neutral-800/60 opacity-60"
                       : isAi
-                      ? "bg-indigo-50/20 dark:bg-indigo-950/20 border-indigo-200/70 dark:border-indigo-900/60 shadow-xs"
-                      : "bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 shadow-xs"
+                      ? "bg-indigo-50/30 dark:bg-indigo-950/30 border-2 border-indigo-200 dark:border-indigo-800 shadow-none"
+                      : "bg-white dark:bg-neutral-900 border border-slate-200/80 dark:border-neutral-800 shadow-none"
                   }`}
                 >
                   <div className="flex items-center gap-3 min-w-0">
                     <div
-                      className={`p-2 rounded-lg shrink-0 ${
+                      className={`p-2 rounded-xl shrink-0 ${
                         isOff
-                          ? "bg-slate-200 dark:bg-slate-800 text-slate-400"
+                          ? "bg-slate-200 dark:bg-neutral-800 text-slate-400"
                           : isAi
-                          ? "bg-indigo-100 dark:bg-indigo-900/50 text-indigo-600 dark:text-indigo-400"
-                          : "bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-400"
+                          ? "bg-indigo-100 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400"
+                          : "bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400"
                       }`}
                     >
                       <IconComp className="h-4 w-4" />
@@ -1487,30 +1487,30 @@ export const KnowledgeBaseEditor: React.FC = () => {
                     <div className="min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
                         <span
-                          className={`text-sm font-medium truncate ${
+                          className={`text-sm font-semibold truncate ${
                             isOff
-                              ? "text-slate-400 dark:text-slate-500"
-                              : "text-slate-900 dark:text-slate-100"
+                              ? "text-slate-400 dark:text-neutral-500"
+                              : "text-slate-900 dark:text-neutral-100"
                           }`}
                         >
                           {sec.label}
                         </span>
                       </div>
-                      <p className="text-xs text-slate-500 dark:text-slate-400 truncate">
+                      <p className="text-xs text-slate-500 dark:text-neutral-400 truncate">
                         {sec.description}
                       </p>
                     </div>
                   </div>
 
                   {/* 3-Position Toggle Switch */}
-                  <div className="inline-flex shrink-0 self-end sm:self-auto rounded-lg border border-slate-200 dark:border-slate-700 p-0.5 bg-slate-100 dark:bg-slate-800 text-xs font-medium">
+                  <div className="inline-flex shrink-0 self-end sm:self-auto rounded-xl border border-slate-200 dark:border-neutral-800 p-1 bg-slate-100 dark:bg-neutral-950 text-xs font-semibold">
                     <button
                       type="button"
                       onClick={() => handleSetDefaultSectionMode(sec.id, "off")}
-                      className={`px-2.5 py-1 rounded-md transition-colors duration-150 select-none whitespace-nowrap font-medium ${
+                      className={`px-2.5 py-1 rounded-lg transition-colors duration-150 select-none whitespace-nowrap font-semibold cursor-pointer ${
                         isOff
-                          ? "bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-100 shadow-xs"
-                          : "text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200"
+                          ? "bg-white dark:bg-neutral-850 text-slate-800 dark:text-neutral-100 shadow-none"
+                          : "text-slate-500 hover:text-slate-800 dark:text-neutral-400 dark:hover:text-neutral-200"
                       }`}
                     >
                       Nie umieszczaj
@@ -1518,10 +1518,10 @@ export const KnowledgeBaseEditor: React.FC = () => {
                     <button
                       type="button"
                       onClick={() => handleSetDefaultSectionMode(sec.id, "raw")}
-                      className={`px-2.5 py-1 rounded-md transition-colors duration-150 select-none whitespace-nowrap font-medium ${
+                      className={`px-2.5 py-1 rounded-lg transition-colors duration-150 select-none whitespace-nowrap font-semibold cursor-pointer ${
                         isRaw
-                          ? "bg-blue-600 text-white shadow-xs"
-                            : "text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200"
+                          ? "bg-slate-900 text-white dark:bg-neutral-800 shadow-none"
+                            : "text-slate-500 hover:text-slate-800 dark:text-neutral-400 dark:hover:text-neutral-200"
                       }`}
                     >
                       Z bazy wiedzy
@@ -1529,10 +1529,10 @@ export const KnowledgeBaseEditor: React.FC = () => {
                     <button
                       type="button"
                       onClick={() => handleSetDefaultSectionMode(sec.id, "ai")}
-                      className={`px-2.5 py-1 rounded-md transition-colors duration-150 flex items-center gap-1 select-none whitespace-nowrap font-medium ${
+                      className={`px-2.5 py-1 rounded-lg transition-colors duration-150 flex items-center gap-1 select-none whitespace-nowrap font-semibold cursor-pointer ${
                         isAi
-                          ? "bg-indigo-600 text-white shadow-xs"
-                          : "text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200"
+                          ? "bg-indigo-600 text-white shadow-none"
+                          : "text-slate-500 hover:text-slate-800 dark:text-neutral-400 dark:hover:text-neutral-200"
                       }`}
                     >
                       <Sparkles className="h-3 w-3 shrink-0" />
@@ -1546,14 +1546,14 @@ export const KnowledgeBaseEditor: React.FC = () => {
         </div>
 
         {/* Bottom Save Action for Contact & Preferences */}
-        <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex justify-end">
+        <div className="pt-3 border-t border-slate-100 dark:border-neutral-800 flex justify-end">
           {renderSectionSaveButton("contact", isContactDirty || isDefaultsDirty)}
         </div>
       </div>
 
       {/* O mnie (Summary) Section */}
       {summarySection && (
-        <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-6 shadow-xs space-y-4">
+        <div className="bg-white dark:bg-neutral-900 rounded-2xl border border-slate-200/80 dark:border-neutral-800 p-5 sm:p-6 shadow-none space-y-4">
           <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
             <div className="flex items-center gap-2 flex-1 mr-4">
               <User className="h-5 w-5 text-indigo-600 dark:text-indigo-400 shrink-0" />
@@ -1583,7 +1583,7 @@ export const KnowledgeBaseEditor: React.FC = () => {
 
       {/* Skills Section (Umiejętności twarde i miękkie) */}
       {skillsSection && (
-        <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-6 shadow-xs space-y-4">
+        <div className="bg-white dark:bg-neutral-900 rounded-2xl border border-slate-200/80 dark:border-neutral-800 p-5 sm:p-6 shadow-none space-y-4">
           <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
             <div className="flex items-center gap-2 flex-1 mr-4">
               <Code className="h-5 w-5 text-emerald-600 dark:text-emerald-400 shrink-0" />
@@ -1801,7 +1801,7 @@ export const KnowledgeBaseEditor: React.FC = () => {
 
       {/* Experience Section */}
       {expSection && (
-        <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-6 shadow-xs space-y-4">
+        <div className="bg-white dark:bg-neutral-900 rounded-2xl border border-slate-200/80 dark:border-neutral-800 p-5 sm:p-6 shadow-none space-y-4">
           <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
             <div className="flex items-center gap-2 flex-1 mr-4">
               <Briefcase className="h-5 w-5 text-blue-600 dark:text-blue-400 shrink-0" />
@@ -1911,7 +1911,7 @@ export const KnowledgeBaseEditor: React.FC = () => {
 
       {/* Projects Section */}
       {projectsSection && (
-        <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-6 shadow-xs space-y-4">
+        <div className="bg-white dark:bg-neutral-900 rounded-2xl border border-slate-200/80 dark:border-neutral-800 p-5 sm:p-6 shadow-none space-y-4">
           <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
             <div className="flex items-center gap-2 flex-1 mr-4">
               <Code className="h-5 w-5 text-purple-600 dark:text-purple-400 shrink-0" />
@@ -2023,7 +2023,7 @@ export const KnowledgeBaseEditor: React.FC = () => {
 
       {/* Education Section */}
       {eduSection && (
-        <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-6 shadow-xs space-y-4">
+        <div className="bg-white dark:bg-neutral-900 rounded-2xl border border-slate-200/80 dark:border-neutral-800 p-5 sm:p-6 shadow-none space-y-4">
           <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
             <div className="flex items-center gap-2 flex-1 mr-4">
               <GraduationCap className="h-5 w-5 text-indigo-600 dark:text-indigo-400 shrink-0" />
@@ -2119,7 +2119,7 @@ export const KnowledgeBaseEditor: React.FC = () => {
 
       {/* Certificates Section */}
       {certsSection && (
-        <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-6 shadow-xs space-y-4">
+        <div className="bg-white dark:bg-neutral-900 rounded-2xl border border-slate-200/80 dark:border-neutral-800 p-5 sm:p-6 shadow-none space-y-4">
           <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
             <div className="flex items-center gap-2 flex-1 mr-4">
               <Award className="h-5 w-5 text-rose-600 dark:text-rose-400 shrink-0" />
@@ -2202,7 +2202,7 @@ export const KnowledgeBaseEditor: React.FC = () => {
 
       {/* Languages Section */}
       {languagesSection && (
-        <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-6 shadow-xs space-y-4">
+        <div className="bg-white dark:bg-neutral-900 rounded-2xl border border-slate-200/80 dark:border-neutral-800 p-5 sm:p-6 shadow-none space-y-4">
           <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
             <div className="flex items-center gap-2 flex-1 mr-4">
               <Languages className="h-5 w-5 text-cyan-600 dark:text-cyan-400 shrink-0" />
@@ -2284,7 +2284,7 @@ export const KnowledgeBaseEditor: React.FC = () => {
 
       {/* Trainings Section */}
       {trainingsSection && (
-        <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-6 shadow-xs space-y-4">
+        <div className="bg-white dark:bg-neutral-900 rounded-2xl border border-slate-200/80 dark:border-neutral-800 p-5 sm:p-6 shadow-none space-y-4">
           <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
             <div className="flex items-center gap-2 flex-1 mr-4">
               <BookOpen className="h-5 w-5 text-amber-600 dark:text-amber-400 shrink-0" />
@@ -2370,7 +2370,7 @@ export const KnowledgeBaseEditor: React.FC = () => {
 
       {/* Achievements Section */}
       {achievementsSection && (
-        <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-6 shadow-xs space-y-4">
+        <div className="bg-white dark:bg-neutral-900 rounded-2xl border border-slate-200/80 dark:border-neutral-800 p-5 sm:p-6 shadow-none space-y-4">
           <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
             <div className="flex items-center gap-2 flex-1 mr-4">
               <Trophy className="h-5 w-5 text-yellow-600 dark:text-yellow-400 shrink-0" />
@@ -2453,7 +2453,7 @@ export const KnowledgeBaseEditor: React.FC = () => {
 
       {/* Interests Section */}
       {interestsSection && (
-        <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-6 shadow-xs space-y-4">
+        <div className="bg-white dark:bg-neutral-900 rounded-2xl border border-slate-200/80 dark:border-neutral-800 p-5 sm:p-6 shadow-none space-y-4">
           <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
             <div className="flex items-center gap-2 flex-1 mr-4">
               <Heart className="h-5 w-5 text-rose-600 dark:text-rose-400 shrink-0" />
@@ -2510,7 +2510,7 @@ export const KnowledgeBaseEditor: React.FC = () => {
       {customSections.map((cs) => {
         const isDirty = isSectionDirty(cs.id);
         return (
-          <div key={cs.id} className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-6 shadow-xs space-y-4">
+          <div key={cs.id} className="bg-white dark:bg-neutral-900 rounded-2xl border border-slate-200/80 dark:border-neutral-800 p-5 sm:p-6 shadow-none space-y-4">
             <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
               <div className="flex items-center gap-2 flex-1 mr-4">
                 <FolderPlus className="h-5 w-5 text-teal-600 dark:text-teal-400 shrink-0" />
@@ -2571,7 +2571,7 @@ export const KnowledgeBaseEditor: React.FC = () => {
 
       {/* GDPR Clause Section */}
       {clauseSection && (
-        <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-6 shadow-xs space-y-4">
+        <div className="bg-white dark:bg-neutral-900 rounded-2xl border border-slate-200/80 dark:border-neutral-800 p-5 sm:p-6 shadow-none space-y-4">
           <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
             <div className="flex items-center gap-2 flex-1 mr-4">
               <ShieldCheck className="h-5 w-5 text-blue-600 dark:text-blue-400 shrink-0" />

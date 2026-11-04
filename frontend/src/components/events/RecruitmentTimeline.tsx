@@ -237,39 +237,39 @@ export const RecruitmentTimeline: React.FC<RecruitmentTimelineProps> = ({
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h4 className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+          <h4 className="text-sm font-bold text-slate-900 dark:text-white">
             Oś czasu rekrutacji ({events.length})
           </h4>
-          <p className="text-xs text-slate-500 dark:text-slate-400">
+          <p className="text-xs text-slate-500 dark:text-neutral-400">
             Śledź zaplanowane etapy, rozmowy i terminy dla tej oferty
           </p>
         </div>
-        <Button size="sm" variant="primary" onClick={openAddModal}>
+        <Button size="sm" variant="primary" onClick={openAddModal} className="rounded-xl">
           <Plus className="h-4 w-4 mr-1.5" />
           Dodaj etap
         </Button>
       </div>
 
       {isLoading ? (
-        <div className="py-6 text-center text-xs text-slate-400 dark:text-slate-500">
+        <div className="py-6 text-center text-xs text-slate-400 dark:text-neutral-500">
           Ładowanie etapów...
         </div>
       ) : events.length === 0 ? (
-        <div className="rounded-lg border border-dashed border-slate-200 dark:border-slate-800 p-6 text-center">
-          <Calendar className="mx-auto h-8 w-8 text-slate-300 dark:text-slate-600 mb-2" />
-          <p className="text-sm font-medium text-slate-600 dark:text-slate-300">
+        <div className="rounded-2xl border border-dashed border-slate-200/90 dark:border-neutral-800 p-6 text-center bg-slate-50/40 dark:bg-neutral-900/40">
+          <Calendar className="mx-auto h-8 w-8 text-slate-300 dark:text-neutral-600 mb-2" />
+          <p className="text-sm font-semibold text-slate-700 dark:text-neutral-300">
             Brak zaplanowanych etapów rekrutacji
           </p>
-          <p className="text-xs text-slate-400 dark:text-slate-500 mt-1 mb-3">
+          <p className="text-xs text-slate-400 dark:text-neutral-500 mt-1 mb-3">
             Dodaj screening HR, rozmowę techniczną lub termin zadania
           </p>
-          <Button size="sm" variant="outline" onClick={openAddModal}>
+          <Button size="sm" variant="outline" onClick={openAddModal} className="rounded-xl">
             <Plus className="h-3.5 w-3.5 mr-1" />
             Dodaj pierwszy etap
           </Button>
         </div>
       ) : (
-        <div className="relative border-l-2 border-slate-200 dark:border-slate-800 ml-4 space-y-6 py-2">
+        <div className="relative border-l-2 border-indigo-200 dark:border-neutral-800 ml-4 space-y-6 py-2">
           {events.map((ev) => {
             const isAppSubmitted = ev.event_type === "application_submitted";
 
@@ -279,7 +279,7 @@ export const RecruitmentTimeline: React.FC<RecruitmentTimelineProps> = ({
                 <button
                   type="button"
                   onClick={() => handleToggleComplete(ev)}
-                  className="absolute -left-2.5 top-0.5 rounded-full bg-white dark:bg-slate-900 transition-transform hover:scale-110"
+                  className="absolute -left-2.5 top-0.5 rounded-full bg-white dark:bg-neutral-900 transition-transform hover:scale-110"
                   title={
                     ev.is_completed
                       ? "Oznacz jako nieukończone"
@@ -287,30 +287,30 @@ export const RecruitmentTimeline: React.FC<RecruitmentTimelineProps> = ({
                   }
                 >
                   {isAppSubmitted ? (
-                    <div className="h-5 w-5 rounded-full bg-blue-100 dark:bg-blue-950 flex items-center justify-center border border-blue-400">
-                      <Send className="h-3 w-3 text-blue-600 dark:text-blue-400" />
+                    <div className="h-5 w-5 rounded-full bg-indigo-50 dark:bg-neutral-900 flex items-center justify-center border-2 border-indigo-500">
+                      <Send className="h-2.5 w-2.5 text-indigo-600 dark:text-indigo-400" />
                     </div>
                   ) : ev.is_completed ? (
-                    <CheckCircle2 className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+                    <CheckCircle2 className="h-5 w-5 text-emerald-500" />
                   ) : (
-                    <Circle className="h-5 w-5 text-slate-400 dark:text-slate-500 hover:text-blue-500" />
+                    <Circle className="h-5 w-5 text-slate-400 dark:text-neutral-500 hover:text-indigo-500" />
                   )}
                 </button>
 
                 <div
-                  className={`rounded-lg border p-4 shadow-sm transition-colors ${
+                  className={`rounded-2xl border p-4 shadow-none transition-colors ${
                     isAppSubmitted
-                      ? "border-blue-200 bg-blue-50/20 dark:border-blue-900/60 dark:bg-blue-950/20 hover:border-blue-300"
-                      : "border-slate-200 bg-white hover:border-slate-300 dark:border-slate-800 dark:bg-slate-900 dark:hover:border-slate-700"
+                      ? "border-2 border-indigo-200 bg-indigo-50/30 dark:border-indigo-900/60 dark:bg-neutral-900 hover:border-indigo-300"
+                      : "border-slate-200/80 bg-white hover:border-slate-300 dark:border-neutral-800 dark:bg-neutral-900 dark:hover:border-neutral-700"
                   }`}
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div>
                       <div className="flex items-center gap-2">
                         <h5
-                          className={`font-semibold text-sm text-slate-900 dark:text-slate-100 ${
+                          className={`font-semibold text-sm text-slate-900 dark:text-white ${
                             ev.is_completed && !isAppSubmitted
-                              ? "line-through text-slate-400 dark:text-slate-600"
+                              ? "line-through text-slate-400 dark:text-neutral-600"
                               : ""
                           }`}
                         >
@@ -321,8 +321,8 @@ export const RecruitmentTimeline: React.FC<RecruitmentTimelineProps> = ({
                         </Badge>
                       </div>
 
-                      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1 text-xs text-slate-500 dark:text-slate-400">
-                        <span className="flex items-center gap-1 font-medium text-blue-600 dark:text-blue-400">
+                      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1 text-xs text-slate-500 dark:text-neutral-400">
+                        <span className="flex items-center gap-1 font-semibold text-indigo-600 dark:text-indigo-400">
                           <Clock className="h-3.5 w-3.5" />
                           {formatDateTime(ev.scheduled_at)}
                           {ev.duration_minutes && !isAppSubmitted
@@ -337,14 +337,14 @@ export const RecruitmentTimeline: React.FC<RecruitmentTimelineProps> = ({
                                 href={ev.location_or_link}
                                 target="_blank"
                                 rel="noreferrer"
-                                className="flex items-center gap-1 text-blue-600 dark:text-blue-400 hover:underline"
+                                className="flex items-center gap-1 text-indigo-600 dark:text-indigo-400 hover:underline font-medium"
                               >
                                 <Video className="h-3.5 w-3.5" />
                                 Link do spotkania
                               </a>
                             ) : (
                               <span className="flex items-center gap-1">
-                                <MapPin className="h-3.5 w-3.5" />
+                                <MapPin className="h-3.5 w-3.5 text-indigo-500" />
                                 {ev.location_or_link}
                               </span>
                             )}
@@ -352,7 +352,7 @@ export const RecruitmentTimeline: React.FC<RecruitmentTimelineProps> = ({
                         )}
 
                         {ev.interviewers && (
-                          <span className="flex items-center gap-1 text-slate-500 dark:text-slate-400">
+                          <span className="flex items-center gap-1 text-slate-500 dark:text-neutral-400">
                             <User className="h-3.5 w-3.5" />
                             {ev.interviewers}
                           </span>
@@ -364,7 +364,7 @@ export const RecruitmentTimeline: React.FC<RecruitmentTimelineProps> = ({
                       <button
                         type="button"
                         onClick={() => openEditModal(ev)}
-                        className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 dark:text-slate-500 dark:hover:text-slate-300 dark:hover:bg-slate-800 rounded-md cursor-pointer"
+                        className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 dark:text-neutral-400 dark:hover:text-neutral-200 dark:hover:bg-neutral-800 rounded-lg cursor-pointer"
                         title={isAppSubmitted ? "Edytuj szczegóły i datę aplikacji" : "Edytuj etap"}
                       >
                         <Edit2 className="h-3.5 w-3.5" />
@@ -372,7 +372,7 @@ export const RecruitmentTimeline: React.FC<RecruitmentTimelineProps> = ({
                       <button
                         type="button"
                         onClick={() => handleDelete(ev)}
-                        className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:text-slate-500 dark:hover:text-rose-400 dark:hover:bg-rose-950/50 rounded-md cursor-pointer"
+                        className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:text-neutral-400 dark:hover:text-rose-400 dark:hover:bg-rose-950/50 rounded-lg cursor-pointer"
                         title="Usuń etap"
                       >
                         <Trash2 className="h-3.5 w-3.5" />
@@ -389,7 +389,7 @@ export const RecruitmentTimeline: React.FC<RecruitmentTimelineProps> = ({
                           href={att.download_url}
                           target="_blank"
                           rel="noreferrer"
-                          className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-blue-600 dark:text-blue-400 hover:bg-slate-50 dark:hover:bg-slate-750 transition-colors"
+                          className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-white dark:bg-neutral-950 border border-slate-200/80 dark:border-neutral-800 text-indigo-600 dark:text-indigo-400 hover:bg-slate-50 dark:hover:bg-neutral-850 transition-colors shadow-none"
                         >
                           <Paperclip className="h-3 w-3 text-slate-400" />
                           <span className="truncate max-w-[220px]">{att.file_name}</span>
@@ -400,8 +400,8 @@ export const RecruitmentTimeline: React.FC<RecruitmentTimelineProps> = ({
                   )}
 
                   {ev.notes && (
-                    <div className="mt-3 rounded-md bg-slate-50 p-2.5 text-xs text-slate-600 border border-slate-100 dark:bg-slate-800/60 dark:border-slate-800 dark:text-slate-300 flex items-start gap-2">
-                      <FileText className="h-3.5 w-3.5 text-slate-400 dark:text-slate-500 mt-0.5 shrink-0" />
+                    <div className="mt-3 rounded-xl bg-slate-50/80 p-2.5 text-xs text-slate-600 border border-slate-200/80 dark:bg-neutral-950/60 dark:border-neutral-800 dark:text-neutral-300 flex items-start gap-2">
+                      <FileText className="h-3.5 w-3.5 text-slate-400 dark:text-neutral-500 mt-0.5 shrink-0" />
                       <p className="whitespace-pre-line">{ev.notes}</p>
                     </div>
                   )}
@@ -535,15 +535,16 @@ export const RecruitmentTimeline: React.FC<RecruitmentTimelineProps> = ({
             </label>
           </div>
 
-          <div className="flex justify-end gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
+          <div className="flex justify-end gap-3 pt-4 border-t border-slate-100 dark:border-neutral-800">
             <Button
               type="button"
               variant="outline"
               onClick={() => setIsModalOpen(false)}
+              className="rounded-xl"
             >
               Anuluj
             </Button>
-            <Button type="submit" variant="primary" isLoading={isSubmitting}>
+            <Button type="submit" variant="primary" isLoading={isSubmitting} className="rounded-xl">
               {editingEvent ? "Zapisz zmiany" : "Zaplanuj etap"}
             </Button>
           </div>

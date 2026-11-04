@@ -53,16 +53,16 @@ export const AchievementsSectionForm: React.FC<AchievementsSectionFormProps> = R
           <div
             key={idx}
             data-cv-field={`section-item:${block.id}:${idx}`}
-            className="p-3.5 bg-slate-50 dark:bg-slate-800/60 rounded-lg border border-slate-200 dark:border-slate-700/60 text-xs space-y-3"
+            className="p-4 bg-slate-50/60 dark:bg-neutral-950 rounded-xl border border-slate-200/80 dark:border-neutral-800 text-xs space-y-3.5"
           >
             <div className="flex items-center justify-between">
-              <span className="font-semibold text-slate-800 dark:text-slate-200">
+              <span className="font-semibold text-slate-800 dark:text-neutral-200">
                 Osiągnięcie #{idx + 1}
               </span>
               <button
                 type="button"
                 onClick={() => handleRemoveItem(idx)}
-                className="text-slate-400 dark:text-slate-500 hover:text-rose-600 dark:hover:text-rose-400 p-1 cursor-pointer"
+                className="p-1.5 text-slate-400 dark:text-neutral-500 hover:text-rose-600 dark:hover:text-rose-400 rounded-lg cursor-pointer transition-colors"
                 title="Usuń osiągnięcie"
               >
                 <Trash2 className="h-3.5 w-3.5" />
@@ -97,14 +97,14 @@ export const AchievementsSectionForm: React.FC<AchievementsSectionFormProps> = R
           </div>
         ))}
 
-        <div className="pt-2 border-t border-slate-100 dark:border-slate-800">
+        <div className="pt-2 border-t border-slate-100 dark:border-neutral-800">
           <Button
             size="sm"
             variant="outline"
             onClick={handleAddItem}
-            className="text-xs h-7"
+            className="text-xs h-8 border-2 border-indigo-600 text-indigo-600 dark:border-indigo-500 dark:text-indigo-400 rounded-xl"
           >
-            <Plus className="h-3 w-3 mr-1" />
+            <Plus className="h-3.5 w-3.5 mr-1" />
             Dodaj osiągnięcie
           </Button>
         </div>

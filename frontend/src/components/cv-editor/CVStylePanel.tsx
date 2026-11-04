@@ -234,13 +234,13 @@ export const CVStylePanel: React.FC<CVStylePanelProps> = ({
   return (
     <div className="space-y-6">
       {/* Top Banner / Reset button */}
-      <div className="flex items-center justify-between pb-1">
+      <div className="flex items-center justify-between pb-1 border-b border-slate-200/80 dark:border-neutral-800">
         <div>
-          <h3 className="text-base font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
-            <Sliders className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+          <h3 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+            <Sliders className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
             <span>Stylizowanie dokumentu CV</span>
           </h3>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+          <p className="text-xs text-slate-500 dark:text-neutral-400 mt-0.5">
             Dostosuj czcionki, rozmiary, interlinię oraz marginesy z natychmiastowym podglądem na żywo.
           </p>
         </div>
@@ -249,7 +249,7 @@ export const CVStylePanel: React.FC<CVStylePanelProps> = ({
           size="sm"
           variant="outline"
           onClick={handleResetToDefaults}
-          className="text-xs h-8 shrink-0 text-slate-600 dark:text-slate-300 border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800"
+          className="text-xs h-8 shrink-0 text-slate-600 dark:text-neutral-300 border-slate-200 dark:border-neutral-700 hover:bg-slate-100 dark:hover:bg-neutral-800 rounded-xl"
           title="Przywróć wartości domyślne dla stylu"
         >
           <RotateCcw className="h-3.5 w-3.5 mr-1.5" />
@@ -258,23 +258,23 @@ export const CVStylePanel: React.FC<CVStylePanelProps> = ({
       </div>
 
       {/* 1. Kolor akcentu CV */}
-      <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-xs space-y-4 dark:border-slate-800 dark:bg-slate-900">
-        <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2.5">
+      <div className="rounded-2xl border border-slate-200/80 bg-white p-5 sm:p-6 shadow-none space-y-4 dark:border-neutral-800 dark:bg-neutral-900">
+        <div className="flex items-center justify-between border-b border-slate-100 dark:border-neutral-800 pb-2.5">
           <div className="flex items-center gap-2">
-            <Palette className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-            <span className="font-semibold text-sm text-slate-900 dark:text-slate-100">
+            <Palette className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
+            <span className="font-bold text-sm text-slate-900 dark:text-white">
               Kolor akcentu CV
             </span>
             <button
               type="button"
               onClick={() => handleAccentColorChange(DEFAULT_CV_STYLING.accent_color)}
-              className="p-1 rounded text-slate-400 hover:text-slate-700 dark:text-slate-500 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+              className="p-1 rounded-lg text-slate-400 hover:text-slate-700 dark:text-neutral-500 dark:hover:text-neutral-200 hover:bg-slate-100 dark:hover:bg-neutral-800 transition-colors cursor-pointer"
               title="Przywróć domyślny kolor akcentu"
             >
               <RotateCcw className="h-3.5 w-3.5" />
             </button>
           </div>
-          <span className="text-[11px] font-mono font-medium text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded border border-slate-200 dark:border-slate-700 flex items-center gap-1.5">
+          <span className="text-[11px] font-mono font-medium text-slate-600 dark:text-neutral-400 bg-slate-100 dark:bg-neutral-950 px-2.5 py-0.5 rounded-full border border-slate-200 dark:border-neutral-800 flex items-center gap-1.5">
             <span
               className="inline-block h-2.5 w-2.5 rounded-full border border-black/10 dark:border-white/10"
               style={{
@@ -287,9 +287,9 @@ export const CVStylePanel: React.FC<CVStylePanelProps> = ({
           </span>
         </div>
 
-        {/* Paleta gotowych próbek kolorów - kwadratowe kafelki */}
+        {/* Paleta gotowych próbek kolorów - zaokrąglone kafelki */}
         <div className="space-y-1.5">
-          <label className="block text-xs font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+          <label className="block text-xs font-semibold uppercase tracking-wider text-slate-700 dark:text-neutral-300">
             Paleta gotowych próbek
           </label>
           <div className="flex flex-wrap gap-2 sm:gap-2.5">
@@ -304,9 +304,9 @@ export const CVStylePanel: React.FC<CVStylePanelProps> = ({
                   title={`${swatch.name} (${swatch.hex})`}
                   aria-label={`${swatch.name} (${swatch.hex})`}
                   className={cn(
-                    "aspect-square h-8 w-8 sm:h-9 sm:w-9 rounded-md flex items-center justify-center transition-all cursor-pointer shadow-xs border",
+                    "aspect-square h-8 w-8 sm:h-9 sm:w-9 rounded-xl flex items-center justify-center transition-all cursor-pointer shadow-none border",
                     isSelected
-                      ? "ring-2 ring-blue-500 ring-offset-2 dark:ring-offset-slate-900 border-white/50 scale-105"
+                      ? "ring-2 ring-indigo-500 ring-offset-2 dark:ring-offset-neutral-900 border-white/50 scale-105"
                       : "border-black/10 dark:border-white/10 hover:scale-105 hover:border-slate-400"
                   )}
                   style={{ backgroundColor: swatch.hex }}
@@ -324,7 +324,7 @@ export const CVStylePanel: React.FC<CVStylePanelProps> = ({
         <div className="space-y-1.5">
           <label
             htmlFor="accent-color-hex"
-            className="block text-xs font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-300"
+            className="block text-xs font-semibold uppercase tracking-wider text-slate-700 dark:text-neutral-300"
           >
             Własny kolor akcentu (HEX)
           </label>
@@ -338,7 +338,7 @@ export const CVStylePanel: React.FC<CVStylePanelProps> = ({
                 onChange={(e) =>
                   handleAccentColorChange(e.target.value.toLowerCase())
                 }
-                className="h-9 w-12 cursor-pointer rounded-md border border-slate-300 bg-white p-0.5 shadow-xs transition-colors dark:border-slate-700 dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="h-9 w-12 cursor-pointer rounded-xl border border-slate-200 bg-white p-0.5 shadow-none transition-colors dark:border-neutral-700 dark:bg-neutral-950 focus:outline-none focus:ring-2 focus:ring-indigo-500"
               />
             </div>
             <div className="relative flex-1">
@@ -355,15 +355,15 @@ export const CVStylePanel: React.FC<CVStylePanelProps> = ({
                 }}
                 placeholder="#2563eb"
                 maxLength={9}
-                className="block w-full rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm font-mono text-slate-900 shadow-xs placeholder-slate-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:placeholder-slate-500"
+                className="block w-full rounded-xl border border-slate-200 bg-slate-50/60 px-3 py-1.5 text-sm font-mono text-slate-900 shadow-none placeholder-slate-400 focus:bg-white focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-neutral-700 dark:bg-neutral-950 dark:text-neutral-100 dark:placeholder-neutral-500 dark:focus:bg-neutral-900"
               />
             </div>
           </div>
         </div>
 
         {/* Pomocniczy opis */}
-        <p className="text-[11px] text-slate-500 dark:text-slate-400 flex items-start gap-1.5 pt-0.5">
-          <Sparkles className="h-3.5 w-3.5 text-amber-500 shrink-0 mt-0.5" />
+        <p className="text-[11px] text-slate-500 dark:text-neutral-400 flex items-start gap-1.5 pt-0.5">
+          <Sparkles className="h-3.5 w-3.5 text-indigo-500 shrink-0 mt-0.5" />
           <span>
             Wybrany kolor akcentu zostanie zastosowany do nazwy stanowiska, nagłówków sekcji oraz linii oddzielających sekcje.
           </span>
@@ -371,23 +371,23 @@ export const CVStylePanel: React.FC<CVStylePanelProps> = ({
       </div>
 
       {/* 2. Global Document Font Family */}
-      <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-xs space-y-3 dark:border-slate-800 dark:bg-slate-900">
-        <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2.5">
+      <div className="rounded-2xl border border-slate-200/80 bg-white p-5 sm:p-6 shadow-none space-y-3 dark:border-neutral-800 dark:bg-neutral-900">
+        <div className="flex items-center justify-between border-b border-slate-100 dark:border-neutral-800 pb-2.5">
           <div className="flex items-center gap-2">
-            <Type className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-            <span className="font-semibold text-sm text-slate-900 dark:text-slate-100">
+            <Type className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
+            <span className="font-bold text-sm text-slate-900 dark:text-white">
               Główny krój czcionki dokumentu
             </span>
             <button
               type="button"
               onClick={() => handleDocumentFontChange(DEFAULT_CV_STYLING.document_font_family)}
-              className="p-1 rounded text-slate-400 hover:text-slate-700 dark:text-slate-500 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+              className="p-1 rounded-lg text-slate-400 hover:text-slate-700 dark:text-neutral-500 dark:hover:text-neutral-200 hover:bg-slate-100 dark:hover:bg-neutral-800 transition-colors cursor-pointer"
               title="Przywróć domyślny krój czcionki dokumentu"
             >
               <RotateCcw className="h-3.5 w-3.5" />
             </button>
           </div>
-          <span className="text-[11px] font-medium text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/50 px-2 py-0.5 rounded border border-blue-200 dark:border-blue-900">
+          <span className="text-[11px] font-semibold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/50 px-2.5 py-0.5 rounded-full border border-indigo-200 dark:border-indigo-900">
             Kaskadowa zmiana
           </span>
         </div>
@@ -395,7 +395,7 @@ export const CVStylePanel: React.FC<CVStylePanelProps> = ({
         <div className="space-y-1.5">
           <label
             htmlFor="global-font-select"
-            className="block text-xs font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-300"
+            className="block text-xs font-semibold uppercase tracking-wider text-slate-700 dark:text-neutral-300"
           >
             Wybierz czcionkę bazową
           </label>
@@ -403,7 +403,7 @@ export const CVStylePanel: React.FC<CVStylePanelProps> = ({
             id="global-font-select"
             value={currentStyling.document_font_family || "Liberation Sans"}
             onChange={(e) => handleDocumentFontChange(e.target.value)}
-            className="flex h-9 w-full rounded-md border border-slate-300 bg-white px-3 py-1 text-sm text-slate-900 shadow-xs transition-colors focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+            className="flex h-9.5 w-full rounded-xl border border-slate-200 bg-slate-50/60 px-3 py-1 text-sm text-slate-900 shadow-none transition-colors focus:bg-white focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 cursor-pointer dark:border-neutral-700 dark:bg-neutral-950 dark:text-neutral-100 dark:focus:bg-neutral-900"
           >
             {AVAILABLE_FONTS.map((f) => (
               <option key={f.value} value={f.value}>
@@ -411,8 +411,8 @@ export const CVStylePanel: React.FC<CVStylePanelProps> = ({
               </option>
             ))}
           </select>
-          <p className="text-[11px] text-slate-500 dark:text-slate-400 flex items-center gap-1 pt-1">
-            <Sparkles className="h-3 w-3 text-amber-500 shrink-0" />
+          <p className="text-[11px] text-slate-500 dark:text-neutral-400 flex items-center gap-1 pt-1">
+            <Sparkles className="h-3 w-3 text-indigo-500 shrink-0" />
             <span>
               Wybór czcionki w tym polu automatycznie zaktualizuje krój dla wszystkich elementów dokumentu.
             </span>
@@ -423,8 +423,8 @@ export const CVStylePanel: React.FC<CVStylePanelProps> = ({
       {/* 3. Individual Typography Elements */}
       <div className="space-y-4">
         <div className="flex items-center gap-2 px-1">
-          <AlignLeft className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-          <h4 className="font-semibold text-sm text-slate-800 dark:text-slate-200">
+          <AlignLeft className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
+          <h4 className="font-bold text-sm text-slate-900 dark:text-white">
             Typografia poszczególnych elementów
           </h4>
         </div>
@@ -449,22 +449,22 @@ export const CVStylePanel: React.FC<CVStylePanelProps> = ({
             return (
               <div
                 key={elem.key}
-                className="rounded-xl border border-slate-200 bg-white p-4 shadow-xs dark:border-slate-800 dark:bg-slate-900 space-y-3"
+                className="rounded-2xl border border-slate-200/80 bg-white p-4 sm:p-5 shadow-none dark:border-neutral-800 dark:bg-neutral-900 space-y-3"
               >
-                {/* Header: title, description & reset button (size badge removed) */}
+                {/* Header: title, description & reset button */}
                 <div className="flex items-center justify-between">
                   <div>
-                    <h5 className="font-semibold text-xs text-slate-900 dark:text-slate-100">
+                    <h5 className="font-bold text-xs text-slate-900 dark:text-white">
                       {elem.label}
                     </h5>
-                    <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                    <p className="text-[11px] text-slate-500 dark:text-neutral-400">
                       {elem.description}
                     </p>
                   </div>
                   <button
                     type="button"
                     onClick={() => handleElementReset(elem.key)}
-                    className="p-1 rounded text-slate-400 hover:text-slate-700 dark:text-slate-500 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                    className="p-1 rounded-lg text-slate-400 hover:text-slate-700 dark:text-neutral-500 dark:hover:text-neutral-200 hover:bg-slate-100 dark:hover:bg-neutral-800 transition-colors cursor-pointer"
                     title="Przywróć domyślne dla tego elementu"
                   >
                     <RotateCcw className="h-3.5 w-3.5" />
@@ -475,7 +475,7 @@ export const CVStylePanel: React.FC<CVStylePanelProps> = ({
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {/* Font Family */}
                   <div className="space-y-1">
-                    <label className="block text-[11px] font-medium text-slate-600 dark:text-slate-400">
+                    <label className="block text-[11px] font-semibold text-slate-700 dark:text-neutral-300">
                       Krój czcionki
                     </label>
                     <select
@@ -483,7 +483,7 @@ export const CVStylePanel: React.FC<CVStylePanelProps> = ({
                       onChange={(e) =>
                         handleElementStyleChange(elem.key, { font_family: e.target.value })
                       }
-                      className="flex h-8 w-full rounded-md border border-slate-300 bg-white px-2 py-0.5 text-xs text-slate-900 shadow-xs transition-colors focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
+                      className="flex h-9 w-full rounded-xl border border-slate-200 bg-slate-50/60 px-2.5 py-1 text-xs text-slate-900 shadow-none transition-colors focus:bg-white focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 cursor-pointer dark:border-neutral-700 dark:bg-neutral-950 dark:text-neutral-100 dark:focus:bg-neutral-900"
                     >
                       {AVAILABLE_FONTS.map((f) => (
                         <option key={f.value} value={f.value}>
@@ -495,7 +495,7 @@ export const CVStylePanel: React.FC<CVStylePanelProps> = ({
 
                   {/* Font Weight */}
                   <div className="space-y-1">
-                    <label className="block text-[11px] font-medium text-slate-600 dark:text-slate-400">
+                    <label className="block text-[11px] font-semibold text-slate-700 dark:text-neutral-300">
                       Grubość (Weight)
                     </label>
                     <select
@@ -503,7 +503,7 @@ export const CVStylePanel: React.FC<CVStylePanelProps> = ({
                       onChange={(e) =>
                         handleElementStyleChange(elem.key, { font_weight: e.target.value as FontWeight })
                       }
-                      className="flex h-8 w-full rounded-md border border-slate-300 bg-white px-2 py-0.5 text-xs text-slate-900 shadow-xs transition-colors focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
+                      className="flex h-9 w-full rounded-xl border border-slate-200 bg-slate-50/60 px-2.5 py-1 text-xs text-slate-900 shadow-none transition-colors focus:bg-white focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 cursor-pointer dark:border-neutral-700 dark:bg-neutral-950 dark:text-neutral-100 dark:focus:bg-neutral-900"
                     >
                       {FONT_WEIGHTS.map((w) => (
                         <option key={w.value} value={w.value}>
@@ -517,10 +517,10 @@ export const CVStylePanel: React.FC<CVStylePanelProps> = ({
                 {/* Line 2: Full width slider with +, -, and numeric input */}
                 <div className="space-y-1">
                   <div className="flex items-center justify-between">
-                    <label className="block text-[11px] font-medium text-slate-600 dark:text-slate-400">
+                    <label className="block text-[11px] font-semibold text-slate-600 dark:text-neutral-400">
                       Rozmiar czcionki (pt)
                     </label>
-                    <span className="text-xs font-mono font-medium text-slate-500 dark:text-slate-400">
+                    <span className="text-xs font-mono font-bold text-indigo-600 dark:text-indigo-400">
                       {sizeVal.toFixed(1)} pt
                     </span>
                   </div>
@@ -529,7 +529,7 @@ export const CVStylePanel: React.FC<CVStylePanelProps> = ({
                       type="button"
                       onClick={stepDown}
                       disabled={sizeVal <= elem.minPt}
-                      className="h-8 w-8 flex items-center justify-center rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 disabled:opacity-30 disabled:cursor-not-allowed transition-colors shrink-0"
+                      className="h-8 w-8 flex items-center justify-center rounded-xl border border-slate-200 dark:border-neutral-700 bg-white dark:bg-neutral-950 text-slate-600 dark:text-neutral-300 hover:bg-slate-100 dark:hover:bg-neutral-800 disabled:opacity-30 disabled:cursor-not-allowed transition-colors shrink-0 shadow-none"
                       title="Zmniejsz rozmiar czcionki"
                     >
                       <Minus className="h-3.5 w-3.5" />
@@ -545,13 +545,13 @@ export const CVStylePanel: React.FC<CVStylePanelProps> = ({
                           font_size_pt: parseFloat(e.target.value),
                         })
                       }
-                      className="flex-1 h-1.5 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-blue-600"
+                      className="flex-1 h-1.5 bg-slate-200 dark:bg-neutral-700 rounded-lg appearance-none cursor-pointer accent-indigo-600"
                     />
                     <button
                       type="button"
                       onClick={stepUp}
                       disabled={sizeVal >= elem.maxPt}
-                      className="h-8 w-8 flex items-center justify-center rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 disabled:opacity-30 disabled:cursor-not-allowed transition-colors shrink-0"
+                      className="h-8 w-8 flex items-center justify-center rounded-xl border border-slate-200 dark:border-neutral-700 bg-white dark:bg-neutral-950 text-slate-600 dark:text-neutral-300 hover:bg-slate-100 dark:hover:bg-neutral-800 disabled:opacity-30 disabled:cursor-not-allowed transition-colors shrink-0 shadow-none"
                       title="Zwiększ rozmiar czcionki"
                     >
                       <Plus className="h-3.5 w-3.5" />
@@ -570,7 +570,7 @@ export const CVStylePanel: React.FC<CVStylePanelProps> = ({
                           });
                         }
                       }}
-                      className="w-16 h-8 text-center text-xs font-mono font-medium rounded-md border border-slate-300 bg-white dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      className="w-16 h-8 text-center text-xs font-mono font-bold rounded-xl border border-slate-200 bg-white dark:border-neutral-700 dark:bg-neutral-950 dark:text-neutral-100 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 shadow-none"
                     />
                   </div>
                 </div>
@@ -581,23 +581,23 @@ export const CVStylePanel: React.FC<CVStylePanelProps> = ({
       </div>
 
       {/* 4. Spacing, Line Height & Margins - Arranged Strictly ONE UNDER ANOTHER */}
-      <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-xs space-y-4 dark:border-slate-800 dark:bg-slate-900">
-        <div className="flex items-center gap-2 border-b border-slate-100 dark:border-slate-800 pb-2.5">
-          <Maximize2 className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-          <h4 className="font-semibold text-sm text-slate-900 dark:text-slate-100">
+      <div className="rounded-2xl border border-slate-200/80 bg-white p-5 sm:p-6 shadow-none space-y-4 dark:border-neutral-800 dark:bg-neutral-900">
+        <div className="flex items-center gap-2 border-b border-slate-100 dark:border-neutral-800 pb-2.5">
+          <Maximize2 className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
+          <h4 className="font-semibold text-sm text-slate-900 dark:text-neutral-100">
             Interlinia, odstępy i marginesy
           </h4>
         </div>
 
         <div className="space-y-4">
           {/* 1. Wysokość linii nagłówków */}
-          <div className="space-y-1.5 p-3 rounded-lg bg-slate-50 dark:bg-slate-950 border border-slate-200/60 dark:border-slate-800">
+          <div className="space-y-1.5 p-3.5 rounded-xl bg-slate-50/60 dark:bg-neutral-950 border border-slate-200/80 dark:border-neutral-800">
             <div className="flex items-center justify-between">
-              <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+              <label className="text-xs font-semibold text-slate-700 dark:text-neutral-300">
                 Wysokość linii nagłówków
               </label>
               <div className="flex items-center gap-2">
-                <span className="text-xs font-mono font-semibold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/40 px-2 py-0.5 rounded border border-blue-200 dark:border-blue-900">
+                <span className="text-xs font-mono font-semibold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/40 px-2.5 py-0.5 rounded-full border border-indigo-200 dark:border-indigo-900">
                   {currentStyling.heading_line_height_em.toFixed(2)} em
                 </span>
                 <button
@@ -608,7 +608,7 @@ export const CVStylePanel: React.FC<CVStylePanelProps> = ({
                       heading_line_height_em: DEFAULT_CV_STYLING.heading_line_height_em,
                     })
                   }
-                  className="p-1 rounded text-slate-400 hover:text-slate-700 dark:text-slate-500 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                  className="p-1 rounded-lg text-slate-400 hover:text-slate-700 dark:text-neutral-400 dark:hover:text-neutral-200 hover:bg-slate-100 dark:hover:bg-neutral-850 transition-colors cursor-pointer"
                   title="Przywróć domyślną wysokość linii nagłówków"
                 >
                   <RotateCcw className="h-3.5 w-3.5" />
@@ -623,7 +623,7 @@ export const CVStylePanel: React.FC<CVStylePanelProps> = ({
                   onChange({ ...currentStyling, heading_line_height_em: nextVal });
                 }}
                 disabled={currentStyling.heading_line_height_em <= 0.4}
-                className="h-8 w-8 flex items-center justify-center rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-30 disabled:cursor-not-allowed transition-colors shrink-0"
+                className="h-8 w-8 flex items-center justify-center rounded-xl border border-slate-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 text-slate-600 dark:text-neutral-300 hover:bg-slate-100 dark:hover:bg-neutral-800 disabled:opacity-30 disabled:cursor-not-allowed transition-colors shrink-0 shadow-none cursor-pointer"
                 title="Zmniejsz wysokość linii nagłówków"
               >
                 <Minus className="h-3.5 w-3.5" />
@@ -640,7 +640,7 @@ export const CVStylePanel: React.FC<CVStylePanelProps> = ({
                     heading_line_height_em: parseFloat(e.target.value),
                   })
                 }
-                className="flex-1 h-1.5 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-blue-600"
+                className="flex-1 h-1.5 bg-slate-200 dark:bg-neutral-800 rounded-lg appearance-none cursor-pointer accent-indigo-600"
               />
               <button
                 type="button"
@@ -649,7 +649,7 @@ export const CVStylePanel: React.FC<CVStylePanelProps> = ({
                   onChange({ ...currentStyling, heading_line_height_em: nextVal });
                 }}
                 disabled={currentStyling.heading_line_height_em >= 1.5}
-                className="h-8 w-8 flex items-center justify-center rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-30 disabled:cursor-not-allowed transition-colors shrink-0"
+                className="h-8 w-8 flex items-center justify-center rounded-xl border border-slate-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 text-slate-600 dark:text-neutral-300 hover:bg-slate-100 dark:hover:bg-neutral-800 disabled:opacity-30 disabled:cursor-not-allowed transition-colors shrink-0 shadow-none cursor-pointer"
                 title="Zwiększ wysokość linii nagłówków"
               >
                 <Plus className="h-3.5 w-3.5" />
@@ -669,22 +669,22 @@ export const CVStylePanel: React.FC<CVStylePanelProps> = ({
                     });
                   }
                 }}
-                className="w-16 h-8 text-center text-xs font-mono font-medium rounded-md border border-slate-300 bg-white dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                className="w-16 h-8 text-center text-xs font-mono font-medium rounded-xl border border-slate-200 bg-white dark:border-neutral-700 dark:bg-neutral-950 dark:text-neutral-100 focus:outline-none focus:ring-1 focus:ring-indigo-500 shadow-none"
               />
             </div>
-            <p className="text-[10px] text-slate-400 dark:text-slate-500">
+            <p className="text-[10px] text-slate-400 dark:text-neutral-500">
               Domyślnie 0.65 em (zwarty układ nagłówków)
             </p>
           </div>
 
           {/* 2. Wysokość linii tekstu sekcji */}
-          <div className="space-y-1.5 p-3 rounded-lg bg-slate-50 dark:bg-slate-950 border border-slate-200/60 dark:border-slate-800">
+          <div className="space-y-1.5 p-3.5 rounded-xl bg-slate-50/60 dark:bg-neutral-950 border border-slate-200/80 dark:border-neutral-800">
             <div className="flex items-center justify-between">
-              <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+              <label className="text-xs font-semibold text-slate-700 dark:text-neutral-300">
                 Wysokość linii tekstu sekcji
               </label>
               <div className="flex items-center gap-2">
-                <span className="text-xs font-mono font-semibold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/40 px-2 py-0.5 rounded border border-blue-200 dark:border-blue-900">
+                <span className="text-xs font-mono font-semibold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/40 px-2.5 py-0.5 rounded-full border border-indigo-200 dark:border-indigo-900">
                   {currentStyling.section_text_line_height_em.toFixed(2)} em
                 </span>
                 <button
@@ -695,7 +695,7 @@ export const CVStylePanel: React.FC<CVStylePanelProps> = ({
                       section_text_line_height_em: DEFAULT_CV_STYLING.section_text_line_height_em,
                     })
                   }
-                  className="p-1 rounded text-slate-400 hover:text-slate-700 dark:text-slate-500 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                  className="p-1 rounded-lg text-slate-400 hover:text-slate-700 dark:text-neutral-400 dark:hover:text-neutral-200 hover:bg-slate-100 dark:hover:bg-neutral-850 transition-colors cursor-pointer"
                   title="Przywróć domyślną wysokość linii tekstu sekcji"
                 >
                   <RotateCcw className="h-3.5 w-3.5" />
@@ -710,7 +710,7 @@ export const CVStylePanel: React.FC<CVStylePanelProps> = ({
                   onChange({ ...currentStyling, section_text_line_height_em: nextVal });
                 }}
                 disabled={currentStyling.section_text_line_height_em <= 0.4}
-                className="h-8 w-8 flex items-center justify-center rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-30 disabled:cursor-not-allowed transition-colors shrink-0"
+                className="h-8 w-8 flex items-center justify-center rounded-xl border border-slate-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 text-slate-600 dark:text-neutral-300 hover:bg-slate-100 dark:hover:bg-neutral-800 disabled:opacity-30 disabled:cursor-not-allowed transition-colors shrink-0 shadow-none cursor-pointer"
                 title="Zmniejsz wysokość linii tekstu"
               >
                 <Minus className="h-3.5 w-3.5" />
@@ -727,7 +727,7 @@ export const CVStylePanel: React.FC<CVStylePanelProps> = ({
                     section_text_line_height_em: parseFloat(e.target.value),
                   })
                 }
-                className="flex-1 h-1.5 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-blue-600"
+                className="flex-1 h-1.5 bg-slate-200 dark:bg-neutral-800 rounded-lg appearance-none cursor-pointer accent-indigo-600"
               />
               <button
                 type="button"
@@ -736,7 +736,7 @@ export const CVStylePanel: React.FC<CVStylePanelProps> = ({
                   onChange({ ...currentStyling, section_text_line_height_em: nextVal });
                 }}
                 disabled={currentStyling.section_text_line_height_em >= 1.5}
-                className="h-8 w-8 flex items-center justify-center rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-30 disabled:cursor-not-allowed transition-colors shrink-0"
+                className="h-8 w-8 flex items-center justify-center rounded-xl border border-slate-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 text-slate-600 dark:text-neutral-300 hover:bg-slate-100 dark:hover:bg-neutral-800 disabled:opacity-30 disabled:cursor-not-allowed transition-colors shrink-0 shadow-none cursor-pointer"
                 title="Zwiększ wysokość linii tekstu"
               >
                 <Plus className="h-3.5 w-3.5" />
@@ -756,27 +756,27 @@ export const CVStylePanel: React.FC<CVStylePanelProps> = ({
                     });
                   }
                 }}
-                className="w-16 h-8 text-center text-xs font-mono font-medium rounded-md border border-slate-300 bg-white dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                className="w-16 h-8 text-center text-xs font-mono font-medium rounded-xl border border-slate-200 bg-white dark:border-neutral-700 dark:bg-neutral-950 dark:text-neutral-100 focus:outline-none focus:ring-1 focus:ring-indigo-500 shadow-none"
               />
             </div>
-            <p className="text-[10px] text-slate-400 dark:text-slate-500">
+            <p className="text-[10px] text-slate-400 dark:text-neutral-500">
               Domyślnie 0.65 em (czytelny układ akapitów)
             </p>
           </div>
 
           {/* 3. Odstęp między sekcjami */}
-          <div className="space-y-1.5 p-3 rounded-lg bg-slate-50 dark:bg-slate-950 border border-slate-200/60 dark:border-slate-800">
+          <div className="space-y-1.5 p-3.5 rounded-xl bg-slate-50/60 dark:bg-neutral-950 border border-slate-200/80 dark:border-neutral-800">
             <div className="flex items-center justify-between">
               <div>
-                <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                <label className="text-xs font-semibold text-slate-700 dark:text-neutral-300">
                   Odstęp między sekcjami
                 </label>
-                <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                <p className="text-[11px] text-slate-500 dark:text-neutral-400">
                   Pionowy dystans oddzielający bloki sekcji CV
                 </p>
               </div>
               <div className="flex items-center gap-2">
-                <span className="text-xs font-mono font-semibold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/40 px-2 py-0.5 rounded border border-blue-200 dark:border-blue-900">
+                <span className="text-xs font-mono font-semibold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/40 px-2.5 py-0.5 rounded-full border border-indigo-200 dark:border-indigo-900">
                   {currentStyling.section_spacing_em.toFixed(2)} em
                 </span>
                 <button
@@ -787,7 +787,7 @@ export const CVStylePanel: React.FC<CVStylePanelProps> = ({
                       section_spacing_em: DEFAULT_CV_STYLING.section_spacing_em,
                     })
                   }
-                  className="p-1 rounded text-slate-400 hover:text-slate-700 dark:text-slate-500 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                  className="p-1 rounded-lg text-slate-400 hover:text-slate-700 dark:text-neutral-400 dark:hover:text-neutral-200 hover:bg-slate-100 dark:hover:bg-neutral-850 transition-colors cursor-pointer"
                   title="Przywróć domyślny odstęp między sekcjami"
                 >
                   <RotateCcw className="h-3.5 w-3.5" />
@@ -802,7 +802,7 @@ export const CVStylePanel: React.FC<CVStylePanelProps> = ({
                   onChange({ ...currentStyling, section_spacing_em: nextVal });
                 }}
                 disabled={currentStyling.section_spacing_em <= 0.1}
-                className="h-8 w-8 flex items-center justify-center rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-30 disabled:cursor-not-allowed transition-colors shrink-0"
+                className="h-8 w-8 flex items-center justify-center rounded-xl border border-slate-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 text-slate-600 dark:text-neutral-300 hover:bg-slate-100 dark:hover:bg-neutral-800 disabled:opacity-30 disabled:cursor-not-allowed transition-colors shrink-0 shadow-none cursor-pointer"
                 title="Zmniejsz odstęp między sekcjami"
               >
                 <Minus className="h-3.5 w-3.5" />
@@ -819,7 +819,7 @@ export const CVStylePanel: React.FC<CVStylePanelProps> = ({
                     section_spacing_em: parseFloat(e.target.value),
                   })
                 }
-                className="flex-1 h-1.5 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-blue-600"
+                className="flex-1 h-1.5 bg-slate-200 dark:bg-neutral-800 rounded-lg appearance-none cursor-pointer accent-indigo-600"
               />
               <button
                 type="button"
@@ -828,7 +828,7 @@ export const CVStylePanel: React.FC<CVStylePanelProps> = ({
                   onChange({ ...currentStyling, section_spacing_em: nextVal });
                 }}
                 disabled={currentStyling.section_spacing_em >= 2.0}
-                className="h-8 w-8 flex items-center justify-center rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-30 disabled:cursor-not-allowed transition-colors shrink-0"
+                className="h-8 w-8 flex items-center justify-center rounded-xl border border-slate-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 text-slate-600 dark:text-neutral-300 hover:bg-slate-100 dark:hover:bg-neutral-800 disabled:opacity-30 disabled:cursor-not-allowed transition-colors shrink-0 shadow-none cursor-pointer"
                 title="Zwiększ odstęp między sekcjami"
               >
                 <Plus className="h-3.5 w-3.5" />
@@ -848,22 +848,22 @@ export const CVStylePanel: React.FC<CVStylePanelProps> = ({
                     });
                   }
                 }}
-                className="w-16 h-8 text-center text-xs font-mono font-medium rounded-md border border-slate-300 bg-white dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                className="w-16 h-8 text-center text-xs font-mono font-medium rounded-xl border border-slate-200 bg-white dark:border-neutral-700 dark:bg-neutral-950 dark:text-neutral-100 focus:outline-none focus:ring-1 focus:ring-indigo-500 shadow-none"
               />
             </div>
-            <p className="text-[10px] text-slate-400 dark:text-slate-500">
+            <p className="text-[10px] text-slate-400 dark:text-neutral-500">
               Domyślnie 0.60 em
             </p>
           </div>
 
           {/* 4. Marginesy boczne (lewy / prawy) */}
-          <div className="space-y-1.5 p-3 rounded-lg bg-slate-50 dark:bg-slate-950 border border-slate-200/60 dark:border-slate-800">
+          <div className="space-y-1.5 p-3.5 rounded-xl bg-slate-50/60 dark:bg-neutral-950 border border-slate-200/80 dark:border-neutral-800">
             <div className="flex items-center justify-between">
-              <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+              <label className="text-xs font-semibold text-slate-700 dark:text-neutral-300">
                 Marginesy boczne (lewy / prawy)
               </label>
               <div className="flex items-center gap-2">
-                <span className="text-xs font-mono font-semibold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/40 px-2 py-0.5 rounded border border-blue-200 dark:border-blue-900">
+                <span className="text-xs font-mono font-semibold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/40 px-2.5 py-0.5 rounded-full border border-indigo-200 dark:border-indigo-900">
                   {currentStyling.margin_x_cm.toFixed(1)} cm
                 </span>
                 <button
@@ -874,7 +874,7 @@ export const CVStylePanel: React.FC<CVStylePanelProps> = ({
                       margin_x_cm: DEFAULT_CV_STYLING.margin_x_cm,
                     })
                   }
-                  className="p-1 rounded text-slate-400 hover:text-slate-700 dark:text-slate-500 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                  className="p-1 rounded-lg text-slate-400 hover:text-slate-700 dark:text-neutral-400 dark:hover:text-neutral-200 hover:bg-slate-100 dark:hover:bg-neutral-850 transition-colors cursor-pointer"
                   title="Przywróć domyślne marginesy boczne"
                 >
                   <RotateCcw className="h-3.5 w-3.5" />
@@ -889,7 +889,7 @@ export const CVStylePanel: React.FC<CVStylePanelProps> = ({
                   onChange({ ...currentStyling, margin_x_cm: nextVal });
                 }}
                 disabled={currentStyling.margin_x_cm <= 0.5}
-                className="h-8 w-8 flex items-center justify-center rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-30 disabled:cursor-not-allowed transition-colors shrink-0"
+                className="h-8 w-8 flex items-center justify-center rounded-xl border border-slate-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 text-slate-600 dark:text-neutral-300 hover:bg-slate-100 dark:hover:bg-neutral-800 disabled:opacity-30 disabled:cursor-not-allowed transition-colors shrink-0 shadow-none cursor-pointer"
                 title="Zmniejsz marginesy boczne"
               >
                 <Minus className="h-3.5 w-3.5" />
@@ -906,7 +906,7 @@ export const CVStylePanel: React.FC<CVStylePanelProps> = ({
                     margin_x_cm: parseFloat(e.target.value),
                   })
                 }
-                className="flex-1 h-1.5 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-blue-600"
+                className="flex-1 h-1.5 bg-slate-200 dark:bg-neutral-800 rounded-lg appearance-none cursor-pointer accent-indigo-600"
               />
               <button
                 type="button"
@@ -915,7 +915,7 @@ export const CVStylePanel: React.FC<CVStylePanelProps> = ({
                   onChange({ ...currentStyling, margin_x_cm: nextVal });
                 }}
                 disabled={currentStyling.margin_x_cm >= 3.5}
-                className="h-8 w-8 flex items-center justify-center rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-30 disabled:cursor-not-allowed transition-colors shrink-0"
+                className="h-8 w-8 flex items-center justify-center rounded-xl border border-slate-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 text-slate-600 dark:text-neutral-300 hover:bg-slate-100 dark:hover:bg-neutral-800 disabled:opacity-30 disabled:cursor-not-allowed transition-colors shrink-0 shadow-none cursor-pointer"
                 title="Zwiększ marginesy boczne"
               >
                 <Plus className="h-3.5 w-3.5" />
@@ -935,22 +935,22 @@ export const CVStylePanel: React.FC<CVStylePanelProps> = ({
                     });
                   }
                 }}
-                className="w-16 h-8 text-center text-xs font-mono font-medium rounded-md border border-slate-300 bg-white dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                className="w-16 h-8 text-center text-xs font-mono font-medium rounded-xl border border-slate-200 bg-white dark:border-neutral-700 dark:bg-neutral-950 dark:text-neutral-100 focus:outline-none focus:ring-1 focus:ring-indigo-500 shadow-none"
               />
             </div>
-            <p className="text-[10px] text-slate-400 dark:text-slate-500">
+            <p className="text-[10px] text-slate-400 dark:text-neutral-500">
               Domyślnie 1.8 cm
             </p>
           </div>
 
           {/* 5. Marginesy pionowe (górny / dolny) */}
-          <div className="space-y-1.5 p-3 rounded-lg bg-slate-50 dark:bg-slate-950 border border-slate-200/60 dark:border-slate-800">
+          <div className="space-y-1.5 p-3.5 rounded-xl bg-slate-50/60 dark:bg-neutral-950 border border-slate-200/80 dark:border-neutral-800">
             <div className="flex items-center justify-between">
-              <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+              <label className="text-xs font-semibold text-slate-700 dark:text-neutral-300">
                 Marginesy pionowe (górny / dolny)
               </label>
               <div className="flex items-center gap-2">
-                <span className="text-xs font-mono font-semibold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/40 px-2 py-0.5 rounded border border-blue-200 dark:border-blue-900">
+                <span className="text-xs font-mono font-semibold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/40 px-2.5 py-0.5 rounded-full border border-indigo-200 dark:border-indigo-900">
                   {currentStyling.margin_y_cm.toFixed(1)} cm
                 </span>
                 <button
@@ -961,7 +961,7 @@ export const CVStylePanel: React.FC<CVStylePanelProps> = ({
                       margin_y_cm: DEFAULT_CV_STYLING.margin_y_cm,
                     })
                   }
-                  className="p-1 rounded text-slate-400 hover:text-slate-700 dark:text-slate-500 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                  className="p-1 rounded-lg text-slate-400 hover:text-slate-700 dark:text-neutral-400 dark:hover:text-neutral-200 hover:bg-slate-100 dark:hover:bg-neutral-850 transition-colors cursor-pointer"
                   title="Przywróć domyślne marginesy pionowe"
                 >
                   <RotateCcw className="h-3.5 w-3.5" />
@@ -976,7 +976,7 @@ export const CVStylePanel: React.FC<CVStylePanelProps> = ({
                   onChange({ ...currentStyling, margin_y_cm: nextVal });
                 }}
                 disabled={currentStyling.margin_y_cm <= 0.5}
-                className="h-8 w-8 flex items-center justify-center rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-30 disabled:cursor-not-allowed transition-colors shrink-0"
+                className="h-8 w-8 flex items-center justify-center rounded-xl border border-slate-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 text-slate-600 dark:text-neutral-300 hover:bg-slate-100 dark:hover:bg-neutral-800 disabled:opacity-30 disabled:cursor-not-allowed transition-colors shrink-0 shadow-none cursor-pointer"
                 title="Zmniejsz marginesy pionowe"
               >
                 <Minus className="h-3.5 w-3.5" />
@@ -993,7 +993,7 @@ export const CVStylePanel: React.FC<CVStylePanelProps> = ({
                     margin_y_cm: parseFloat(e.target.value),
                   })
                 }
-                className="flex-1 h-1.5 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-blue-600"
+                className="flex-1 h-1.5 bg-slate-200 dark:bg-neutral-800 rounded-lg appearance-none cursor-pointer accent-indigo-600"
               />
               <button
                 type="button"
@@ -1002,7 +1002,7 @@ export const CVStylePanel: React.FC<CVStylePanelProps> = ({
                   onChange({ ...currentStyling, margin_y_cm: nextVal });
                 }}
                 disabled={currentStyling.margin_y_cm >= 3.5}
-                className="h-8 w-8 flex items-center justify-center rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-30 disabled:cursor-not-allowed transition-colors shrink-0"
+                className="h-8 w-8 flex items-center justify-center rounded-xl border border-slate-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 text-slate-600 dark:text-neutral-300 hover:bg-slate-100 dark:hover:bg-neutral-800 disabled:opacity-30 disabled:cursor-not-allowed transition-colors shrink-0 shadow-none cursor-pointer"
                 title="Zwiększ marginesy pionowe"
               >
                 <Plus className="h-3.5 w-3.5" />
@@ -1022,10 +1022,10 @@ export const CVStylePanel: React.FC<CVStylePanelProps> = ({
                     });
                   }
                 }}
-                className="w-16 h-8 text-center text-xs font-mono font-medium rounded-md border border-slate-300 bg-white dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                className="w-16 h-8 text-center text-xs font-mono font-medium rounded-xl border border-slate-200 bg-white dark:border-neutral-700 dark:bg-neutral-950 dark:text-neutral-100 focus:outline-none focus:ring-1 focus:ring-indigo-500 shadow-none"
               />
             </div>
-            <p className="text-[10px] text-slate-400 dark:text-slate-500">
+            <p className="text-[10px] text-slate-400 dark:text-neutral-500">
               Domyślnie 1.8 cm
             </p>
           </div>

@@ -230,17 +230,17 @@ export const PresetsManager: React.FC = () => {
   return (
     <div className="space-y-6 max-w-6xl mx-auto pb-12">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-6 rounded-xl border border-slate-200 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-slate-200/80 shadow-none dark:border-neutral-800 dark:bg-neutral-900">
         <div>
-          <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100">
+          <h2 className="text-xl font-bold text-slate-900 dark:text-neutral-100">
             Szablony bazowe CV (Archetypy ról)
           </h2>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+          <p className="text-xs text-slate-500 dark:text-neutral-400 mt-1">
             Zdefiniuj gotowe profile stanowiskowe (np. Flutter Developer, DevOps, Fullstack) do natychmiastowego generowania i dopasowywania CV ze split-view podglądu Typst
           </p>
         </div>
 
-        <Button variant="primary" onClick={openCreateModal}>
+        <Button variant="primary" onClick={openCreateModal} className="font-semibold shadow-none rounded-xl">
           <Plus className="h-4 w-4 mr-1.5" />
           Nowy szablon bazowy
         </Button>
@@ -248,19 +248,19 @@ export const PresetsManager: React.FC = () => {
 
       {/* Grid of Presets */}
       {isLoading ? (
-        <div className="py-12 text-center text-sm text-slate-400 dark:text-slate-500 animate-pulse">
+        <div className="py-12 text-center text-sm text-slate-400 dark:text-neutral-500 animate-pulse">
           Ładowanie szablonów bazowych...
         </div>
       ) : presets.length === 0 ? (
-        <div className="p-12 text-center bg-white rounded-xl border border-dashed border-slate-300 dark:border-slate-800 dark:bg-slate-900">
-          <Layers className="h-10 w-10 text-slate-300 dark:text-slate-600 mx-auto mb-3" />
-          <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-200">
+        <div className="p-12 text-center bg-white rounded-2xl border-2 border-dashed border-slate-200 dark:border-neutral-800 dark:bg-neutral-900 shadow-none">
+          <Layers className="h-10 w-10 text-slate-300 dark:text-neutral-600 mx-auto mb-3" />
+          <h3 className="text-sm font-semibold text-slate-800 dark:text-neutral-200">
             Brak szablonów bazowych
           </h3>
-          <p className="text-xs text-slate-500 dark:text-slate-400 max-w-sm mx-auto mt-1 mb-4">
+          <p className="text-xs text-slate-500 dark:text-neutral-400 max-w-sm mx-auto mt-1 mb-4">
             Stwórz pierwszy szablon stanowiskowy, aby AI mogło sprofilować Twoje CV bezpośrednio pod konkretne domeny technologiczne.
           </p>
-          <Button variant="primary" onClick={openCreateModal}>
+          <Button variant="primary" onClick={openCreateModal} className="font-semibold shadow-none rounded-xl">
             <Plus className="h-4 w-4 mr-1" />
             Utwórz pierwszy szablon
           </Button>
@@ -277,11 +277,11 @@ export const PresetsManager: React.FC = () => {
             return (
               <div
                 key={p.id}
-                className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between dark:border-slate-800 dark:bg-slate-900"
+                className="bg-white rounded-2xl border border-slate-200/80 p-5 sm:p-6 shadow-none hover:border-slate-300 dark:hover:border-neutral-700 transition-colors flex flex-col justify-between dark:border-neutral-800 dark:bg-neutral-900"
               >
                 <div>
                   <div className="flex items-start justify-between gap-2 mb-2">
-                    <h3 className="font-bold text-slate-900 dark:text-slate-100 text-base line-clamp-1">
+                    <h3 className="font-bold text-slate-900 dark:text-neutral-100 text-base line-clamp-1">
                       {p.title}
                     </h3>
                     <Badge variant={p.language === "pl" ? "default" : "secondary"}>
@@ -289,7 +289,7 @@ export const PresetsManager: React.FC = () => {
                     </Badge>
                   </div>
 
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">
+                  <p className="text-xs text-slate-500 dark:text-neutral-400 mb-4">
                     Zmodyfikowano: {new Date(p.updated_at).toLocaleDateString("pl-PL")}
                   </p>
 
@@ -298,13 +298,13 @@ export const PresetsManager: React.FC = () => {
                     {sections.slice(0, 4).map((s, idx) => (
                       <span
                         key={idx}
-                        className="rounded bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-600 border border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700"
+                        className="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-semibold text-slate-700 border border-slate-200/80 dark:bg-neutral-800 dark:text-neutral-300 dark:border-neutral-700"
                       >
                         {s.title || s.type}
                       </span>
                     ))}
                     {sectionCount > 4 && (
-                      <span className="text-[11px] text-slate-400 dark:text-slate-500 self-center">
+                      <span className="text-[11px] font-semibold text-slate-400 dark:text-neutral-500 self-center">
                         +{sectionCount - 4}
                       </span>
                     )}
@@ -312,12 +312,12 @@ export const PresetsManager: React.FC = () => {
                 </div>
 
                 {/* Actions */}
-                <div className="pt-4 mt-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-2">
+                <div className="pt-4 mt-4 border-t border-slate-100 dark:border-neutral-800 flex items-center justify-between gap-2">
                   <Button
                     size="sm"
                     variant="primary"
                     onClick={() => setActiveEditingPreset(p)}
-                    className="text-xs flex-1"
+                    className="text-xs flex-1 rounded-xl font-semibold shadow-none"
                   >
                     <Edit2 className="h-3.5 w-3.5 mr-1" />
                     Edytuj szablon (Split View)
@@ -327,7 +327,7 @@ export const PresetsManager: React.FC = () => {
                     size="sm"
                     variant="outline"
                     onClick={() => handleOpenPreview(p)}
-                    className="text-xs px-2.5"
+                    className="text-xs px-2.5 rounded-xl border-2 border-indigo-600 text-indigo-600 dark:border-indigo-500 dark:text-indigo-400 font-semibold shadow-none"
                     title="Szybki podgląd Typst"
                   >
                     <Eye className="h-3.5 w-3.5" />
@@ -336,7 +336,7 @@ export const PresetsManager: React.FC = () => {
                   <button
                     type="button"
                     onClick={() => handleDeletePreset(p)}
-                    className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:text-slate-500 dark:hover:text-rose-400 dark:hover:bg-rose-950/50 rounded-lg transition-colors"
+                    className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:text-neutral-500 dark:hover:text-rose-400 dark:hover:bg-rose-950/40 rounded-xl transition-colors cursor-pointer"
                     title="Usuń szablon"
                   >
                     <Trash2 className="h-4 w-4" />

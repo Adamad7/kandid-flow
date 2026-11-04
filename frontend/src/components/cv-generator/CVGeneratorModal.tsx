@@ -318,17 +318,17 @@ export const CVGeneratorModal: React.FC<CVGeneratorModalProps> = ({
         <div className="py-12 px-4 flex flex-col items-center justify-center text-center space-y-6">
           <div className="relative">
             {/* Pulsing ring animation */}
-            <div className="absolute -inset-4 rounded-full bg-blue-500/20 animate-ping" />
-            <div className="relative h-20 w-20 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center shadow-lg shadow-blue-500/30">
+            <div className="absolute -inset-4 rounded-full bg-indigo-500/20 animate-ping" />
+            <div className="relative h-20 w-20 rounded-2xl bg-gradient-to-tr from-indigo-600 to-violet-600 flex items-center justify-center shadow-none">
               <Sparkles className="h-10 w-10 text-white animate-spin" />
             </div>
           </div>
 
           <div className="space-y-2 max-w-md">
-            <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100">
+            <h3 className="text-lg font-bold text-slate-900 dark:text-white">
               Inteligentne dopasowywanie CV w toku...
             </h3>
-            <p className="text-sm font-medium text-blue-600 dark:text-blue-400 animate-pulse">
+            <p className="text-sm font-semibold text-indigo-600 dark:text-indigo-400 animate-pulse">
               {stages[generationStage]}
             </p>
           </div>
@@ -340,14 +340,14 @@ export const CVGeneratorModal: React.FC<CVGeneratorModalProps> = ({
                 key={idx}
                 className={`h-2 rounded-full transition-all duration-500 ${
                   idx <= generationStage
-                    ? "w-8 bg-blue-600 dark:bg-blue-500"
-                    : "w-2 bg-slate-200 dark:bg-slate-800"
+                    ? "w-8 bg-indigo-600 dark:bg-indigo-500"
+                    : "w-2 bg-slate-200 dark:bg-neutral-800"
                 }`}
               />
             ))}
           </div>
 
-          <p className="text-xs text-slate-400 dark:text-slate-500 max-w-xs">
+          <p className="text-xs text-slate-400 dark:text-neutral-500 max-w-xs">
             Model językowy weryfikuje Twoje doświadczenie z wymaganiami oferty,
             formułując uderzające punkty osiągnięć.
           </p>
@@ -356,7 +356,7 @@ export const CVGeneratorModal: React.FC<CVGeneratorModalProps> = ({
         /* Configuration Form View */
         <div className="space-y-6">
           {errorMessage && (
-            <div className="rounded-lg bg-rose-50 border border-rose-200 p-3 text-xs text-rose-700 dark:bg-rose-950/50 dark:border-rose-900 dark:text-rose-300 flex items-center gap-2">
+            <div className="rounded-xl bg-rose-50 border border-rose-200 p-3 text-xs text-rose-700 dark:bg-rose-950/50 dark:border-rose-900 dark:text-rose-300 flex items-center gap-2">
               <AlertCircle className="h-4 w-4 shrink-0" />
               <span>{errorMessage}</span>
             </div>
@@ -364,7 +364,7 @@ export const CVGeneratorModal: React.FC<CVGeneratorModalProps> = ({
 
           {/* 1. Base Template Selection */}
           <div className="space-y-1.5">
-            <label className="block text-xs font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+            <label className="block text-xs font-semibold uppercase tracking-wider text-slate-700 dark:text-neutral-300">
               1. Szablon bazowy:
             </label>
             <Select
@@ -383,7 +383,7 @@ export const CVGeneratorModal: React.FC<CVGeneratorModalProps> = ({
 
           {/* 2. AI Engine Selection */}
           <div className="space-y-3">
-            <label className="block text-xs font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+            <label className="block text-xs font-semibold uppercase tracking-wider text-slate-700 dark:text-neutral-300">
               2. Silnik sztucznej inteligencji:
             </label>
             <Select
@@ -397,13 +397,13 @@ export const CVGeneratorModal: React.FC<CVGeneratorModalProps> = ({
 
             {/* API Options */}
             {llmEngine === "api" && (
-              <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 space-y-3">
-                <label className="flex items-center gap-2.5 cursor-pointer text-xs font-medium text-slate-700 dark:text-slate-300">
+              <div className="p-4 rounded-2xl bg-slate-50/60 dark:bg-neutral-950 border border-slate-200/80 dark:border-neutral-800 space-y-3">
+                <label className="flex items-center gap-2.5 cursor-pointer text-xs font-medium text-slate-700 dark:text-neutral-300">
                   <input
                     type="checkbox"
                     checked={useDefaultApiKey}
                     onChange={(e) => setUseDefaultApiKey(e.target.checked)}
-                    className="rounded border-slate-300 dark:border-slate-700 text-blue-600 focus:ring-blue-500 h-4 w-4"
+                    className="rounded border-slate-300 dark:border-neutral-700 text-indigo-600 focus:ring-indigo-500 h-4 w-4"
                   />
                   <span>Użyj domyślnego klucza API z konfiguracji serwera</span>
                 </label>
@@ -444,20 +444,20 @@ export const CVGeneratorModal: React.FC<CVGeneratorModalProps> = ({
             )}
 
             {/* Thinking / Reasoning Mode Switch */}
-            <div className="flex items-center justify-between p-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/60">
-              <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+            <div className="flex items-center justify-between p-3.5 rounded-2xl border border-slate-200/80 dark:border-neutral-800 bg-slate-50/60 dark:bg-neutral-950">
+              <span className="text-xs font-semibold text-slate-700 dark:text-neutral-300">
                 Tryb pracy modelu:
               </span>
 
               {/* 2-Option Switch: Tryb namysłu (LEFT), Natychmiastowa odpowiedź (RIGHT) */}
-              <div className="inline-flex rounded-lg border border-slate-200 dark:border-slate-700 p-0.5 bg-slate-100 dark:bg-slate-800 text-xs font-medium">
+              <div className="inline-flex rounded-xl border border-slate-200 dark:border-neutral-700 p-0.5 bg-slate-100 dark:bg-neutral-900 text-xs font-medium">
                 <button
                   type="button"
                   onClick={() => setEnableThinking(true)}
-                  className={`px-3 py-1.5 rounded-md transition-colors duration-150 flex items-center gap-1.5 select-none whitespace-nowrap font-medium ${
+                  className={`px-3 py-1.5 rounded-lg transition-colors duration-150 flex items-center gap-1.5 select-none whitespace-nowrap font-semibold ${
                     enableThinking
-                      ? "bg-blue-600 text-white shadow-xs"
-                      : "text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200"
+                      ? "bg-indigo-600 text-white shadow-none"
+                      : "text-slate-500 hover:text-slate-800 dark:text-neutral-400 dark:hover:text-white"
                   }`}
                 >
                   <Brain className="h-3.5 w-3.5 shrink-0" />
@@ -466,10 +466,10 @@ export const CVGeneratorModal: React.FC<CVGeneratorModalProps> = ({
                 <button
                   type="button"
                   onClick={() => setEnableThinking(false)}
-                  className={`px-3 py-1.5 rounded-md transition-colors duration-150 flex items-center gap-1.5 select-none whitespace-nowrap font-medium ${
+                  className={`px-3 py-1.5 rounded-lg transition-colors duration-150 flex items-center gap-1.5 select-none whitespace-nowrap font-semibold ${
                     !enableThinking
-                      ? "bg-amber-500 text-white shadow-xs"
-                      : "text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200"
+                      ? "bg-amber-500 text-white shadow-none"
+                      : "text-slate-500 hover:text-slate-800 dark:text-neutral-400 dark:hover:text-white"
                   }`}
                 >
                   <Zap className="h-3.5 w-3.5 shrink-0" />
@@ -481,7 +481,7 @@ export const CVGeneratorModal: React.FC<CVGeneratorModalProps> = ({
 
           {/* 3. Output Language */}
           <div className="space-y-1.5">
-            <label className="block text-xs font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+            <label className="block text-xs font-semibold uppercase tracking-wider text-slate-700 dark:text-neutral-300">
               3. Język wyjściowy CV:
             </label>
             <Select
@@ -496,10 +496,10 @@ export const CVGeneratorModal: React.FC<CVGeneratorModalProps> = ({
           {/* 4. Sections to Generate (Full Width Stack with 3-Position Toggles) */}
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-700 dark:text-neutral-300">
                 4. Sekcje do wygenerowania:
               </label>
-              <span className="text-[11px] text-slate-400 dark:text-slate-500">
+              <span className="text-[11px] text-slate-400 dark:text-neutral-500">
                 Domyślne ustawienia pobrane z Bazy Wiedzy
               </span>
             </div>
@@ -515,23 +515,23 @@ export const CVGeneratorModal: React.FC<CVGeneratorModalProps> = ({
                 return (
                   <div
                     key={sec.id}
-                    className={`w-full flex flex-col sm:flex-row sm:items-center justify-between p-3.5 rounded-xl border transition-colors duration-150 gap-3 ${
+                    className={`w-full flex flex-col sm:flex-row sm:items-center justify-between p-3.5 rounded-2xl border transition-colors duration-150 gap-3 ${
                       isOff
-                        ? "bg-slate-50/60 dark:bg-slate-900/30 border-slate-200/60 dark:border-slate-800/60 opacity-60"
+                        ? "bg-slate-50/60 dark:bg-neutral-950/40 border-slate-200/60 dark:border-neutral-800/60 opacity-60"
                         : isAi
-                        ? "bg-indigo-50/20 dark:bg-indigo-950/20 border-indigo-200/70 dark:border-indigo-900/60 shadow-xs"
-                        : "bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 shadow-xs"
+                        ? "bg-indigo-50/30 dark:bg-neutral-900 border-2 border-indigo-200/90 dark:border-indigo-900/60 shadow-none"
+                        : "bg-white dark:bg-neutral-900 border border-slate-200/80 dark:border-neutral-800 shadow-none"
                     }`}
                   >
                     {/* Section Info */}
                     <div className="flex items-center gap-3 min-w-0">
                       <div
-                        className={`p-2 rounded-lg shrink-0 ${
+                        className={`p-2 rounded-xl shrink-0 ${
                           isOff
-                            ? "bg-slate-200 dark:bg-slate-800 text-slate-400"
+                            ? "bg-slate-200 dark:bg-neutral-800 text-slate-400"
                             : isAi
-                            ? "bg-indigo-100 dark:bg-indigo-900/50 text-indigo-600 dark:text-indigo-400"
-                            : "bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-400"
+                            ? "bg-indigo-100 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400"
+                            : "bg-slate-100 dark:bg-neutral-800 text-slate-600 dark:text-neutral-300"
                         }`}
                       >
                         <IconComponent className="h-4 w-4" />
@@ -539,30 +539,30 @@ export const CVGeneratorModal: React.FC<CVGeneratorModalProps> = ({
                       <div className="min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
                           <span
-                            className={`text-sm font-medium truncate ${
+                            className={`text-sm font-semibold truncate ${
                               isOff
-                                ? "text-slate-400 dark:text-slate-500"
-                                : "text-slate-900 dark:text-slate-100"
+                                ? "text-slate-400 dark:text-neutral-500"
+                                : "text-slate-900 dark:text-white"
                             }`}
                           >
                             {sec.title}
                           </span>
                         </div>
-                        <p className="text-xs text-slate-500 dark:text-slate-400 truncate">
+                        <p className="text-xs text-slate-500 dark:text-neutral-400 truncate">
                           {sec.description}
                         </p>
                       </div>
                     </div>
 
                     {/* 3-Position Toggle Switch */}
-                    <div className="inline-flex shrink-0 self-end sm:self-auto rounded-lg border border-slate-200 dark:border-slate-700 p-0.5 bg-slate-100 dark:bg-slate-800 text-xs font-medium">
+                    <div className="inline-flex shrink-0 self-end sm:self-auto rounded-xl border border-slate-200 dark:border-neutral-700 p-0.5 bg-slate-100 dark:bg-neutral-950 text-xs font-medium">
                       <button
                         type="button"
                         onClick={() => handleSetSectionMode(sec.id, "off")}
-                        className={`px-2.5 py-1 rounded-md transition-colors duration-150 select-none whitespace-nowrap font-medium ${
+                        className={`px-2.5 py-1 rounded-lg transition-colors duration-150 select-none whitespace-nowrap font-semibold ${
                           isOff
-                            ? "bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-100 shadow-xs"
-                            : "text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200"
+                            ? "bg-white dark:bg-neutral-800 text-slate-800 dark:text-neutral-100 shadow-none"
+                            : "text-slate-500 hover:text-slate-800 dark:text-neutral-400 dark:hover:text-white"
                         }`}
                       >
                         Nie umieszczaj
@@ -570,10 +570,10 @@ export const CVGeneratorModal: React.FC<CVGeneratorModalProps> = ({
                       <button
                         type="button"
                         onClick={() => handleSetSectionMode(sec.id, "raw")}
-                        className={`px-2.5 py-1 rounded-md transition-colors duration-150 select-none whitespace-nowrap font-medium ${
+                        className={`px-2.5 py-1 rounded-lg transition-colors duration-150 select-none whitespace-nowrap font-semibold ${
                           isRaw
-                            ? "bg-blue-600 text-white shadow-xs"
-                            : "text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200"
+                            ? "bg-slate-700 dark:bg-neutral-700 text-white shadow-none"
+                            : "text-slate-500 hover:text-slate-800 dark:text-neutral-400 dark:hover:text-white"
                         }`}
                       >
                         Z bazy wiedzy
@@ -581,10 +581,10 @@ export const CVGeneratorModal: React.FC<CVGeneratorModalProps> = ({
                       <button
                         type="button"
                         onClick={() => handleSetSectionMode(sec.id, "ai")}
-                        className={`px-2.5 py-1 rounded-md transition-colors duration-150 flex items-center gap-1 select-none whitespace-nowrap font-medium ${
+                        className={`px-2.5 py-1 rounded-lg transition-colors duration-150 flex items-center gap-1 select-none whitespace-nowrap font-bold ${
                           isAi
-                            ? "bg-indigo-600 text-white shadow-xs"
-                            : "text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200"
+                            ? "bg-indigo-600 text-white shadow-none"
+                            : "text-slate-500 hover:text-slate-800 dark:text-neutral-400 dark:hover:text-white"
                         }`}
                       >
                         <Sparkles className="h-3 w-3 shrink-0" />
@@ -607,17 +607,17 @@ export const CVGeneratorModal: React.FC<CVGeneratorModalProps> = ({
           />
 
           {/* Dialog Actions */}
-          <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
-            <Button variant="outline" onClick={onClose}>
+          <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100 dark:border-neutral-800">
+            <Button variant="outline" onClick={onClose} className="rounded-xl">
               Anuluj
             </Button>
             <Button
-              variant="primary"
+              variant="success"
               onClick={handleGenerate}
-              className="px-6 font-semibold shadow-md"
+              className="px-6 font-bold rounded-xl shadow-none"
             >
               <Sparkles className="h-4 w-4 mr-2" />
-              Generuj CV (v1)
+              Generuj dedykowane CV (v1)
             </Button>
           </div>
         </div>

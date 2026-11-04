@@ -32,10 +32,10 @@ export function getSalaryPeriodLabel(period?: string | null): string {
 export type DeadlineColor = "default" | "yellow" | "orange" | "red";
 
 export const DEADLINE_BADGE_CLASSES: Record<DeadlineColor, string> = {
-  red: "bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950/50 dark:text-rose-300 dark:border-rose-800",
-  orange: "bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-950/50 dark:text-orange-300 dark:border-orange-800",
-  yellow: "bg-yellow-50 text-yellow-800 border-yellow-200 dark:bg-yellow-950/50 dark:text-yellow-300 dark:border-yellow-800",
-  default: "bg-slate-50 text-slate-600 border-slate-200 dark:bg-slate-800/60 dark:text-slate-300 dark:border-slate-700",
+  red: "bg-rose-50 text-rose-700 border-2 border-rose-300 dark:bg-rose-950/60 dark:text-rose-300 dark:border-rose-700",
+  orange: "bg-orange-50 text-orange-700 border-2 border-orange-300 dark:bg-orange-950/60 dark:text-orange-300 dark:border-orange-700",
+  yellow: "bg-yellow-50 text-yellow-800 border-2 border-yellow-300 dark:bg-yellow-950/60 dark:text-yellow-300 dark:border-yellow-700",
+  default: "bg-slate-100 text-slate-700 border-2 border-slate-300 dark:bg-neutral-800 dark:text-neutral-300 dark:border-neutral-600",
 };
 
 export interface DeadlineInfo {

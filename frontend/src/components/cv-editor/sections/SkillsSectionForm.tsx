@@ -72,7 +72,7 @@ export const SkillsSectionForm: React.FC<SkillsSectionFormProps> = React.memo(
           <div
             key={catIdx}
             data-cv-field={`section-item:${block.id}:${catIdx}`}
-            className="p-3 bg-slate-50/80 rounded-lg border border-slate-200/80 text-xs dark:bg-slate-800/60 dark:border-slate-800 space-y-2"
+            className="p-3.5 bg-slate-50/60 rounded-xl border border-slate-200/80 text-xs dark:bg-neutral-950 dark:border-neutral-800 space-y-2.5"
           >
             <div className="flex items-center justify-between gap-2">
               <div className="flex-1 max-w-xs sm:max-w-sm">
@@ -80,7 +80,7 @@ export const SkillsSectionForm: React.FC<SkillsSectionFormProps> = React.memo(
                   value={cat.category}
                   onChange={(e) => handleUpdateCategoryName(catIdx, e.target.value)}
                   placeholder="Nazwa kategorii (np. Języki i Frameworki)"
-                  className="h-8 text-sm font-semibold"
+                  className="h-8.5 text-sm font-semibold"
                 />
               </div>
               <div className="flex items-center gap-1">
@@ -88,7 +88,7 @@ export const SkillsSectionForm: React.FC<SkillsSectionFormProps> = React.memo(
                   type="button"
                   onClick={() => handleMoveUp(catIdx)}
                   disabled={catIdx === 0}
-                  className="p-1 rounded text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 disabled:opacity-20 cursor-pointer disabled:cursor-not-allowed"
+                  className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:text-neutral-500 dark:hover:text-neutral-200 disabled:opacity-20 cursor-pointer disabled:cursor-not-allowed transition-colors"
                   title="Przesuń kategorię w górę"
                 >
                   <ChevronUp className="h-3.5 w-3.5" />
@@ -97,7 +97,7 @@ export const SkillsSectionForm: React.FC<SkillsSectionFormProps> = React.memo(
                   type="button"
                   onClick={() => handleMoveDown(catIdx)}
                   disabled={catIdx === items.length - 1}
-                  className="p-1 rounded text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 disabled:opacity-20 cursor-pointer disabled:cursor-not-allowed"
+                  className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:text-neutral-500 dark:hover:text-neutral-200 disabled:opacity-20 cursor-pointer disabled:cursor-not-allowed transition-colors"
                   title="Przesuń kategorię w dół"
                 >
                   <ChevronDown className="h-3.5 w-3.5" />
@@ -105,7 +105,7 @@ export const SkillsSectionForm: React.FC<SkillsSectionFormProps> = React.memo(
                 <button
                   type="button"
                   onClick={() => handleRemoveCategory(catIdx)}
-                  className="p-1 text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 rounded cursor-pointer"
+                  className="p-1.5 text-slate-400 hover:text-rose-600 dark:text-neutral-500 dark:hover:text-rose-400 rounded-lg cursor-pointer transition-colors"
                   title="Usuń kategorię"
                 >
                   <Trash2 className="h-3.5 w-3.5" />
@@ -121,14 +121,14 @@ export const SkillsSectionForm: React.FC<SkillsSectionFormProps> = React.memo(
           </div>
         ))}
 
-        <div className="pt-2 border-t border-slate-100 dark:border-slate-800">
+        <div className="pt-2 border-t border-slate-100 dark:border-neutral-800">
           <Button
             size="sm"
             variant="outline"
             onClick={handleAddCategory}
-            className="text-xs h-7"
+            className="text-xs h-8 border-2 border-indigo-600 text-indigo-600 dark:border-indigo-500 dark:text-indigo-400 rounded-xl"
           >
-            <Plus className="h-3 w-3 mr-1" />
+            <Plus className="h-3.5 w-3.5 mr-1" />
             Dodaj kategorię umiejętności
           </Button>
         </div>

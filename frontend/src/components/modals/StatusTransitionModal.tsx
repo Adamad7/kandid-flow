@@ -189,13 +189,13 @@ export const StatusTransitionModal: React.FC<StatusTransitionModalProps> = ({
       maxWidth="lg"
     >
       <form onSubmit={handleSubmit} className="space-y-5">
-        <div className="rounded-lg bg-blue-50/70 border border-blue-100 p-3.5 dark:bg-blue-950/40 dark:border-blue-900 flex items-start gap-3">
-          <Send className="h-5 w-5 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" />
-          <div className="text-xs text-slate-700 dark:text-slate-300">
-            <p className="font-semibold text-slate-900 dark:text-slate-100">
+        <div className="rounded-2xl bg-indigo-50/60 border-2 border-indigo-200/80 p-4 dark:bg-indigo-950/40 dark:border-indigo-800 flex items-start gap-3">
+          <Send className="h-5 w-5 text-indigo-600 dark:text-indigo-400 shrink-0 mt-0.5" />
+          <div className="text-xs text-slate-700 dark:text-neutral-300">
+            <p className="font-semibold text-slate-900 dark:text-neutral-100">
               Stanowisko: {job.role_title || "Nieokreślone"} w {job.company_name || "Nieznana firma"}
             </p>
-            <p className="mt-0.5 text-slate-600 dark:text-slate-400">
+            <p className="mt-0.5 text-slate-600 dark:text-neutral-400">
               {isEditMode
                 ? "Edytuj dokładną datę wysłania, notatki oraz dokumenty powiązane z tym zgłoszeniem na osi czasu."
                 : "Zarejestruj dokładną datę oraz opcjonalnie powiąż dokument CV, który trafił do rekrutera."}
@@ -205,8 +205,8 @@ export const StatusTransitionModal: React.FC<StatusTransitionModalProps> = ({
 
         {/* Date & Time Input */}
         <div>
-          <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5 flex items-center gap-1.5">
-            <Calendar className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400" />
+          <label className="block text-xs font-semibold text-slate-700 dark:text-neutral-300 mb-1.5 flex items-center gap-1.5">
+            <Calendar className="h-3.5 w-3.5 text-indigo-600 dark:text-indigo-400" />
             Dokładna data i godzina wysłania aplikacji:
           </label>
           <Input
@@ -220,25 +220,25 @@ export const StatusTransitionModal: React.FC<StatusTransitionModalProps> = ({
 
         {/* Existing Attachments Display (if in edit mode) */}
         {existingAttachments.length > 0 && (
-          <div className="rounded-lg border border-slate-200 dark:border-slate-800 p-3 bg-slate-50/50 dark:bg-slate-900/50 space-y-2">
-            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
-              <Paperclip className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400" />
+          <div className="rounded-xl border border-slate-200/80 dark:border-neutral-800 p-3.5 bg-slate-50/60 dark:bg-neutral-950 space-y-2">
+            <label className="block text-xs font-semibold text-slate-700 dark:text-neutral-300 flex items-center gap-1.5">
+              <Paperclip className="h-3.5 w-3.5 text-indigo-600 dark:text-indigo-400" />
               Dołączone dokumenty do tej aplikacji:
             </label>
             <div className="space-y-1.5">
               {existingAttachments.map((att) => (
                 <div
                   key={att.id}
-                  className="flex items-center justify-between text-xs bg-white dark:bg-slate-800 p-2 rounded-md border border-slate-200 dark:border-slate-700"
+                  className="flex items-center justify-between text-xs bg-white dark:bg-neutral-900 p-2.5 rounded-xl border border-slate-200/80 dark:border-neutral-800"
                 >
-                  <span className="font-medium text-slate-800 dark:text-slate-200 truncate mr-2">
+                  <span className="font-medium text-slate-800 dark:text-neutral-200 truncate mr-2">
                     {att.file_name} ({(att.file_size_bytes / 1024).toFixed(1)} KB)
                   </span>
                   <a
                     href={att.download_url}
                     target="_blank"
                     rel="noreferrer"
-                    className="inline-flex items-center gap-1 text-blue-600 dark:text-blue-400 hover:underline shrink-0"
+                    className="inline-flex items-center gap-1 text-indigo-600 dark:text-indigo-400 hover:underline shrink-0 font-semibold"
                   >
                     <Download className="h-3.5 w-3.5" />
                     Pobierz
@@ -251,23 +251,23 @@ export const StatusTransitionModal: React.FC<StatusTransitionModalProps> = ({
 
         {/* CV Association Option */}
         <div>
-          <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-2 flex items-center gap-1.5">
-            <FileText className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400" />
+          <label className="block text-xs font-semibold text-slate-700 dark:text-neutral-300 mb-2 flex items-center gap-1.5">
+            <FileText className="h-3.5 w-3.5 text-indigo-600 dark:text-indigo-400" />
             {isEditMode ? "Dodaj lub zmień dokument CV:" : "Które CV zostało wysłane?"}
           </label>
 
           <div className="space-y-2">
             {cvVersions.length > 0 && (
-              <label className="flex items-center gap-2 p-2.5 rounded-lg border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/60 cursor-pointer">
+              <label className="flex items-center gap-2.5 p-3 rounded-xl border border-slate-200/80 dark:border-neutral-800 hover:bg-slate-50 dark:hover:bg-neutral-850 cursor-pointer transition-colors">
                 <input
                   type="radio"
                   name="cvOption"
                   value="generated"
                   checked={cvOption === "generated"}
                   onChange={() => setCvOption("generated")}
-                  className="text-blue-600 focus:ring-blue-500"
+                  className="text-indigo-600 focus:ring-indigo-500"
                 />
-                <span className="text-xs text-slate-800 dark:text-slate-200 font-medium">
+                <span className="text-xs text-slate-800 dark:text-neutral-200 font-medium">
                   Powiąż wersję wygenerowaną w KandidFlow
                 </span>
               </label>
@@ -278,7 +278,7 @@ export const StatusTransitionModal: React.FC<StatusTransitionModalProps> = ({
                 <select
                   value={selectedVersionId}
                   onChange={(e) => setSelectedVersionId(e.target.value)}
-                  className="w-full text-xs rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-slate-800 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
+                  className="w-full text-xs rounded-xl border border-slate-200 bg-white px-3 py-2 text-slate-800 dark:border-neutral-700 dark:bg-neutral-950 dark:text-neutral-200"
                 >
                   {cvVersions.map((v) => (
                     <option key={v.id} value={v.id}>
@@ -290,16 +290,16 @@ export const StatusTransitionModal: React.FC<StatusTransitionModalProps> = ({
               </div>
             )}
 
-            <label className="flex items-center gap-2 p-2.5 rounded-lg border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/60 cursor-pointer">
+            <label className="flex items-center gap-2.5 p-3 rounded-xl border border-slate-200/80 dark:border-neutral-800 hover:bg-slate-50 dark:hover:bg-neutral-850 cursor-pointer transition-colors">
               <input
                 type="radio"
                 name="cvOption"
                 value="external"
                 checked={cvOption === "external"}
                 onChange={() => setCvOption("external")}
-                className="text-blue-600 focus:ring-blue-500"
+                className="text-indigo-600 focus:ring-indigo-500"
               />
-              <span className="text-xs text-slate-800 dark:text-slate-200 font-medium">
+              <span className="text-xs text-slate-800 dark:text-neutral-200 font-medium">
                 Wgraj nowe zewnętrzne CV (PDF / DOCX przygotowane poza aplikacją)
               </span>
             </label>
@@ -314,7 +314,7 @@ export const StatusTransitionModal: React.FC<StatusTransitionModalProps> = ({
                       setExternalFile(e.target.files[0]);
                     }
                   }}
-                  className="block w-full text-xs text-slate-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 dark:file:bg-blue-950/60 dark:file:text-blue-300"
+                  className="block w-full text-xs text-slate-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 dark:file:bg-indigo-950/60 dark:file:text-indigo-300"
                 />
                 {externalFile && (
                   <p className="mt-1 text-[11px] text-emerald-600 dark:text-emerald-400 flex items-center gap-1 font-medium">
@@ -325,16 +325,16 @@ export const StatusTransitionModal: React.FC<StatusTransitionModalProps> = ({
               </div>
             )}
 
-            <label className="flex items-center gap-2 p-2.5 rounded-lg border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/60 cursor-pointer">
+            <label className="flex items-center gap-2.5 p-3 rounded-xl border border-slate-200/80 dark:border-neutral-800 hover:bg-slate-50 dark:hover:bg-neutral-850 cursor-pointer transition-colors">
               <input
                 type="radio"
                 name="cvOption"
                 value="none"
                 checked={cvOption === "none"}
                 onChange={() => setCvOption("none")}
-                className="text-blue-600 focus:ring-blue-500"
+                className="text-indigo-600 focus:ring-indigo-500"
               />
-              <span className="text-xs text-slate-800 dark:text-slate-200 font-medium">
+              <span className="text-xs text-slate-800 dark:text-neutral-200 font-medium">
                 {isEditMode ? "Nie zmieniaj załączonych dokumentów" : "Nie przypisuj dokumentu CV teraz"}
               </span>
             </label>
@@ -343,7 +343,7 @@ export const StatusTransitionModal: React.FC<StatusTransitionModalProps> = ({
 
         {/* Notes */}
         <div>
-          <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+          <label className="block text-xs font-semibold text-slate-700 dark:text-neutral-300 mb-1.5">
             Notatka do zgłoszenia / aplikacji:
           </label>
           <Textarea
@@ -355,11 +355,11 @@ export const StatusTransitionModal: React.FC<StatusTransitionModalProps> = ({
           />
         </div>
 
-        <div className="flex justify-end gap-2.5 pt-4 border-t border-slate-200 dark:border-slate-800">
-          <Button type="button" variant="outline" size="sm" onClick={onClose} disabled={isSubmitting}>
+        <div className="flex justify-end gap-2.5 pt-4 border-t border-slate-100 dark:border-neutral-800">
+          <Button type="button" variant="outline" size="sm" onClick={onClose} disabled={isSubmitting} className="rounded-xl font-semibold shadow-none">
             Anuluj
           </Button>
-          <Button type="submit" variant="primary" size="sm" isLoading={isSubmitting}>
+          <Button type="submit" variant="primary" size="sm" isLoading={isSubmitting} className="rounded-xl font-semibold shadow-none">
             <Send className="h-3.5 w-3.5 mr-1.5" />
             {isEditMode ? "Zapisz zmiany w aplikacji" : "Zapisz i oznacz jako Zaaplikowano"}
           </Button>

@@ -19,7 +19,7 @@ export const ThemeToggle: React.FC<ThemeToggleProps> = ({ className }) => {
       title={isDark ? "Przełącz na tryb jasny" : "Przełącz na tryb ciemny"}
       onClick={toggleTheme}
       className={cn(
-        "relative inline-flex h-8 w-16 shrink-0 items-center rounded-full border border-slate-300 bg-slate-200 p-1 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 dark:border-slate-700 dark:bg-slate-800 cursor-pointer shadow-xs",
+        "relative inline-flex h-8 w-16 shrink-0 items-center rounded-full border border-slate-200 dark:border-neutral-800 bg-slate-200/80 p-1 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/30 dark:bg-neutral-800 cursor-pointer shadow-none",
         className
       )}
     >
@@ -38,7 +38,7 @@ export const ThemeToggle: React.FC<ThemeToggleProps> = ({ className }) => {
       {/* Sliding Thumb */}
       <span
         className={cn(
-          "pointer-events-none flex h-6 w-6 items-center justify-center rounded-full bg-white shadow-md border border-slate-200/80 transition-transform duration-200 ease-in-out dark:bg-slate-900 dark:border-slate-700",
+          "pointer-events-none flex h-6 w-6 items-center justify-center rounded-full bg-white shadow-none border border-slate-200/80 transition-transform duration-200 ease-in-out dark:bg-neutral-900 dark:border-neutral-700",
           isDark ? "translate-x-8 text-indigo-400" : "translate-x-0 text-amber-500"
         )}
       >

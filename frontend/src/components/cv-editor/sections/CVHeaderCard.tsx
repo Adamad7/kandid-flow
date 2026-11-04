@@ -30,18 +30,18 @@ export const CVHeaderCard: React.FC<CVHeaderCardProps> = React.memo(
     onUpdateContactInfo,
   }) => {
     return (
-      <div className="rounded-xl border border-slate-200 bg-white shadow-xs dark:border-slate-800 dark:bg-slate-900 [contain:content]">
+      <div className="rounded-2xl border border-slate-200/80 bg-white shadow-none dark:border-neutral-800 dark:bg-neutral-900 [contain:content]">
         <div
           className="flex items-center justify-between p-5 cursor-pointer select-none"
           onClick={onToggleExpand}
         >
           <div className="flex items-center gap-2">
-            <User className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-            <h3 className="font-semibold text-sm text-slate-900 dark:text-slate-100">
+            <User className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
+            <h3 className="font-semibold text-sm text-slate-900 dark:text-neutral-100">
               Nagłówek dokumentu i dane kontaktowe
             </h3>
             {!isExpanded && fullName && (
-              <span className="text-xs text-slate-500 dark:text-slate-400 font-normal truncate max-w-[200px]">
+              <span className="text-xs text-slate-500 dark:text-neutral-400 font-normal truncate max-w-[200px]">
                 — {fullName}
               </span>
             )}
@@ -52,7 +52,7 @@ export const CVHeaderCard: React.FC<CVHeaderCardProps> = React.memo(
               e.stopPropagation();
               onToggleExpand();
             }}
-            className="px-3.5 py-1.5 h-8 min-w-[48px] rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white transition-all cursor-pointer flex items-center justify-center shrink-0"
+            className="px-3.5 py-1.5 h-8 min-w-[48px] rounded-xl border border-slate-200 dark:border-neutral-700 bg-slate-50/60 hover:bg-slate-100 dark:bg-neutral-800 dark:hover:bg-neutral-700 text-slate-600 hover:text-slate-900 dark:text-neutral-300 dark:hover:text-white transition-all cursor-pointer flex items-center justify-center shrink-0 shadow-none"
             title={isExpanded ? "Zwiń nagłówek" : "Rozwiń nagłówek"}
           >
             <ChevronDown
@@ -70,7 +70,7 @@ export const CVHeaderCard: React.FC<CVHeaderCardProps> = React.memo(
           }`}
         >
           <div className="overflow-hidden min-h-0">
-            <div className="border-t border-slate-100 dark:border-slate-800 p-5 pt-4">
+            <div className="border-t border-slate-100 dark:border-neutral-800 p-5 pt-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <Input
                   label="Imię i nazwisko kandydata"
@@ -92,9 +92,9 @@ export const CVHeaderCard: React.FC<CVHeaderCardProps> = React.memo(
                       <button
                         type="button"
                         onClick={onApplySuggestedJobTitle}
-                        className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-950/50 hover:bg-blue-100 dark:hover:bg-blue-900/60 rounded-md border border-blue-200 dark:border-blue-800 transition-colors cursor-pointer"
+                        className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-semibold text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-950/50 hover:bg-indigo-100 dark:hover:bg-indigo-900/60 rounded-xl border border-indigo-200 dark:border-indigo-800 transition-colors cursor-pointer shadow-none"
                       >
-                        <Sparkles className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400" />
+                        <Sparkles className="h-3.5 w-3.5 text-indigo-600 dark:text-indigo-400" />
                         <span>
                           Użyj z oferty:{" "}
                           <strong className="font-semibold">{suggestedJobTitle}</strong>

@@ -6,6 +6,7 @@ import {
   Sparkles,
   Clock,
   CheckCircle,
+  Check,
   FileText,
   AlertCircle,
   Calendar,
@@ -220,43 +221,45 @@ export const JobDetailsModal: React.FC<JobDetailsModalProps> = ({
       contentClassName="p-0 flex flex-col flex-1 overflow-hidden h-full"
     >
       {/* Header Container */}
-      <div className="bg-slate-50 border-b border-slate-200 px-6 py-5 shrink-0 dark:bg-slate-800/80 dark:border-slate-800">
+      <div className="bg-slate-50/90 border-b border-slate-200/80 px-6 py-5 shrink-0 dark:bg-neutral-900/90 dark:border-neutral-800">
         <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
           <div>
-            <div className="flex flex-wrap items-center gap-2 mb-1.5">
-              <Badge variant="secondary">
+            <div className="flex flex-wrap items-center gap-2 mb-2">
+              <span className="rounded-full text-[10px] py-0.5 px-2.5 font-bold uppercase tracking-wider bg-slate-100 dark:bg-neutral-800 text-slate-600 dark:text-neutral-300 border border-slate-200/60 dark:border-neutral-700/60">
                 {PORTAL_LABELS[job.source_portal] || job.source_portal}
-              </Badge>
+              </span>
               {job.work_model && (
-                <Badge variant="outline">
+                <span className="rounded-full text-[10px] py-0.5 px-2.5 font-semibold border-2 border-slate-200 dark:border-neutral-700 bg-slate-50 dark:bg-neutral-800/60 text-slate-600 dark:text-neutral-300">
                   {WORK_MODEL_LABELS[job.work_model] || job.work_model}
                   {job.work_model_details ? ` (${job.work_model_details})` : ""}
-                </Badge>
+                </span>
               )}
               {job.contract_type && (
-                <Badge variant="outline">{job.contract_type}</Badge>
+                <span className="rounded-full text-[10px] py-0.5 px-2.5 font-semibold border-2 border-slate-200 dark:border-neutral-700 bg-slate-50 dark:bg-neutral-800/60 text-slate-600 dark:text-neutral-300">
+                  {job.contract_type}
+                </span>
               )}
             </div>
 
-            <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100 leading-tight">
+            <h2 className="text-xl font-bold text-slate-900 dark:text-white leading-tight">
               {job.role_title || "Nieokreślone stanowisko"}
             </h2>
 
-            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-2 text-sm text-slate-600 dark:text-slate-300">
-              <span className="flex items-center gap-1 font-semibold text-slate-800 dark:text-slate-200">
-                <Building className="h-4 w-4 text-slate-400 dark:text-slate-500" />
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 mt-2.5 text-sm text-slate-600 dark:text-neutral-300">
+              <span className="flex items-center gap-1.5 font-semibold text-slate-800 dark:text-neutral-200">
+                <Building className="h-4 w-4 text-indigo-500" />
                 {job.company_name || "Nieznana firma"}
               </span>
 
               {job.locations && job.locations.length > 0 && (
-                <span className="flex items-center gap-1">
-                  <MapPin className="h-4 w-4 text-slate-400 dark:text-slate-500" />
+                <span className="flex items-center gap-1.5">
+                  <MapPin className="h-4 w-4 text-indigo-500" />
                   {job.locations.join(", ")}
                 </span>
               )}
 
               {salaryText && (
-                <span className="inline-flex items-center gap-1.5 font-semibold text-emerald-700 bg-emerald-50 dark:text-emerald-300 dark:bg-emerald-950/60 px-2 py-0.5 rounded">
+                <span className="inline-flex items-center gap-1.5 font-bold text-xs text-emerald-700 bg-emerald-50 dark:text-emerald-300 dark:bg-emerald-950/50 px-3 py-1 rounded-full border border-emerald-200/60 dark:border-emerald-800/60">
                   <span>{salaryText}</span>
                   {job.salary_period && job.salary_period !== "month" && (
                     <span
@@ -275,14 +278,14 @@ export const JobDetailsModal: React.FC<JobDetailsModalProps> = ({
               {(job.tags || []).map((tag) => (
                 <span
                   key={tag}
-                  className="inline-flex items-center gap-1 rounded-md bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-700 border border-blue-200 dark:bg-blue-950/50 dark:text-blue-300 dark:border-blue-800"
+                  className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-0.5 text-[10px] text-slate-600 font-mono dark:bg-neutral-800 dark:text-neutral-300 border border-slate-200/60 dark:border-neutral-700/60"
                 >
-                  <TagIcon className="h-3 w-3" />
+                  <TagIcon className="h-3 w-3 text-indigo-500" />
                   {tag}
                   <button
                     type="button"
                     onClick={() => handleRemoveTag(tag)}
-                    className="ml-0.5 text-blue-400 hover:text-rose-600 dark:hover:text-rose-400 transition-colors"
+                    className="ml-0.5 text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 transition-colors"
                     title="Usuń tag"
                   >
                     <X className="h-3 w-3" />
@@ -303,14 +306,14 @@ export const JobDetailsModal: React.FC<JobDetailsModalProps> = ({
                   }}
                   placeholder="+ Dodaj tag..."
                   disabled={isAddingTag}
-                  className="h-6 w-24 text-xs rounded border border-slate-300 bg-white px-2 text-slate-800 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 focus:w-36 focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all"
+                  className="h-6.5 w-24 text-xs rounded-full border border-slate-200 bg-white px-2.5 text-slate-800 dark:border-neutral-700 dark:bg-neutral-950 dark:text-neutral-200 focus:w-36 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/30 transition-all shadow-none"
                 />
                 {newTagInput.trim() && (
                   <button
                     type="button"
                     onClick={handleAddTag}
                     disabled={isAddingTag}
-                    className="p-1 rounded text-blue-600 hover:bg-blue-100 dark:text-blue-400 dark:hover:bg-slate-800"
+                    className="p-1 rounded-full text-indigo-600 hover:bg-indigo-50 dark:text-indigo-400 dark:hover:bg-neutral-800"
                     title="Dodaj tag"
                   >
                     <Plus className="h-3.5 w-3.5" />
@@ -325,19 +328,25 @@ export const JobDetailsModal: React.FC<JobDetailsModalProps> = ({
               {/* Current Status Badge */}
               <span
                 className={cn(
-                  "inline-flex items-center text-xs font-semibold px-2.5 py-1 rounded-full border",
-                  STATUS_COLORS[job.status]?.bg || "bg-slate-100 dark:bg-slate-800",
-                  STATUS_COLORS[job.status]?.text || "text-slate-700 dark:text-slate-200",
-                  STATUS_COLORS[job.status]?.border || "border-slate-300 dark:border-slate-700"
+                  "inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1 rounded-full border-2 shadow-none",
+                  STATUS_COLORS[job.status]?.bg || "bg-slate-100 dark:bg-neutral-800",
+                  STATUS_COLORS[job.status]?.text || "text-slate-700 dark:text-neutral-200",
+                  STATUS_COLORS[job.status]?.border || "border-slate-300 dark:border-neutral-700"
                 )}
               >
+                <span
+                  className={cn(
+                    "h-1.5 w-1.5 rounded-full shrink-0",
+                    STATUS_COLORS[job.status]?.dot || "bg-slate-400"
+                  )}
+                />
                 {STATUS_LABELS[job.status] || job.status}
               </span>
 
               <button
                 type="button"
                 onClick={onClose}
-                className="rounded-lg p-1 text-slate-400 hover:bg-slate-200/70 hover:text-slate-700 dark:text-slate-400 dark:hover:bg-slate-700 dark:hover:text-slate-200 transition-colors focus:outline-none"
+                className="rounded-xl p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:text-neutral-400 dark:hover:bg-neutral-800 dark:hover:text-neutral-200 transition-colors focus:outline-none"
                 aria-label="Zamknij"
               >
                 <X className="h-5 w-5" />
@@ -354,7 +363,7 @@ export const JobDetailsModal: React.FC<JobDetailsModalProps> = ({
                         size="sm"
                         variant="primary"
                         onClick={() => setIsStatusModalOpen(true)}
-                        className="text-xs shadow-xs"
+                        className="text-xs rounded-xl"
                       >
                         <Send className="h-3.5 w-3.5 mr-1.5" />
                         Aplikowałem na tę ofertę
@@ -363,7 +372,7 @@ export const JobDetailsModal: React.FC<JobDetailsModalProps> = ({
                         size="sm"
                         variant="primary"
                         onClick={() => handleStatusChange("interview")}
-                        className="text-xs bg-purple-600 hover:bg-purple-700 text-white border-purple-600"
+                        className="text-xs rounded-xl bg-purple-600 hover:bg-purple-500 text-white"
                       >
                         <Users className="h-3.5 w-3.5 mr-1.5" />
                         Zaproszenie na rozmowę
@@ -372,9 +381,9 @@ export const JobDetailsModal: React.FC<JobDetailsModalProps> = ({
                   ) : (
                     <Button
                       size="sm"
-                      variant="primary"
+                      variant="success"
                       onClick={() => handleStatusChange("ready")}
-                      className="text-xs font-semibold shadow-xs bg-emerald-600 hover:bg-emerald-700 text-white"
+                      className="text-xs rounded-xl font-bold"
                     >
                       <ArchiveRestore className="h-3.5 w-3.5 mr-1.5" />
                       Przywróć do gotowych
@@ -389,7 +398,7 @@ export const JobDetailsModal: React.FC<JobDetailsModalProps> = ({
                     size="sm"
                     variant="outline"
                     onClick={() => handleStatusChange("ready")}
-                    className="text-xs"
+                    className="text-xs rounded-xl"
                   >
                     <CheckCircle className="h-3.5 w-3.5 mr-1 text-indigo-600 dark:text-indigo-400" />
                     Do aplikacji
@@ -398,7 +407,7 @@ export const JobDetailsModal: React.FC<JobDetailsModalProps> = ({
                     size="sm"
                     variant="primary"
                     onClick={() => setIsStatusModalOpen(true)}
-                    className="text-xs shadow-xs"
+                    className="text-xs rounded-xl"
                   >
                     <Send className="h-3.5 w-3.5 mr-1.5" />
                     Zaaplikowano
@@ -411,7 +420,7 @@ export const JobDetailsModal: React.FC<JobDetailsModalProps> = ({
                   size="sm"
                   variant="primary"
                   onClick={() => setIsStatusModalOpen(true)}
-                  className="text-xs font-semibold shadow-xs bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white"
+                  className="text-xs font-bold rounded-xl"
                 >
                   <Send className="h-3.5 w-3.5 mr-1.5" />
                   Aplikowałem na tę ofertę
@@ -424,7 +433,7 @@ export const JobDetailsModal: React.FC<JobDetailsModalProps> = ({
                     size="sm"
                     variant="outline"
                     onClick={() => setIsStatusModalOpen(true)}
-                    className="text-xs text-slate-700 border-slate-200 hover:bg-slate-50 dark:text-slate-300 dark:border-slate-800 dark:hover:bg-slate-800"
+                    className="text-xs rounded-xl border-slate-200 dark:border-neutral-700 text-slate-700 hover:bg-slate-50 dark:text-neutral-300 dark:hover:bg-neutral-800"
                     title="Edytuj datę wysłania, notatki lub dokumenty powiązane z aplikacją"
                   >
                     <Edit2 className="h-3.5 w-3.5 mr-1 text-slate-500" />
@@ -434,16 +443,16 @@ export const JobDetailsModal: React.FC<JobDetailsModalProps> = ({
                     size="sm"
                     variant="outline"
                     onClick={() => setIsFollowUpModalOpen(true)}
-                    className="text-xs text-blue-700 border-blue-200 hover:bg-blue-50 dark:text-blue-400 dark:border-blue-900 dark:hover:bg-slate-800"
+                    className="text-xs rounded-xl border-indigo-200 dark:border-indigo-900/60 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-50 dark:hover:bg-neutral-850"
                   >
-                    <MessageSquare className="h-3.5 w-3.5 mr-1.5 text-blue-600 dark:text-blue-400" />
+                    <MessageSquare className="h-3.5 w-3.5 mr-1.5 text-indigo-600 dark:text-indigo-400" />
                     Generuj follow-up
                   </Button>
                   <Button
                     size="sm"
                     variant="primary"
                     onClick={() => handleStatusChange("interview")}
-                    className="text-xs bg-purple-600 hover:bg-purple-700 text-white border-purple-600"
+                    className="text-xs rounded-xl bg-purple-600 hover:bg-purple-500 text-white"
                   >
                     <Users className="h-3.5 w-3.5 mr-1.5" />
                     Zaproszenie na rozmowę
@@ -454,9 +463,9 @@ export const JobDetailsModal: React.FC<JobDetailsModalProps> = ({
               {job.status === "interview" && (
                 <Button
                   size="sm"
-                  variant="primary"
+                  variant="success"
                   onClick={() => handleStatusChange("offer")}
-                  className="text-xs bg-emerald-600 hover:bg-emerald-700 text-white border-emerald-600"
+                  className="text-xs rounded-xl font-bold"
                 >
                   <Award className="h-3.5 w-3.5 mr-1.5" />
                   Otrzymano ofertę
@@ -468,7 +477,7 @@ export const JobDetailsModal: React.FC<JobDetailsModalProps> = ({
                   size="sm"
                   variant="outline"
                   onClick={() => handleStatusChange("archived")}
-                  className="text-xs text-stone-600 dark:text-stone-300 border-stone-200 dark:border-stone-700 hover:bg-stone-50 dark:hover:bg-slate-800"
+                  className="text-xs rounded-xl text-stone-600 dark:text-neutral-400 border-slate-200 dark:border-neutral-700 hover:bg-slate-100 dark:hover:bg-neutral-800"
                   title="Przenieś ofertę do archiwum"
                 >
                   <Archive className="h-3.5 w-3.5 mr-1 text-stone-500" />
@@ -478,27 +487,27 @@ export const JobDetailsModal: React.FC<JobDetailsModalProps> = ({
             </div>
 
             {/* Subdued / Secondary Manual Status Switcher */}
-            <div className="flex items-center gap-2 text-[11px] text-slate-400 dark:text-slate-500">
+            <div className="flex items-center gap-2 text-[11px] text-slate-500 dark:text-neutral-400">
               {job.applied_at && (
                 <button
                   type="button"
                   onClick={() => setIsStatusModalOpen(true)}
-                  className="text-amber-700 dark:text-amber-400 font-medium mr-1 hover:underline cursor-pointer inline-flex items-center gap-1"
+                  className="text-amber-600 dark:text-amber-400 font-semibold mr-1 hover:underline cursor-pointer inline-flex items-center gap-1"
                   title="Kliknij, aby edytować szczegóły aplikacji"
                 >
                   <Send className="h-3 w-3" />
                   Zaaplikowano: {new Date(job.applied_at).toLocaleDateString("pl-PL")}
                 </button>
               )}
-              <span className="text-slate-400">•</span>
-              <label className="text-slate-500 dark:text-slate-400">Zmień status ręcznie:</label>
+              <span className="text-slate-300 dark:text-neutral-700">•</span>
+              <label className="text-slate-500 dark:text-neutral-400">Zmień status ręcznie:</label>
               {job.status === "archived" && isExpiredWithoutApp ? (
                 <select
                   value={job.status}
                   onChange={(e) =>
                     handleStatusChange(e.target.value as JobStatusType)
                   }
-                  className="text-[11px] rounded border border-slate-200 bg-white px-1.5 py-0.5 text-slate-600 shadow-2xs dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 cursor-pointer focus:outline-none"
+                  className="text-[11px] rounded-xl border border-slate-200 bg-white px-2 py-1 text-slate-700 dark:border-neutral-700 dark:bg-neutral-950 dark:text-neutral-300 cursor-pointer focus:outline-none focus:border-indigo-500 shadow-none"
                 >
                   <option value="archived">Zarchiwizowane</option>
                   <option value="applied">Zaaplikowano</option>
@@ -512,7 +521,7 @@ export const JobDetailsModal: React.FC<JobDetailsModalProps> = ({
                   onChange={(e) =>
                     handleStatusChange(e.target.value as JobStatusType)
                   }
-                  className="text-[11px] rounded border border-slate-200 bg-white px-1.5 py-0.5 text-slate-600 shadow-2xs dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 cursor-pointer focus:outline-none"
+                  className="text-[11px] rounded-xl border border-slate-200 bg-white px-2 py-1 text-slate-700 dark:border-neutral-700 dark:bg-neutral-950 dark:text-neutral-300 cursor-pointer focus:outline-none focus:border-indigo-500 shadow-none"
                 >
                   <option value="inbox">Do przetworzenia</option>
                   <option value="ready">Gotowe do aplikacji</option>
@@ -530,7 +539,7 @@ export const JobDetailsModal: React.FC<JobDetailsModalProps> = ({
                 href={normalizeJobOfferUrl(job.source_url)}
                 target="_blank"
                 rel="noreferrer"
-                className="inline-flex items-center gap-1 text-xs text-blue-600 dark:text-blue-400 hover:text-blue-800 hover:underline"
+                className="inline-flex items-center gap-1 text-xs text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 hover:underline font-medium"
               >
                 Otwórz ogłoszenie źródłowe
                 <ExternalLink className="h-3 w-3" />
@@ -541,12 +550,12 @@ export const JobDetailsModal: React.FC<JobDetailsModalProps> = ({
 
         {/* Archive banner */}
         {job.status === "archived" && (
-          <div className="mt-4 rounded-lg bg-stone-100 border border-stone-200 p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-stone-800 dark:bg-stone-800/80 dark:border-stone-700 dark:text-stone-200">
-            <div className="flex items-start gap-2">
+          <div className="mt-4 rounded-2xl bg-stone-50 border border-stone-200/80 p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-stone-800 dark:bg-neutral-900/60 dark:border-neutral-800 dark:text-neutral-300 shadow-none">
+            <div className="flex items-start gap-2.5">
               <Archive className="h-4 w-4 text-stone-600 dark:text-stone-400 mt-0.5 shrink-0" />
               <div>
-                <p className="font-semibold">Oferta znajduje się w archiwum</p>
-                <p className="mt-0.5 text-stone-500 dark:text-stone-400">
+                <p className="font-semibold text-stone-900 dark:text-neutral-100">Oferta znajduje się w archiwum</p>
+                <p className="mt-0.5 text-stone-600 dark:text-neutral-400 leading-relaxed">
                   {isExpiredWithoutApp
                     ? "Termin zgłoszeń minął bez zarejestrowanej aplikacji. Aby przywrócić tę ofertę do aktywnego lejka, wybierz status 'Zaaplikowano' lub zaproszenie na rozmowę."
                     : "Oferta jest zarchiwizowana. Możesz przywrócić ją do gotowych lub wybrać kolejny etap rekrutacji."}
@@ -558,7 +567,7 @@ export const JobDetailsModal: React.FC<JobDetailsModalProps> = ({
                 size="sm"
                 variant="outline"
                 onClick={() => handleStatusChange("ready")}
-                className="text-xs bg-white dark:bg-slate-900 border-stone-300 dark:border-stone-700 text-stone-800 dark:text-stone-200 shrink-0 gap-1.5"
+                className="text-xs rounded-xl bg-white dark:bg-neutral-950 border-stone-300 dark:border-neutral-700 text-stone-800 dark:text-neutral-200 shrink-0 gap-1.5"
               >
                 <ArchiveRestore className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
                 Przywróć do gotowych
@@ -569,12 +578,12 @@ export const JobDetailsModal: React.FC<JobDetailsModalProps> = ({
 
         {/* Failed parsing banner */}
         {job.status === "failed_parsing" && (
-          <div className="mt-4 rounded-lg bg-rose-50 border border-rose-200 p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-rose-800 dark:bg-rose-950/50 dark:border-rose-900 dark:text-rose-300">
-            <div className="flex items-start gap-2">
+          <div className="mt-4 rounded-2xl bg-rose-50/80 border border-rose-200 p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-rose-800 dark:bg-rose-950/40 dark:border-rose-900 dark:text-rose-300 shadow-none">
+            <div className="flex items-start gap-2.5">
               <AlertCircle className="h-4 w-4 text-rose-600 dark:text-rose-400 mt-0.5 shrink-0" />
               <div>
-                <p className="font-semibold">Błąd podczas przetwarzania AI</p>
-                <p className="mt-0.5">{job.error_message}</p>
+                <p className="font-semibold text-rose-950 dark:text-rose-200">Błąd podczas przetwarzania AI</p>
+                <p className="mt-0.5 text-rose-700 dark:text-rose-300">{job.error_message}</p>
               </div>
             </div>
             <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
@@ -583,9 +592,9 @@ export const JobDetailsModal: React.FC<JobDetailsModalProps> = ({
                 variant="outline"
                 onClick={() => handleReparse("ai")}
                 isLoading={isReparsing}
-                className="text-xs bg-white border-blue-300 text-blue-700 hover:bg-blue-50 dark:bg-slate-900 dark:border-blue-800 dark:text-blue-400 dark:hover:bg-slate-800"
+                className="text-xs rounded-xl bg-white border-indigo-200 text-indigo-700 hover:bg-indigo-50 dark:bg-neutral-950 dark:border-indigo-900/60 dark:text-indigo-400 dark:hover:bg-neutral-850"
               >
-                <Sparkles className="h-3 w-3 mr-1 text-blue-600 dark:text-blue-400" />
+                <Sparkles className="h-3 w-3 mr-1 text-indigo-600 dark:text-indigo-400" />
                 Parsuj przez AI
               </Button>
               <Button
@@ -593,9 +602,9 @@ export const JobDetailsModal: React.FC<JobDetailsModalProps> = ({
                 variant="outline"
                 onClick={() => handleReparse("traditional")}
                 isLoading={isReparsing}
-                className="text-xs bg-white border-slate-300 text-slate-700 hover:bg-slate-50 dark:bg-slate-900 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+                className="text-xs rounded-xl bg-white border-slate-200 text-slate-700 hover:bg-slate-50 dark:bg-neutral-950 dark:border-neutral-700 dark:text-neutral-300 dark:hover:bg-neutral-850"
               >
-                <Cpu className="h-3 w-3 mr-1 text-slate-600 dark:text-slate-400" />
+                <Cpu className="h-3 w-3 mr-1 text-slate-600 dark:text-neutral-400" />
                 Auto-parsuj tradycyjne
               </Button>
             </div>
@@ -613,7 +622,7 @@ export const JobDetailsModal: React.FC<JobDetailsModalProps> = ({
                   ? "warning"
                   : "secondary"
               }
-              className="text-xs"
+              className="text-xs rounded-full border-2"
             >
               <Clock className="h-3.5 w-3.5 mr-1" />
               {deadlineInfo.detailText}
@@ -623,15 +632,15 @@ export const JobDetailsModal: React.FC<JobDetailsModalProps> = ({
       </div>
 
       {/* Navigation Tabs */}
-      <div className="border-b border-slate-200 bg-white px-6 shrink-0 dark:border-slate-800 dark:bg-slate-900">
-        <nav className="flex space-x-6 text-sm font-medium overflow-x-auto">
+      <div className="border-b border-slate-200/80 bg-white/95 px-6 py-2.5 shrink-0 dark:border-neutral-800 dark:bg-neutral-900/95">
+        <nav className="flex space-x-2 text-xs font-semibold overflow-x-auto">
           <button
             type="button"
             onClick={() => setActiveTab("structured")}
-            className={`py-3.5 border-b-2 transition-colors ${
+            className={`rounded-xl px-3.5 py-1.5 transition-colors ${
               activeTab === "structured"
-                ? "border-blue-600 text-blue-600 dark:border-blue-400 dark:text-blue-400"
-                : "border-transparent text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200"
+                ? "bg-indigo-600 text-white shadow-none"
+                : "text-slate-600 hover:text-slate-900 hover:bg-slate-100 dark:text-neutral-400 dark:hover:text-white dark:hover:bg-neutral-800"
             }`}
           >
             Wymagania i AI
@@ -639,10 +648,10 @@ export const JobDetailsModal: React.FC<JobDetailsModalProps> = ({
           <button
             type="button"
             onClick={() => setActiveTab("timeline")}
-            className={`py-3.5 border-b-2 transition-colors flex items-center gap-1.5 ${
+            className={`rounded-xl px-3.5 py-1.5 transition-colors flex items-center gap-1.5 ${
               activeTab === "timeline"
-                ? "border-blue-600 text-blue-600 dark:border-blue-400 dark:text-blue-400"
-                : "border-transparent text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200"
+                ? "bg-indigo-600 text-white shadow-none"
+                : "text-slate-600 hover:text-slate-900 hover:bg-slate-100 dark:text-neutral-400 dark:hover:text-white dark:hover:bg-neutral-800"
             }`}
           >
             <Calendar className="h-4 w-4" />
@@ -651,10 +660,10 @@ export const JobDetailsModal: React.FC<JobDetailsModalProps> = ({
           <button
             type="button"
             onClick={() => setActiveTab("attachments")}
-            className={`py-3.5 border-b-2 transition-colors flex items-center gap-1.5 ${
+            className={`rounded-xl px-3.5 py-1.5 transition-colors flex items-center gap-1.5 ${
               activeTab === "attachments"
-                ? "border-blue-600 text-blue-600 dark:border-blue-400 dark:text-blue-400"
-                : "border-transparent text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200"
+                ? "bg-indigo-600 text-white shadow-none"
+                : "text-slate-600 hover:text-slate-900 hover:bg-slate-100 dark:text-neutral-400 dark:hover:text-white dark:hover:bg-neutral-800"
             }`}
           >
             <Paperclip className="h-4 w-4" />
@@ -663,10 +672,10 @@ export const JobDetailsModal: React.FC<JobDetailsModalProps> = ({
           <button
             type="button"
             onClick={() => setActiveTab("versions")}
-            className={`py-3.5 border-b-2 transition-colors flex items-center gap-1.5 ${
+            className={`rounded-xl px-3.5 py-1.5 transition-colors flex items-center gap-1.5 ${
               activeTab === "versions"
-                ? "border-blue-600 text-blue-600 dark:border-blue-400 dark:text-blue-400"
-                : "border-transparent text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200"
+                ? "bg-indigo-600 text-white shadow-none"
+                : "text-slate-600 hover:text-slate-900 hover:bg-slate-100 dark:text-neutral-400 dark:hover:text-white dark:hover:bg-neutral-800"
             }`}
           >
             <Layers className="h-4 w-4" />
@@ -675,10 +684,10 @@ export const JobDetailsModal: React.FC<JobDetailsModalProps> = ({
           <button
             type="button"
             onClick={() => setActiveTab("notes")}
-            className={`py-3.5 border-b-2 transition-colors flex items-center gap-1.5 ${
+            className={`rounded-xl px-3.5 py-1.5 transition-colors flex items-center gap-1.5 ${
               activeTab === "notes"
-                ? "border-blue-600 text-blue-600 dark:border-blue-400 dark:text-blue-400"
-                : "border-transparent text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200"
+                ? "bg-indigo-600 text-white shadow-none"
+                : "text-slate-600 hover:text-slate-900 hover:bg-slate-100 dark:text-neutral-400 dark:hover:text-white dark:hover:bg-neutral-800"
             }`}
           >
             <Edit3 className="h-4 w-4" />
@@ -687,10 +696,10 @@ export const JobDetailsModal: React.FC<JobDetailsModalProps> = ({
           <button
             type="button"
             onClick={() => setActiveTab("raw")}
-            className={`py-3.5 border-b-2 transition-colors flex items-center gap-1.5 ${
+            className={`rounded-xl px-3.5 py-1.5 transition-colors flex items-center gap-1.5 ${
               activeTab === "raw"
-                ? "border-blue-600 text-blue-600 dark:border-blue-400 dark:text-blue-400"
-                : "border-transparent text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200"
+                ? "bg-indigo-600 text-white shadow-none"
+                : "text-slate-600 hover:text-slate-900 hover:bg-slate-100 dark:text-neutral-400 dark:hover:text-white dark:hover:bg-neutral-800"
             }`}
           >
             <FileText className="h-4 w-4" />
@@ -700,17 +709,17 @@ export const JobDetailsModal: React.FC<JobDetailsModalProps> = ({
       </div>
 
       {/* Tab Contents */}
-      <div className="p-6 overflow-y-auto flex-1 dark:bg-slate-900">
+      <div className="p-6 overflow-y-auto flex-1 dark:bg-neutral-900">
         {activeTab === "structured" && (
           <div className="space-y-6">
             {structured ? (
               <>
                 {structured.role_summary && (
-                  <div className="rounded-lg bg-blue-50/60 border border-blue-100 p-4 dark:bg-blue-950/40 dark:border-blue-900">
-                    <h4 className="text-xs font-semibold uppercase tracking-wider text-blue-900 dark:text-blue-300 mb-1.5">
+                  <div className="border-l-2 border-indigo-500 pl-4 py-1 my-2">
+                    <p className="text-xs font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400 mb-1">
                       Podsumowanie roli
-                    </h4>
-                    <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
+                    </p>
+                    <p className="text-sm text-slate-700 dark:text-neutral-300 leading-relaxed font-normal">
                       {structured.role_summary}
                     </p>
                   </div>
@@ -724,14 +733,14 @@ export const JobDetailsModal: React.FC<JobDetailsModalProps> = ({
                   if (!techStackList.length) return null;
                   return (
                     <div>
-                      <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2">
+                      <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-neutral-400 mb-2.5">
                         Stos technologiczny
                       </h4>
                       <div className="flex flex-wrap gap-1.5">
                         {techStackList.map((tech, idx) => (
                           <span
                             key={idx}
-                            className="rounded-md bg-slate-100 px-2.5 py-1 text-xs font-mono font-medium text-slate-800 border border-slate-200 dark:bg-slate-800 dark:text-slate-200 dark:border-slate-700"
+                            className="rounded-full bg-slate-100 px-3 py-1 text-xs font-mono font-medium text-slate-700 border border-slate-200/60 dark:bg-neutral-800 dark:text-neutral-300 dark:border-neutral-700/60"
                           >
                             {tech}
                           </span>
@@ -744,40 +753,40 @@ export const JobDetailsModal: React.FC<JobDetailsModalProps> = ({
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {/* Must Have */}
                   <div>
-                    <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2.5 flex items-center gap-1.5">
-                      <CheckCircle className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                    <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-neutral-400 mb-3 flex items-center gap-1.5">
+                      <CheckCircle className="h-4 w-4 text-emerald-500" />
                       Wymagania konieczne (Must-have)
                     </h4>
                     {structured.must_have && structured.must_have.length > 0 ? (
-                      <ul className="space-y-1.5 text-xs text-slate-700 dark:text-slate-300">
+                      <ul className="space-y-2 text-xs text-slate-700 dark:text-neutral-300">
                         {structured.must_have.map((item, idx) => (
-                          <li key={idx} className="flex items-start gap-2">
-                            <span className="text-emerald-500 font-bold">•</span>
-                            <span>{item}</span>
+                          <li key={idx} className="flex items-start gap-2.5">
+                            <Check className="h-4 w-4 text-emerald-500 shrink-0 mt-0.5" />
+                            <span className="leading-relaxed">{item}</span>
                           </li>
                         ))}
                       </ul>
                     ) : (
-                      <p className="text-xs text-slate-400 dark:text-slate-500 italic">Brak wyspecyfikowanych wymagań must-have.</p>
+                      <p className="text-xs text-slate-400 dark:text-neutral-500 italic">Brak wyspecyfikowanych wymagań must-have.</p>
                     )}
                   </div>
 
                   {/* Nice to Have */}
                   <div>
-                    <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2.5">
+                    <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-neutral-400 mb-3">
                       Mile widziane (Nice-to-have)
                     </h4>
                     {structured.nice_to_have && structured.nice_to_have.length > 0 ? (
-                      <ul className="space-y-1.5 text-xs text-slate-700 dark:text-slate-300">
+                      <ul className="space-y-2 text-xs text-slate-700 dark:text-neutral-300">
                         {structured.nice_to_have.map((item, idx) => (
-                          <li key={idx} className="flex items-start gap-2">
-                            <span className="text-blue-500 font-bold">•</span>
-                            <span>{item}</span>
+                          <li key={idx} className="flex items-start gap-2.5">
+                            <span className="h-1.5 w-1.5 rounded-full bg-indigo-500 shrink-0 mt-1.5" />
+                            <span className="leading-relaxed">{item}</span>
                           </li>
                         ))}
                       </ul>
                     ) : (
-                      <p className="text-xs text-slate-400 dark:text-slate-500 italic">Brak wymagań nice-to-have.</p>
+                      <p className="text-xs text-slate-400 dark:text-neutral-500 italic">Brak wymagań nice-to-have.</p>
                     )}
                   </div>
                 </div>
@@ -785,14 +794,14 @@ export const JobDetailsModal: React.FC<JobDetailsModalProps> = ({
                 {/* Benefits */}
                 {structured.benefits && structured.benefits.length > 0 && (
                   <div>
-                    <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2.5">
+                    <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-neutral-400 mb-3">
                       Benefity i warunki
                     </h4>
-                    <ul className="space-y-1.5 text-xs text-slate-700 dark:text-slate-300">
+                    <ul className="space-y-2 text-xs text-slate-700 dark:text-neutral-300">
                       {structured.benefits.map((b, idx) => (
-                        <li key={idx} className="flex items-start gap-2">
-                          <span className="text-emerald-500 font-bold">•</span>
-                          <span>{b}</span>
+                        <li key={idx} className="flex items-start gap-2.5">
+                          <Check className="h-4 w-4 text-emerald-500 shrink-0 mt-0.5" />
+                          <span className="leading-relaxed">{b}</span>
                         </li>
                       ))}
                     </ul>
@@ -801,7 +810,7 @@ export const JobDetailsModal: React.FC<JobDetailsModalProps> = ({
               </>
             ) : (
               <div className="py-8 text-center">
-                <p className="text-sm text-slate-500 dark:text-slate-400">
+                <p className="text-sm text-slate-500 dark:text-neutral-400">
                   Ta oferta nie posiada jeszcze przetworzonych danych strukturalnych AI.
                 </p>
                 <div className="flex items-center justify-center gap-2 mt-3">
@@ -810,9 +819,9 @@ export const JobDetailsModal: React.FC<JobDetailsModalProps> = ({
                     variant="primary"
                     onClick={() => handleReparse("ai")}
                     isLoading={isReparsing}
-                    className="text-xs"
+                    className="text-xs rounded-xl"
                   >
-                    <Sparkles className="h-3.5 w-3.5 mr-1 text-blue-200" />
+                    <Sparkles className="h-3.5 w-3.5 mr-1" />
                     Parsuj przez AI
                   </Button>
                   <Button
@@ -820,9 +829,9 @@ export const JobDetailsModal: React.FC<JobDetailsModalProps> = ({
                     variant="outline"
                     onClick={() => handleReparse("traditional")}
                     isLoading={isReparsing}
-                    className="text-xs"
+                    className="text-xs rounded-xl"
                   >
-                    <Cpu className="h-3.5 w-3.5 mr-1 text-slate-600 dark:text-slate-400" />
+                    <Cpu className="h-3.5 w-3.5 mr-1 text-slate-600 dark:text-neutral-400" />
                     Auto-parsuj tradycyjne
                   </Button>
                 </div>
@@ -847,10 +856,10 @@ export const JobDetailsModal: React.FC<JobDetailsModalProps> = ({
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <div>
-                <h4 className="font-semibold text-sm text-slate-900 dark:text-slate-100">
+                <h4 className="font-bold text-sm text-slate-900 dark:text-white">
                   Wygenerowane wersje CV
                 </h4>
-                <p className="text-xs text-slate-500 dark:text-slate-400">
+                <p className="text-xs text-slate-500 dark:text-neutral-400">
                   Wersje dokumentu dostosowane do tej konkretnej oferty pracy
                 </p>
               </div>
@@ -858,6 +867,7 @@ export const JobDetailsModal: React.FC<JobDetailsModalProps> = ({
                 size="sm"
                 variant="primary"
                 onClick={() => onGenerateCV(job)}
+                className="rounded-xl"
               >
                 <Sparkles className="h-3.5 w-3.5 mr-1.5" />
                 Generuj nową wersję
@@ -865,48 +875,49 @@ export const JobDetailsModal: React.FC<JobDetailsModalProps> = ({
             </div>
 
             {isLoadingVersions ? (
-              <div className="py-6 text-center text-xs text-slate-400 dark:text-slate-500">
+              <div className="py-6 text-center text-xs text-slate-400 dark:text-neutral-500">
                 Ładowanie wersji...
               </div>
             ) : cvVersions.length === 0 ? (
-              <div className="rounded-lg border border-dashed border-slate-200 dark:border-slate-800 py-8 text-center">
-                <FileText className="mx-auto h-8 w-8 text-slate-300 dark:text-slate-600 mb-2" />
-                <p className="text-sm font-medium text-slate-600 dark:text-slate-300">
+              <div className="rounded-2xl border border-dashed border-slate-200/90 dark:border-neutral-800 py-8 text-center bg-slate-50/40 dark:bg-neutral-900/40">
+                <FileText className="mx-auto h-8 w-8 text-slate-300 dark:text-neutral-600 mb-2" />
+                <p className="text-sm font-semibold text-slate-700 dark:text-neutral-300">
                   Brak wygenerowanych wersji CV dla tej oferty
                 </p>
-                <p className="text-xs text-slate-400 dark:text-slate-500 mt-1 mb-3">
+                <p className="text-xs text-slate-400 dark:text-neutral-500 mt-1 mb-3">
                   Użyj generatora AI, aby dopasować profil lub szablon bazowy
                 </p>
                 <Button
                   size="sm"
                   variant="primary"
                   onClick={() => onGenerateCV(job)}
+                  className="rounded-xl"
                 >
                   <Sparkles className="h-3.5 w-3.5 mr-1.5" />
                   Generuj CV (v1)
                 </Button>
               </div>
             ) : (
-              <div className="divide-y divide-slate-100 dark:divide-slate-800">
+              <div className="space-y-2">
                 {cvVersions.map((v) => (
                   <div
                     key={v.id}
-                    className="py-3 flex items-center justify-between gap-3 hover:bg-slate-50 dark:hover:bg-slate-800 -mx-2 px-2 rounded-lg"
+                    className="p-3.5 flex items-center justify-between gap-3 bg-slate-50/70 border border-slate-200/80 rounded-xl dark:bg-neutral-950/60 dark:border-neutral-800"
                   >
                     <div>
                       <div className="flex items-center gap-2">
-                        <span className="font-semibold text-sm text-slate-900 dark:text-slate-100">
+                        <span className="font-bold text-sm text-slate-900 dark:text-white">
                           Wersja v{v.version_number}
                         </span>
                         {v.is_active && (
                           <Badge variant="success">Aktywna</Badge>
                         )}
-                        <span className="text-xs text-slate-400 dark:text-slate-500">
+                        <span className="text-xs text-slate-400 dark:text-neutral-500">
                           Język: {v.language.toUpperCase()}
                         </span>
                       </div>
                       {v.change_summary && (
-                        <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                        <p className="text-xs text-slate-500 dark:text-neutral-400 mt-1">
                           {v.change_summary}
                         </p>
                       )}
@@ -916,7 +927,7 @@ export const JobDetailsModal: React.FC<JobDetailsModalProps> = ({
                       size="sm"
                       variant="outline"
                       onClick={() => onOpenCVVersion(v, job)}
-                      className="text-xs"
+                      className="text-xs rounded-xl"
                     >
                       Otwórz w edytorze
                     </Button>
@@ -943,6 +954,7 @@ export const JobDetailsModal: React.FC<JobDetailsModalProps> = ({
                 variant="primary"
                 onClick={handleSaveNotes}
                 isLoading={isSavingNotes}
+                className="rounded-xl"
               >
                 Zapisz notatki
               </Button>
@@ -956,7 +968,7 @@ export const JobDetailsModal: React.FC<JobDetailsModalProps> = ({
       </div>
 
       {/* Footer */}
-      <div className="border-t border-slate-200 bg-slate-50 px-6 py-4 flex items-center justify-between shrink-0 dark:border-slate-800 dark:bg-slate-800/80">
+      <div className="border-t border-slate-200/80 bg-slate-50/80 px-6 py-4 flex items-center justify-between shrink-0 dark:border-neutral-800 dark:bg-neutral-900/90">
         <div className="flex items-center gap-2">
           {(job.status === "inbox" || job.status === "failed_parsing") && (
             <>
@@ -965,9 +977,9 @@ export const JobDetailsModal: React.FC<JobDetailsModalProps> = ({
                 variant="outline"
                 onClick={() => handleReparse("ai")}
                 isLoading={isReparsing}
-                className="text-xs"
+                className="text-xs rounded-xl"
               >
-                <Sparkles className="h-3.5 w-3.5 mr-1.5 text-blue-600 dark:text-blue-400" />
+                <Sparkles className="h-3.5 w-3.5 mr-1.5 text-indigo-600 dark:text-indigo-400" />
                 Parsuj przez AI
               </Button>
               <Button
@@ -975,9 +987,9 @@ export const JobDetailsModal: React.FC<JobDetailsModalProps> = ({
                 variant="outline"
                 onClick={() => handleReparse("traditional")}
                 isLoading={isReparsing}
-                className="text-xs"
+                className="text-xs rounded-xl"
               >
-                <Cpu className="h-3.5 w-3.5 mr-1.5 text-slate-600 dark:text-slate-400" />
+                <Cpu className="h-3.5 w-3.5 mr-1.5 text-slate-600 dark:text-neutral-400" />
                 Auto-parsuj tradycyjne
               </Button>
             </>
@@ -988,25 +1000,26 @@ export const JobDetailsModal: React.FC<JobDetailsModalProps> = ({
               size="sm"
               variant="outline"
               onClick={() => setIsFollowUpModalOpen(true)}
-              className="text-xs bg-white text-blue-700 border-blue-200 hover:bg-blue-50 dark:bg-slate-900 dark:border-blue-800 dark:text-blue-400"
+              className="text-xs rounded-xl bg-white text-indigo-700 border-indigo-200 hover:bg-indigo-50 dark:bg-neutral-950 dark:border-indigo-900/60 dark:text-indigo-400 dark:hover:bg-neutral-850"
             >
-              <MessageSquare className="h-3.5 w-3.5 mr-1.5 text-blue-600 dark:text-blue-400" />
+              <MessageSquare className="h-3.5 w-3.5 mr-1.5 text-indigo-600 dark:text-indigo-400" />
               Generuj follow-up
             </Button>
           )}
         </div>
 
         <div className="flex items-center gap-2">
-          <Button size="sm" variant="outline" onClick={onClose}>
+          <Button size="sm" variant="outline" onClick={onClose} className="rounded-xl">
             Zamknij
           </Button>
           <Button
             size="sm"
-            variant="primary"
+            variant="success"
             onClick={() => onGenerateCV(job)}
+            className="rounded-xl font-bold"
           >
             <Sparkles className="h-3.5 w-3.5 mr-1.5" />
-            Generuj CV
+            Generuj dedykowane CV
           </Button>
         </div>
       </div>

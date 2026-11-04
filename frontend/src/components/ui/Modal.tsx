@@ -63,7 +63,7 @@ export const Modal: React.FC<ModalProps> = ({
       {/* Modal Dialog */}
       <div
         className={cn(
-          "relative z-10 w-full overflow-hidden rounded-xl border border-slate-200 bg-white shadow-2xl transition-all flex flex-col max-h-[90vh] dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100",
+          "relative z-10 w-full overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-2xl transition-all flex flex-col max-h-[90vh] dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-100",
           maxWidthStyles[maxWidth],
           className
         )}
@@ -71,21 +71,21 @@ export const Modal: React.FC<ModalProps> = ({
         aria-modal="true"
       >
         {(title || description) && (
-          <div className="flex items-start justify-between border-b border-slate-100 dark:border-slate-800 px-6 py-4">
+          <div className="flex items-start justify-between border-b border-slate-100 dark:border-neutral-800 px-6 py-4.5">
             <div>
               {title && (
-                <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
+                <h3 className="text-lg font-bold text-slate-900 dark:text-white">
                   {title}
                 </h3>
               )}
               {description && (
-                <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{description}</p>
+                <p className="mt-1 text-sm text-slate-500 dark:text-neutral-400">{description}</p>
               )}
             </div>
             <button
               type="button"
               onClick={onClose}
-              className="rounded-lg p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:text-slate-500 dark:hover:bg-slate-800 dark:hover:text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="rounded-xl p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:text-neutral-500 dark:hover:bg-neutral-800 dark:hover:text-neutral-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 cursor-pointer transition-colors"
               aria-label="Zamknij"
             >
               <X className="h-5 w-5" />

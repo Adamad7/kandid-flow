@@ -149,7 +149,7 @@ export const App: React.FC = () => {
   // If currently in Split-View CV Editor:
   if (editingCVVersion && editingCVJob) {
     return (
-      <div className="h-screen bg-slate-50 dark:bg-slate-950 flex flex-col transition-colors overflow-hidden">
+      <div className="h-screen bg-slate-50 dark:bg-neutral-950 flex flex-col transition-colors overflow-hidden">
         <CVEditor
           initialVersion={editingCVVersion}
           job={editingCVJob}
@@ -164,28 +164,28 @@ export const App: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex flex-col font-sans text-slate-900 dark:text-slate-100 transition-colors">
+    <div className="min-h-screen bg-slate-50 dark:bg-neutral-950 flex flex-col font-sans text-slate-900 dark:text-neutral-100 transition-colors">
       {/* Top Application Header */}
-      <header className="sticky top-0 z-40 border-b border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md px-6 py-3.5 shadow-xs">
+      <header className="sticky top-0 z-40 border-b border-slate-200/80 dark:border-neutral-800 bg-white/95 dark:bg-neutral-900/95 backdrop-blur-md px-6 py-3.5 shadow-none">
         <div className="flex items-center justify-between max-w-[1800px] mx-auto">
           {/* Logo & Brand */}
           <div className="flex items-center gap-3">
-            <div className="h-9 w-9 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-white shadow-sm shadow-blue-500/20">
+            <div className="h-9 w-9 rounded-xl bg-gradient-to-tr from-indigo-600 to-violet-600 flex items-center justify-center text-white shadow-none">
               <Briefcase className="h-5 w-5" />
             </div>
             <div>
               <div className="flex items-center gap-2">
                 <span className="text-lg font-black tracking-tight text-slate-900 dark:text-white">
-                  Kandid<span className="text-blue-600 dark:text-blue-400">Flow</span>
+                  Kandid<span className="text-indigo-600 dark:text-indigo-400">Flow</span>
                 </span>
-                <span className="rounded-full bg-blue-50 dark:bg-blue-950/60 px-2 py-0.5 text-[10px] font-bold text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
+                <span className="rounded-full bg-indigo-50 dark:bg-indigo-950/60 px-2.5 py-0.5 text-[10px] font-bold text-indigo-700 dark:text-indigo-300 border border-indigo-200/70 dark:border-indigo-800/70">
                   v1.1
                 </span>
 
                 {/* Real-time SSE Status Badge */}
                 {realtimeStatus === "connected" && (
                   <span
-                    className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950/50 dark:text-emerald-300 dark:border-emerald-800"
+                    className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700 border-2 border-emerald-400 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-600 shadow-none"
                     title="Połączono ze strumieniem zdarzeń w czasie rzeczywistym"
                   >
                     <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
@@ -194,7 +194,7 @@ export const App: React.FC = () => {
                 )}
                 {realtimeStatus === "connecting" && (
                   <span
-                    className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-50 text-amber-700 border border-amber-200 dark:bg-amber-950/50 dark:text-amber-300 dark:border-amber-800"
+                    className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-amber-50 text-amber-700 border-2 border-amber-400 dark:bg-amber-950/60 dark:text-amber-300 dark:border-amber-600 shadow-none"
                     title="Nawiązywanie połączenia na żywo..."
                   >
                     <span className="h-2 w-2 rounded-full bg-amber-500 animate-pulse" />
@@ -203,15 +203,15 @@ export const App: React.FC = () => {
                 )}
                 {realtimeStatus === "disconnected" && (
                   <span
-                    className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-slate-100 text-slate-600 border border-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700"
+                    className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-slate-100 text-slate-600 border-2 border-slate-300 dark:bg-neutral-800 dark:text-neutral-400 dark:border-neutral-700 shadow-none"
                     title="Brak połączenia na żywo (aktywne odpytywanie rezerwowe)"
                   >
-                    <span className="h-2 w-2 rounded-full bg-slate-400 dark:bg-slate-500" />
+                    <span className="h-2 w-2 rounded-full bg-slate-400 dark:bg-neutral-500" />
                     Offline
                   </span>
                 )}
               </div>
-              <p className="text-[11px] text-slate-400 dark:text-slate-500 font-medium hidden sm:block">
+              <p className="text-[11px] text-slate-500 dark:text-neutral-400 font-medium hidden sm:block">
                 Automatyzacja rekrutacji IT & Wektorowy generator CV
               </p>
             </div>
@@ -224,10 +224,10 @@ export const App: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setActiveTab("list")}
-                className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold transition-colors ${
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-colors cursor-pointer ${
                   activeTab === "list"
-                    ? "bg-slate-900 text-white shadow-xs dark:bg-slate-100 dark:text-slate-900"
-                    : "text-slate-600 hover:text-slate-900 hover:bg-slate-100 dark:text-slate-300 dark:hover:text-white dark:hover:bg-slate-800"
+                    ? "bg-indigo-600 text-white shadow-none"
+                    : "text-slate-600 hover:text-slate-900 hover:bg-slate-100 dark:text-neutral-400 dark:hover:text-white dark:hover:bg-neutral-800"
                 }`}
               >
                 <List className="h-4 w-4" />
@@ -237,10 +237,10 @@ export const App: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setActiveTab("kanban")}
-                className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold transition-colors ${
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-colors cursor-pointer ${
                   activeTab === "kanban"
-                    ? "bg-slate-900 text-white shadow-xs dark:bg-slate-100 dark:text-slate-900"
-                    : "text-slate-600 hover:text-slate-900 hover:bg-slate-100 dark:text-slate-300 dark:hover:text-white dark:hover:bg-slate-800"
+                    ? "bg-indigo-600 text-white shadow-none"
+                    : "text-slate-600 hover:text-slate-900 hover:bg-slate-100 dark:text-neutral-400 dark:hover:text-white dark:hover:bg-neutral-800"
                 }`}
               >
                 <LayoutDashboard className="h-4 w-4" />
@@ -250,10 +250,10 @@ export const App: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setActiveTab("archive")}
-                className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold transition-colors ${
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-colors cursor-pointer ${
                   activeTab === "archive"
-                    ? "bg-slate-900 text-white shadow-xs dark:bg-slate-100 dark:text-slate-900"
-                    : "text-slate-600 hover:text-slate-900 hover:bg-slate-100 dark:text-slate-300 dark:hover:text-white dark:hover:bg-slate-800"
+                    ? "bg-indigo-600 text-white shadow-none"
+                    : "text-slate-600 hover:text-slate-900 hover:bg-slate-100 dark:text-neutral-400 dark:hover:text-white dark:hover:bg-neutral-800"
                 }`}
               >
                 <Archive className="h-4 w-4" />
@@ -263,10 +263,10 @@ export const App: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setActiveTab("analytics")}
-                className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold transition-colors ${
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-colors cursor-pointer ${
                   activeTab === "analytics"
-                    ? "bg-slate-900 text-white shadow-xs dark:bg-slate-100 dark:text-slate-900"
-                    : "text-slate-600 hover:text-slate-900 hover:bg-slate-100 dark:text-slate-300 dark:hover:text-white dark:hover:bg-slate-800"
+                    ? "bg-indigo-600 text-white shadow-none"
+                    : "text-slate-600 hover:text-slate-900 hover:bg-slate-100 dark:text-neutral-400 dark:hover:text-white dark:hover:bg-neutral-800"
                 }`}
               >
                 <BarChart3 className="h-4 w-4" />
@@ -276,10 +276,10 @@ export const App: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setActiveTab("profile")}
-                className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold transition-colors ${
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-colors cursor-pointer ${
                   activeTab === "profile"
-                    ? "bg-slate-900 text-white shadow-xs dark:bg-slate-100 dark:text-slate-900"
-                    : "text-slate-600 hover:text-slate-900 hover:bg-slate-100 dark:text-slate-300 dark:hover:text-white dark:hover:bg-slate-800"
+                    ? "bg-indigo-600 text-white shadow-none"
+                    : "text-slate-600 hover:text-slate-900 hover:bg-slate-100 dark:text-neutral-400 dark:hover:text-white dark:hover:bg-neutral-800"
                 }`}
               >
                 <User className="h-4 w-4" />
@@ -289,10 +289,10 @@ export const App: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setActiveTab("presets")}
-                className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold transition-colors ${
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-colors cursor-pointer ${
                   activeTab === "presets"
-                    ? "bg-slate-900 text-white shadow-xs dark:bg-slate-100 dark:text-slate-900"
-                    : "text-slate-600 hover:text-slate-900 hover:bg-slate-100 dark:text-slate-300 dark:hover:text-white dark:hover:bg-slate-800"
+                    ? "bg-indigo-600 text-white shadow-none"
+                    : "text-slate-600 hover:text-slate-900 hover:bg-slate-100 dark:text-neutral-400 dark:hover:text-white dark:hover:bg-neutral-800"
                 }`}
               >
                 <Layers className="h-4 w-4" />
@@ -302,10 +302,10 @@ export const App: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setActiveTab("settings")}
-                className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold transition-colors ${
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-colors cursor-pointer ${
                   activeTab === "settings"
-                    ? "bg-slate-900 text-white shadow-xs dark:bg-slate-100 dark:text-slate-900"
-                    : "text-slate-600 hover:text-slate-900 hover:bg-slate-100 dark:text-slate-300 dark:hover:text-white dark:hover:bg-slate-800"
+                    ? "bg-indigo-600 text-white shadow-none"
+                    : "text-slate-600 hover:text-slate-900 hover:bg-slate-100 dark:text-neutral-400 dark:hover:text-white dark:hover:bg-neutral-800"
                 }`}
               >
                 <Settings className="h-4 w-4" />
@@ -315,10 +315,10 @@ export const App: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setActiveTab("test-menu")}
-                className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold transition-colors ${
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-colors cursor-pointer ${
                   activeTab === "test-menu"
-                    ? "bg-blue-600 text-white shadow-xs"
-                    : "text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/40"
+                    ? "bg-indigo-600 text-white shadow-none"
+                    : "text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-neutral-800"
                 }`}
                 title="Sandbox testowania stylów UI (/test-menu)"
               >
@@ -328,7 +328,7 @@ export const App: React.FC = () => {
             </nav>
 
             {/* Dark Mode Toggle on the right side */}
-            <div className="pl-2 border-l border-slate-200 dark:border-slate-800 flex items-center shrink-0">
+            <div className="pl-2 border-l border-slate-200/80 dark:border-neutral-800 flex items-center shrink-0">
               <ThemeToggle />
             </div>
           </div>

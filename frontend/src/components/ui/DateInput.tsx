@@ -56,7 +56,7 @@ export const DateInput: React.FC<DateInputProps> = ({
   return (
     <div className="w-full space-y-1.5">
       {label && (
-        <label className="block text-xs font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+        <label className="block text-xs font-semibold uppercase tracking-wider text-slate-700 dark:text-neutral-300">
           {label}
         </label>
       )}
@@ -67,15 +67,15 @@ export const DateInput: React.FC<DateInputProps> = ({
           onChange={(e) => onChange(e.target.value)}
           placeholder={placeholder}
           className={cn(
-            "flex h-9 w-full rounded-md border border-slate-300 bg-white pl-3 pr-9 py-1 text-sm text-slate-900 shadow-sm transition-colors placeholder:text-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:border-blue-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:placeholder:text-slate-500",
-            error && "border-rose-500 focus-visible:ring-rose-500 dark:border-rose-500",
+            "flex h-9.5 w-full rounded-xl border border-slate-200 dark:border-neutral-700 bg-slate-50/60 dark:bg-neutral-950 pl-3.5 pr-9 py-2 text-sm text-slate-900 dark:text-white shadow-none transition-all placeholder:text-slate-400 dark:placeholder:text-neutral-500 focus:bg-white dark:focus:bg-neutral-900 focus:border-indigo-500 dark:focus:border-indigo-400 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none",
+            error && "border-rose-500 focus:border-rose-500 focus:ring-rose-500/20 dark:border-rose-500",
             className
           )}
         />
         <button
           type="button"
           onClick={openCalendar}
-          className="absolute right-2 p-1 text-slate-400 hover:text-slate-700 dark:text-slate-500 dark:hover:text-slate-300 focus:outline-none transition-colors"
+          className="absolute right-2.5 p-1 text-slate-400 hover:text-indigo-600 dark:text-neutral-500 dark:hover:text-indigo-400 focus:outline-none transition-colors cursor-pointer"
           title="Wybierz z kalendarza"
         >
           <Calendar className="h-4 w-4" />
@@ -92,7 +92,7 @@ export const DateInput: React.FC<DateInputProps> = ({
         />
       </div>
       {helperText && !error && (
-        <p className="text-xs text-slate-500 dark:text-slate-400">{helperText}</p>
+        <p className="text-xs text-slate-500 dark:text-neutral-400">{helperText}</p>
       )}
       {error && <p className="text-xs text-rose-600 dark:text-rose-400 font-medium">{error}</p>}
     </div>

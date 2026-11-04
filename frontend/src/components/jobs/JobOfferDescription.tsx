@@ -11,7 +11,6 @@ import {
 import type { JobOfferRead } from "../../types";
 import { PORTAL_LABELS } from "../../lib/constants";
 import { normalizeJobOfferUrl } from "../../lib/formatters";
-import { Badge } from "../ui/Badge";
 import { Button } from "../ui/Button";
 
 interface JobOfferDescriptionProps {
@@ -488,12 +487,12 @@ export const JobOfferDescription: React.FC<JobOfferDescriptionProps> = ({
 
   if (!hasContent) {
     return (
-      <div className="py-12 px-6 rounded-xl border border-dashed border-slate-200 dark:border-slate-800 text-center bg-slate-50/50 dark:bg-slate-900/40">
-        <FileText className="mx-auto h-10 w-10 text-slate-300 dark:text-slate-600 mb-3" />
-        <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+      <div className="py-12 px-6 rounded-2xl border border-dashed border-slate-200/90 dark:border-neutral-800 text-center bg-slate-50/50 dark:bg-neutral-900/40">
+        <FileText className="mx-auto h-10 w-10 text-slate-300 dark:text-neutral-600 mb-3" />
+        <h4 className="text-sm font-bold text-slate-800 dark:text-white">
           Brak oryginalnej treści ogłoszenia
         </h4>
-        <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-sm mx-auto">
+        <p className="text-xs text-slate-500 dark:text-neutral-400 mt-1 max-w-sm mx-auto">
           Dla tej oferty nie zarejestrowano jeszcze pełnego tekstu ogłoszenia z
           portalu źródłowego.
         </p>
@@ -503,7 +502,7 @@ export const JobOfferDescription: React.FC<JobOfferDescriptionProps> = ({
               href={normalizeJobOfferUrl(job.source_url)}
               target="_blank"
               rel="noreferrer"
-              className="inline-flex items-center gap-1.5 text-xs font-medium text-blue-600 dark:text-blue-400 hover:underline"
+              className="inline-flex items-center gap-1.5 text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 hover:underline"
             >
               Przejdź do oferty na stronie źródłowej
               <ExternalLink className="h-3.5 w-3.5" />
@@ -517,19 +516,19 @@ export const JobOfferDescription: React.FC<JobOfferDescriptionProps> = ({
   return (
     <div className="space-y-4">
       {/* Top Action Bar / Info Strip */}
-      <div className="flex flex-wrap items-center justify-between gap-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 px-4 py-2.5 rounded-xl shadow-xs">
+      <div className="flex flex-wrap items-center justify-between gap-3 bg-white dark:bg-neutral-900 border border-slate-200/80 dark:border-neutral-800 px-4 py-2.5 rounded-2xl shadow-none">
         <div className="flex items-center gap-2">
-          <Badge variant="secondary" className="text-xs">
+          <span className="rounded-full text-[10px] py-0.5 px-2.5 font-bold uppercase tracking-wider bg-slate-100 dark:bg-neutral-800 text-slate-600 dark:text-neutral-300 border border-slate-200/60 dark:border-neutral-700/60">
             {PORTAL_LABELS[job.source_portal] || job.source_portal}
-          </Badge>
+          </span>
           {wordCount > 0 && (
-            <span className="text-xs text-slate-500 dark:text-slate-400">
+            <span className="text-xs text-slate-500 dark:text-neutral-400 font-mono">
               {wordCount.toLocaleString("pl-PL")} słów
             </span>
           )}
           {job.company_name && (
-            <span className="hidden sm:inline-flex items-center gap-1 text-xs text-slate-600 dark:text-slate-400 font-medium">
-              <Building className="h-3.5 w-3.5 text-slate-400" />
+            <span className="hidden sm:inline-flex items-center gap-1 text-xs text-slate-700 dark:text-neutral-300 font-semibold">
+              <Building className="h-3.5 w-3.5 text-indigo-500" />
               {job.company_name}
             </span>
           )}
@@ -537,14 +536,14 @@ export const JobOfferDescription: React.FC<JobOfferDescriptionProps> = ({
 
         <div className="flex items-center gap-2">
           {/* Formatted vs Raw View Switcher */}
-          <div className="inline-flex rounded-lg border border-slate-200 dark:border-slate-700 p-0.5 bg-slate-100 dark:bg-slate-800">
+          <div className="inline-flex rounded-xl border border-slate-200 dark:border-neutral-700 p-0.5 bg-slate-100 dark:bg-neutral-950">
             <button
               type="button"
               onClick={() => setViewMode("formatted")}
-              className={`flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-md transition-all ${
+              className={`flex items-center gap-1.5 px-3 py-1 text-xs font-semibold rounded-lg transition-all ${
                 viewMode === "formatted"
-                  ? "bg-white text-slate-900 shadow-xs dark:bg-slate-900 dark:text-slate-100"
-                  : "text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-200"
+                  ? "bg-white text-slate-900 shadow-none dark:bg-neutral-850 dark:text-white"
+                  : "text-slate-600 hover:text-slate-900 dark:text-neutral-400 dark:hover:text-white"
               }`}
               title="Widok z czytelnym formatowaniem tekstu"
             >
@@ -554,10 +553,10 @@ export const JobOfferDescription: React.FC<JobOfferDescriptionProps> = ({
             <button
               type="button"
               onClick={() => setViewMode("raw")}
-              className={`flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-md transition-all ${
+              className={`flex items-center gap-1.5 px-3 py-1 text-xs font-semibold rounded-lg transition-all ${
                 viewMode === "raw"
-                  ? "bg-white text-slate-900 shadow-xs dark:bg-slate-900 dark:text-slate-100"
-                  : "text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-200"
+                  ? "bg-white text-slate-900 shadow-none dark:bg-neutral-850 dark:text-white"
+                  : "text-slate-600 hover:text-slate-900 dark:text-neutral-400 dark:hover:text-white"
               }`}
               title="Widok surowego tekstu"
             >
@@ -571,12 +570,12 @@ export const JobOfferDescription: React.FC<JobOfferDescriptionProps> = ({
             size="sm"
             variant="outline"
             onClick={handleCopy}
-            className="text-xs h-7 px-2.5"
+            className="text-xs h-7.5 px-2.5 rounded-xl border-slate-200 dark:border-neutral-700"
             title="Kopiuj całą treść ogłoszenia do schowka"
           >
             {copied ? (
               <>
-                <Check className="h-3.5 w-3.5 mr-1 text-emerald-600 dark:text-emerald-400" />
+                <Check className="h-3.5 w-3.5 mr-1 text-emerald-500" />
                 Skopiowano!
               </>
             ) : (
@@ -591,22 +590,22 @@ export const JobOfferDescription: React.FC<JobOfferDescriptionProps> = ({
 
       {/* Main Content View */}
       {viewMode === "formatted" ? (
-        <div className="rounded-xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900/70 p-6 sm:p-8 shadow-xs">
+        <div className="rounded-2xl border border-slate-200/80 dark:border-neutral-800 bg-white dark:bg-neutral-900 p-6 sm:p-8 shadow-none">
           {parsedHtmlContent ? (
             // Render rich sanitized HTML structure
-            <div className="space-y-1 text-slate-800 dark:text-slate-200">
+            <div className="space-y-1 text-slate-800 dark:text-neutral-200">
               {parsedHtmlContent}
             </div>
           ) : plainTextBlocks.length > 0 ? (
             // Render smart structured plain text blocks
-            <div className="space-y-4 text-slate-800 dark:text-slate-200">
+            <div className="space-y-4 text-slate-800 dark:text-neutral-200">
               {plainTextBlocks.map((block, idx) => {
                 if (block.type === "heading") {
                   if (block.headingLevel === 2) {
                     return (
                       <h3
                         key={idx}
-                        className="text-base sm:text-lg font-bold text-slate-900 dark:text-slate-100 mt-5 first:mt-0 pb-1 border-b border-slate-100 dark:border-slate-800/60"
+                        className="text-base sm:text-lg font-bold text-slate-900 dark:text-white mt-5 first:mt-0 pb-1.5 border-b border-slate-200/80 dark:border-neutral-800"
                       >
                         {block.content}
                       </h3>
@@ -615,9 +614,9 @@ export const JobOfferDescription: React.FC<JobOfferDescriptionProps> = ({
                   return (
                     <h4
                       key={idx}
-                      className="text-sm font-semibold text-slate-900 dark:text-slate-100 mt-4 first:mt-0 flex items-center gap-2"
+                      className="text-sm font-semibold text-slate-900 dark:text-white mt-4 first:mt-0 flex items-center gap-2"
                     >
-                      <span className="h-1.5 w-1.5 rounded-full bg-blue-500 shrink-0" />
+                      <span className="h-1.5 w-1.5 rounded-full bg-indigo-500 shrink-0" />
                       {block.content}
                     </h4>
                   );
@@ -629,9 +628,9 @@ export const JobOfferDescription: React.FC<JobOfferDescriptionProps> = ({
                       {block.items.map((item, bIdx) => (
                         <li
                           key={bIdx}
-                          className="flex items-start gap-2.5 text-sm text-slate-700 dark:text-slate-300 leading-relaxed"
+                          className="flex items-start gap-2.5 text-sm text-slate-700 dark:text-neutral-300 leading-relaxed"
                         >
-                          <span className="mt-2 h-1.5 w-1.5 rounded-full bg-blue-500 dark:bg-blue-400 shrink-0" />
+                          <span className="mt-2 h-1.5 w-1.5 rounded-full bg-indigo-500 shrink-0" />
                           <div className="flex-1 min-w-0">
                             {linkifyText(item)}
                           </div>
@@ -645,7 +644,7 @@ export const JobOfferDescription: React.FC<JobOfferDescriptionProps> = ({
                   return (
                     <p
                       key={idx}
-                      className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed"
+                      className="text-sm text-slate-700 dark:text-neutral-300 leading-relaxed"
                     >
                       {linkifyText(block.content)}
                     </p>
@@ -656,7 +655,7 @@ export const JobOfferDescription: React.FC<JobOfferDescriptionProps> = ({
               })}
             </div>
           ) : (
-            <p className="text-sm text-slate-500 dark:text-slate-400 italic">
+            <p className="text-sm text-slate-500 dark:text-neutral-400 italic">
               Brak sformatowanej treści opisu.
             </p>
           )}
@@ -664,7 +663,7 @@ export const JobOfferDescription: React.FC<JobOfferDescriptionProps> = ({
       ) : (
         // Raw Text View
         <div className="relative">
-          <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-950 p-5 text-xs text-slate-200 font-mono whitespace-pre-wrap leading-relaxed max-h-[650px] overflow-y-auto">
+          <div className="rounded-2xl border border-slate-200/80 dark:border-neutral-800 bg-neutral-950 p-5 text-xs text-neutral-200 font-mono whitespace-pre-wrap leading-relaxed max-h-[650px] overflow-y-auto">
             {descriptionText || descriptionHtml || "Brak treści"}
           </div>
         </div>

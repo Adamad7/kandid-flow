@@ -7,7 +7,7 @@ export const Card: React.FC<CardProps> = ({ className, children, ...props }) => 
   return (
     <div
       className={cn(
-        "rounded-xl border border-slate-200/80 bg-white p-5 shadow-sm transition-shadow hover:shadow dark:border-slate-800 dark:bg-slate-900/90 dark:text-slate-100",
+        "rounded-2xl border border-slate-200/80 bg-white p-5 sm:p-6 shadow-none transition-all dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-100",
         className
       )}
       {...props}

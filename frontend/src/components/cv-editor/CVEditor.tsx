@@ -646,27 +646,27 @@ export const CVEditor: React.FC<CVEditorProps> = ({
   };
 
   return (
-    <div className="flex flex-col h-full w-full bg-slate-50 dark:bg-slate-950 overflow-hidden">
+    <div className="flex flex-col h-full w-full bg-slate-50 dark:bg-neutral-950 overflow-hidden">
       {/* Top Navbar */}
-      <header className="border-b border-slate-200 bg-white px-6 py-3 shrink-0 flex items-center justify-between gap-4 shadow-xs dark:border-slate-800 dark:bg-slate-900">
+      <header className="border-b border-slate-200/80 bg-white/95 px-6 py-3 shrink-0 flex items-center justify-between gap-4 shadow-none dark:border-neutral-800 dark:bg-neutral-900/95 backdrop-blur-md">
         <div className="flex items-center gap-3 truncate">
           <Button
             size="sm"
             variant="ghost"
             onClick={onBack}
-            className="text-xs h-8 text-slate-600 dark:text-slate-400 dark:hover:text-white"
+            className="text-xs h-8 text-slate-600 dark:text-neutral-400 dark:hover:text-white rounded-xl"
           >
             <ArrowLeft className="h-4 w-4 mr-1.5" />
             Wróć do ofert
           </Button>
 
-          <div className="h-4 w-px bg-slate-200 dark:bg-slate-800" />
+          <div className="h-4 w-px bg-slate-200 dark:border-neutral-800" />
 
           <div className="truncate">
-            <h2 className="font-bold text-slate-900 dark:text-slate-100 text-sm truncate flex items-center gap-2">
+            <h2 className="font-bold text-slate-900 dark:text-white text-sm truncate flex items-center gap-2">
               <span>{job.role_title || "CV bez tytułu"}</span>
-              <span className="text-slate-400 dark:text-slate-500 font-normal">w</span>
-              <span className="text-slate-700 dark:text-slate-300 font-medium">{job.company_name}</span>
+              <span className="text-slate-400 dark:text-neutral-500 font-normal">w</span>
+              <span className="text-slate-700 dark:text-neutral-300 font-semibold">{job.company_name}</span>
             </h2>
           </div>
         </div>
@@ -677,7 +677,7 @@ export const CVEditor: React.FC<CVEditorProps> = ({
           <div className="flex items-center gap-1.5">
             <label
               htmlFor="cv-version-select"
-              className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase whitespace-nowrap"
+              className="text-[11px] font-semibold text-slate-500 dark:text-neutral-400 uppercase whitespace-nowrap"
             >
               Wersja:
             </label>
@@ -690,7 +690,7 @@ export const CVEditor: React.FC<CVEditorProps> = ({
                   handleSwitchVersion(selected);
                 }
               }}
-              className="h-8 rounded-lg border border-slate-300 bg-white px-2.5 py-1 text-xs font-semibold text-slate-800 shadow-xs transition-colors focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
+              className="h-8 rounded-xl border border-slate-200 bg-white px-2.5 py-1 text-xs font-semibold text-slate-800 shadow-none transition-colors focus:border-indigo-500 focus:outline-none cursor-pointer dark:border-neutral-700 dark:bg-neutral-950 dark:text-neutral-200"
             >
               {allVersions.map((v) => (
                 <option key={v.id} value={v.id}>
@@ -704,14 +704,14 @@ export const CVEditor: React.FC<CVEditorProps> = ({
           <ThemeToggle />
 
           {/* Mobile Edit/Preview Tabs (visible < lg) */}
-          <div className="flex lg:hidden bg-slate-100 dark:bg-slate-800 rounded-lg p-0.5 border border-slate-200 dark:border-slate-700">
+          <div className="flex lg:hidden bg-slate-100 dark:bg-neutral-950 rounded-xl p-0.5 border border-slate-200 dark:border-neutral-800">
             <button
               type="button"
               onClick={() => setMobileTab("edit")}
-              className={`px-3 py-1 text-xs font-medium rounded-md ${
+              className={`px-3 py-1 text-xs font-semibold rounded-lg ${
                 mobileTab === "edit"
-                  ? "bg-white text-slate-900 shadow-xs dark:bg-slate-900 dark:text-white"
-                  : "text-slate-600 dark:text-slate-400"
+                  ? "bg-white text-slate-900 shadow-none dark:bg-neutral-850 dark:text-white"
+                  : "text-slate-600 dark:text-neutral-400"
               }`}
             >
               Edycja
@@ -719,10 +719,10 @@ export const CVEditor: React.FC<CVEditorProps> = ({
             <button
               type="button"
               onClick={() => setMobileTab("preview")}
-              className={`px-3 py-1 text-xs font-medium rounded-md ${
+              className={`px-3 py-1 text-xs font-semibold rounded-lg ${
                 mobileTab === "preview"
-                  ? "bg-white text-slate-900 shadow-xs dark:bg-slate-900 dark:text-white"
-                  : "text-slate-600 dark:text-slate-400"
+                  ? "bg-white text-slate-900 shadow-none dark:bg-neutral-850 dark:text-white"
+                  : "text-slate-600 dark:text-neutral-400"
               }`}
             >
               Podgląd
@@ -731,7 +731,7 @@ export const CVEditor: React.FC<CVEditorProps> = ({
 
           {/* Save Status / Button */}
           {saveSuccess && (
-            <span className="hidden sm:flex items-center gap-1 text-xs font-medium text-emerald-600 bg-emerald-50 px-2 py-1 rounded dark:bg-emerald-950/50 dark:text-emerald-300 dark:border dark:border-emerald-800">
+            <span className="hidden sm:flex items-center gap-1.5 text-xs font-bold text-emerald-700 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200/60 dark:bg-emerald-950/50 dark:text-emerald-300 dark:border-emerald-800/60">
               <Check className="h-3.5 w-3.5" />
               Zapisano
             </span>
@@ -739,10 +739,10 @@ export const CVEditor: React.FC<CVEditorProps> = ({
 
           <Button
             size="sm"
-            variant="default"
+            variant="primary"
             onClick={handleSaveVersion}
             isLoading={isSaving}
-            className="text-xs h-8"
+            className="text-xs h-8 rounded-xl font-semibold"
           >
             <Save className="h-3.5 w-3.5 mr-1" />
             Zapisz zmiany
@@ -750,10 +750,10 @@ export const CVEditor: React.FC<CVEditorProps> = ({
 
           <Button
             size="sm"
-            variant="outline"
+            variant="success"
             onClick={handleExportPdf}
             isLoading={isExportingPdf}
-            className="text-xs h-8"
+            className="text-xs h-8 rounded-xl font-bold"
           >
             <Download className="h-3.5 w-3.5 mr-1" />
             Pobierz PDF
@@ -781,14 +781,14 @@ export const CVEditor: React.FC<CVEditorProps> = ({
           } ${isDragging ? "pointer-events-none select-none" : ""}`}
         >
           {/* Segmented Mode Switcher: Data vs Style */}
-          <div className="flex items-center bg-slate-200/80 dark:bg-slate-800/80 p-1 rounded-xl border border-slate-200 dark:border-slate-700/60 shadow-2xs">
+          <div className="flex items-center bg-slate-100 dark:bg-neutral-950 p-1 rounded-xl border border-slate-200 dark:border-neutral-800 shadow-none">
             <button
               type="button"
               onClick={() => setLeftPanelMode("data")}
               className={`flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
                 leftPanelMode === "data"
-                  ? "bg-white dark:bg-slate-900 text-blue-600 dark:text-blue-400 shadow-xs"
-                  : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200"
+                  ? "bg-white dark:bg-neutral-850 text-indigo-600 dark:text-indigo-400 shadow-none font-bold"
+                  : "text-slate-600 dark:text-neutral-400 hover:text-slate-900 dark:hover:text-white"
               }`}
             >
               <FileText className="h-4 w-4" />
@@ -799,8 +799,8 @@ export const CVEditor: React.FC<CVEditorProps> = ({
               onClick={() => setLeftPanelMode("style")}
               className={`flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
                 leftPanelMode === "style"
-                  ? "bg-white dark:bg-slate-900 text-blue-600 dark:text-blue-400 shadow-xs"
-                  : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200"
+                  ? "bg-white dark:bg-neutral-850 text-indigo-600 dark:text-indigo-400 shadow-none font-bold"
+                  : "text-slate-600 dark:text-neutral-400 hover:text-slate-900 dark:hover:text-white"
               }`}
             >
               <Palette className="h-4 w-4" />
@@ -836,22 +836,22 @@ export const CVEditor: React.FC<CVEditorProps> = ({
 
               {/* Sections Header with Collapse/Expand Controls */}
               <div className="flex items-center justify-between px-1 pt-1">
-                <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-neutral-400">
                   Sekcje CV ({layoutSchema.sections.length})
                 </span>
                 <div className="flex items-center gap-2">
                   <button
                     type="button"
                     onClick={expandAllSections}
-                    className="text-xs font-medium text-blue-600 dark:text-blue-400 hover:underline cursor-pointer"
+                    className="text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:underline cursor-pointer"
                   >
                     Rozwiń wszystkie
                   </button>
-                  <span className="text-slate-300 dark:text-slate-700">•</span>
+                  <span className="text-slate-300 dark:text-neutral-700">•</span>
                   <button
                     type="button"
                     onClick={collapseAllSections}
-                    className="text-xs font-medium text-slate-600 dark:text-slate-400 hover:underline cursor-pointer"
+                    className="text-xs font-semibold text-slate-500 dark:text-neutral-400 hover:underline cursor-pointer"
                   >
                     Zwiń wszystkie
                   </button>
@@ -915,17 +915,17 @@ export const CVEditor: React.FC<CVEditorProps> = ({
 
                     {canShowAddPageBreak && (
                       <div className="flex items-center justify-center py-0.5 group">
-                        <div className="h-px bg-slate-200 dark:bg-slate-800 flex-1 transition-colors group-hover:bg-blue-300 dark:group-hover:bg-blue-700" />
+                        <div className="h-px bg-slate-200 dark:bg-neutral-800 flex-1 transition-colors group-hover:bg-indigo-300 dark:group-hover:bg-indigo-800" />
                         <button
                           type="button"
                           onClick={() => addPageBreakAt(index + 1)}
-                          className="mx-3 inline-flex items-center gap-1.5 px-3 py-1 text-[11px] font-medium text-slate-500 hover:text-blue-600 dark:text-slate-400 dark:hover:text-blue-400 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-blue-300 dark:hover:border-blue-700 rounded-full shadow-2xs transition-all hover:scale-105 cursor-pointer"
+                          className="mx-3 inline-flex items-center gap-1.5 px-3 py-1 text-[11px] font-semibold text-slate-500 hover:text-indigo-600 dark:text-neutral-400 dark:hover:text-indigo-400 bg-white dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 hover:border-indigo-400 dark:hover:border-indigo-600 rounded-full shadow-none transition-all hover:scale-105 cursor-pointer"
                           title="Wstaw podział na nową stronę w tym miejscu"
                         >
                           <Plus className="h-3 w-3" />
                           <span>Dodaj separator stron</span>
                         </button>
-                        <div className="h-px bg-slate-200 dark:bg-slate-800 flex-1 transition-colors group-hover:bg-blue-300 dark:group-hover:bg-blue-700" />
+                        <div className="h-px bg-slate-200 dark:bg-neutral-800 flex-1 transition-colors group-hover:bg-indigo-300 dark:group-hover:bg-indigo-800" />
                       </div>
                     )}
                   </React.Fragment>
@@ -938,7 +938,7 @@ export const CVEditor: React.FC<CVEditorProps> = ({
                   type="button"
                   variant="outline"
                   onClick={addCustomSection}
-                  className="border-dashed border-slate-300 dark:border-slate-700 hover:border-blue-500 dark:hover:border-blue-500 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50/50 dark:hover:bg-blue-950/20 py-3 text-xs w-full max-w-md"
+                  className="rounded-2xl border-dashed border-2 border-slate-300 dark:border-neutral-700 hover:border-indigo-500 dark:hover:border-indigo-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50/50 dark:hover:bg-indigo-950/20 py-3.5 text-xs font-semibold w-full max-w-md shadow-none"
                 >
                   <Plus className="h-3.5 w-3.5 mr-1.5" />
                   Dodaj własną sekcję do CV
@@ -955,9 +955,9 @@ export const CVEditor: React.FC<CVEditorProps> = ({
           aria-valuenow={splitRatio}
           aria-label="Zmień szerokość paneli"
           onMouseDown={handleSplitterMouseDown}
-          className={`hidden lg:flex w-2.5 shrink-0 items-center justify-center cursor-col-resize hover:bg-blue-500/15 active:bg-blue-500/25 transition-colors z-20 group select-none border-x border-slate-200/60 dark:border-slate-800/60 bg-slate-100/60 dark:bg-slate-900/40 ${
+          className={`hidden lg:flex w-2.5 shrink-0 items-center justify-center cursor-col-resize hover:bg-indigo-500/15 active:bg-indigo-500/25 transition-colors z-20 group select-none border-x border-slate-200/60 dark:border-neutral-800 bg-slate-100/60 dark:bg-neutral-900/60 ${
             isDragging
-              ? "bg-blue-500/20 dark:bg-blue-900/30 ring-1 ring-blue-500/30"
+              ? "bg-indigo-500/20 dark:bg-indigo-900/40 ring-1 ring-indigo-500/30"
               : ""
           }`}
           title="Przeciągnij, aby zmienić szerokość paneli"
@@ -965,8 +965,8 @@ export const CVEditor: React.FC<CVEditorProps> = ({
           <div
             className={`w-0.5 h-12 rounded-full transition-colors ${
               isDragging
-                ? "bg-blue-600 dark:bg-blue-400"
-                : "bg-slate-300 dark:bg-slate-700 group-hover:bg-blue-500 dark:group-hover:bg-blue-400"
+                ? "bg-indigo-600 dark:bg-indigo-400"
+                : "bg-slate-300 dark:bg-neutral-700 group-hover:bg-indigo-500 dark:group-hover:bg-indigo-400"
             }`}
           />
         </div>
@@ -1013,7 +1013,7 @@ export const CVEditor: React.FC<CVEditorProps> = ({
 
             {/* Quick Action Pills */}
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase">
+              <label className="text-xs font-semibold text-slate-600 dark:text-neutral-400 uppercase">
                 Szybkie modyfikacje:
               </label>
               <div className="flex flex-wrap gap-2">
@@ -1027,7 +1027,7 @@ export const CVEditor: React.FC<CVEditorProps> = ({
                     key={idx}
                     type="button"
                     onClick={() => setRefinementInstruction(action)}
-                    className="text-xs px-2.5 py-1 rounded-md border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700/70 text-left transition-colors cursor-pointer"
+                    className="text-xs px-2.5 py-1 rounded-xl border border-slate-200 dark:border-neutral-700 bg-slate-50 dark:bg-neutral-950 text-slate-700 dark:text-neutral-300 hover:bg-indigo-50 hover:border-indigo-300 dark:hover:bg-neutral-800 text-left transition-colors cursor-pointer shadow-none"
                   >
                     {action}
                   </button>
@@ -1043,11 +1043,12 @@ export const CVEditor: React.FC<CVEditorProps> = ({
               rows={3}
             />
 
-            <div className="flex justify-end gap-3 pt-3 border-t border-slate-100 dark:border-slate-800">
+            <div className="flex justify-end gap-3 pt-3 border-t border-slate-100 dark:border-neutral-800">
               <Button
                 variant="outline"
                 onClick={() => setRefiningBlockId(null)}
                 disabled={isRefining}
+                className="rounded-xl"
               >
                 Anuluj
               </Button>
@@ -1055,6 +1056,7 @@ export const CVEditor: React.FC<CVEditorProps> = ({
                 variant="primary"
                 onClick={() => executeBlockRefinement()}
                 isLoading={isRefining}
+                className="rounded-xl font-semibold"
               >
                 <Sparkles className="h-3.5 w-3.5 mr-1.5" />
                 Zastosuj udoskonalenie AI

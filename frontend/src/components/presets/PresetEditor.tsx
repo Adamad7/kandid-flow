@@ -594,21 +594,21 @@ export const PresetEditor: React.FC<PresetEditorProps> = ({
   ) as CustomSectionBlock[];
 
   return (
-    <div className="flex flex-col h-[calc(100vh-4.5rem)] -m-6 bg-slate-50 dark:bg-slate-950 overflow-hidden">
+    <div className="flex flex-col h-[calc(100vh-4.5rem)] -m-6 bg-slate-50/70 dark:bg-neutral-950 overflow-hidden">
       {/* Top Navbar */}
-      <header className="border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-6 py-3 shrink-0 flex items-center justify-between gap-4 shadow-xs">
+      <header className="border-b border-slate-200/80 dark:border-neutral-800 bg-white dark:bg-neutral-900 px-6 py-3 shrink-0 flex items-center justify-between gap-4 shadow-none">
         <div className="flex items-center gap-3 truncate">
           <Button
             size="sm"
             variant="ghost"
             onClick={onBack}
-            className="text-xs h-8 text-slate-600 dark:text-slate-300"
+            className="text-xs h-8 text-slate-600 dark:text-neutral-300 rounded-xl"
           >
             <ArrowLeft className="h-4 w-4 mr-1.5" />
             Wróć do listy szablonów
           </Button>
 
-          <div className="h-4 w-px bg-slate-200 dark:bg-slate-700" />
+          <div className="h-4 w-px bg-slate-200 dark:bg-neutral-800" />
 
           <div className="flex items-center gap-2 truncate">
             <input
@@ -616,23 +616,23 @@ export const PresetEditor: React.FC<PresetEditorProps> = ({
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="Nazwa szablonu / Stanowisko"
-              className="font-bold text-slate-900 dark:text-slate-100 text-sm bg-transparent border-b border-dashed border-slate-300 dark:border-slate-700 hover:border-blue-500 focus:border-blue-500 focus:outline-none px-1 py-0.5 min-w-[200px]"
+              className="font-bold text-slate-900 dark:text-neutral-100 text-sm bg-transparent border-b border-dashed border-slate-300 dark:border-neutral-700 hover:border-indigo-500 focus:border-indigo-500 focus:outline-none px-1 py-0.5 min-w-[200px]"
             />
-            <span className="text-xs text-slate-400 dark:text-slate-500 font-mono">(Szablon bazowy)</span>
+            <span className="text-xs text-slate-400 dark:text-neutral-500 font-mono">(Szablon bazowy)</span>
           </div>
         </div>
 
         {/* Center / Right controls */}
         <div className="flex items-center gap-3">
           {/* Mobile Tab Switcher */}
-          <div className="flex lg:hidden bg-slate-100 dark:bg-slate-800 p-0.5 rounded-lg border border-slate-200 dark:border-slate-700">
+          <div className="flex lg:hidden bg-slate-100 dark:bg-neutral-950 p-1 rounded-xl border border-slate-200 dark:border-neutral-800">
             <button
               type="button"
               onClick={() => setMobileTab("edit")}
-              className={`px-3 py-1 rounded-md text-xs font-semibold ${
+              className={`px-3 py-1 rounded-lg text-xs font-semibold ${
                 mobileTab === "edit"
-                  ? "bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-xs"
-                  : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                  ? "bg-white dark:bg-neutral-850 text-slate-900 dark:text-white shadow-none"
+                  : "text-slate-600 dark:text-neutral-400 hover:text-slate-900 dark:hover:text-white"
               }`}
             >
               Edycja
@@ -640,10 +640,10 @@ export const PresetEditor: React.FC<PresetEditorProps> = ({
             <button
               type="button"
               onClick={() => setMobileTab("preview")}
-              className={`px-3 py-1 rounded-md text-xs font-semibold ${
+              className={`px-3 py-1 rounded-lg text-xs font-semibold ${
                 mobileTab === "preview"
-                  ? "bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-xs"
-                  : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                  ? "bg-white dark:bg-neutral-850 text-slate-900 dark:text-white shadow-none"
+                  : "text-slate-600 dark:text-neutral-400 hover:text-slate-900 dark:hover:text-white"
               }`}
             >
               Podgląd
@@ -662,14 +662,14 @@ export const PresetEditor: React.FC<PresetEditorProps> = ({
           </div>
 
           {saveSuccess && (
-            <span className="flex items-center gap-1 text-xs font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-2.5 py-1.5 rounded-lg border border-emerald-200 dark:border-emerald-900/50">
+            <span className="flex items-center gap-1.5 text-xs font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-3 py-1 rounded-full border-2 border-emerald-200 dark:border-emerald-800">
               <Check className="h-4 w-4" />
               Zapisano pomyślnie!
             </span>
           )}
 
           {errorMessage && (
-            <span className="flex items-center gap-1 text-xs font-semibold text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/40 px-2.5 py-1.5 rounded-lg border border-rose-200 dark:border-rose-900/50">
+            <span className="flex items-center gap-1.5 text-xs font-semibold text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/40 px-3 py-1 rounded-full border-2 border-rose-200 dark:border-rose-800">
               <AlertCircle className="h-4 w-4" />
               {errorMessage}
             </span>
@@ -680,7 +680,7 @@ export const PresetEditor: React.FC<PresetEditorProps> = ({
             variant="primary"
             onClick={handleSave}
             isLoading={isSaving}
-            className="text-xs h-8 shadow-xs"
+            className="text-xs h-8 rounded-xl font-semibold shadow-none"
           >
             <Save className="h-3.5 w-3.5 mr-1.5" />
             Zapisz szablon
@@ -688,10 +688,10 @@ export const PresetEditor: React.FC<PresetEditorProps> = ({
 
           <Button
             size="sm"
-            variant="outline"
+            variant="success"
             onClick={handleExportPdf}
             isLoading={isExportingPdf}
-            className="text-xs h-8"
+            className="text-xs h-8 rounded-xl font-bold shadow-none"
           >
             <Download className="h-3.5 w-3.5 mr-1.5" />
             Pobierz PDF
@@ -708,7 +708,7 @@ export const PresetEditor: React.FC<PresetEditorProps> = ({
           }`}
         >
           {/* Header & Basic Candidate Identity for Preview */}
-          <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-xs space-y-4">
+          <div className="rounded-2xl border border-slate-200/80 dark:border-neutral-800 bg-white dark:bg-neutral-900 p-5 sm:p-6 shadow-none space-y-4">
             <div className="flex items-center gap-2 border-b border-slate-100 dark:border-slate-800 pb-2.5">
               <User className="h-4 w-4 text-blue-600 dark:text-blue-400" />
               <h3 className="font-semibold text-sm text-slate-900 dark:text-slate-100">
@@ -747,7 +747,7 @@ export const PresetEditor: React.FC<PresetEditorProps> = ({
 
           {/* O mnie (Summary) Block */}
           {summaryBlock && (
-            <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-xs space-y-3">
+            <div className="rounded-2xl border border-slate-200/80 dark:border-neutral-800 bg-white dark:bg-neutral-900 p-5 sm:p-6 shadow-none space-y-3">
               <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2.5">
                 <div className="flex items-center gap-2 flex-1 mr-3">
                   <FileText className="h-4 w-4 text-indigo-600 dark:text-indigo-400 shrink-0" />
@@ -781,7 +781,7 @@ export const PresetEditor: React.FC<PresetEditorProps> = ({
 
           {/* Skills Block */}
           {skillsBlock && (
-            <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-xs space-y-4">
+            <div className="rounded-2xl border border-slate-200/80 dark:border-neutral-800 bg-white dark:bg-neutral-900 p-5 sm:p-6 shadow-none space-y-4">
               <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2.5">
                 <div className="flex items-center gap-2 flex-1 mr-3">
                   <Code className="h-4 w-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
@@ -861,7 +861,7 @@ export const PresetEditor: React.FC<PresetEditorProps> = ({
 
           {/* Experience Block */}
           {expBlock && (
-            <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-xs space-y-4">
+            <div className="rounded-2xl border border-slate-200/80 dark:border-neutral-800 bg-white dark:bg-neutral-900 p-5 sm:p-6 shadow-none space-y-4">
               <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2.5">
                 <div className="flex items-center gap-2 flex-1 mr-3">
                   <Briefcase className="h-4 w-4 text-blue-600 dark:text-blue-400 shrink-0" />
@@ -961,7 +961,7 @@ export const PresetEditor: React.FC<PresetEditorProps> = ({
 
           {/* Projects Block */}
           {projectsBlock && (
-            <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-xs space-y-4">
+            <div className="rounded-2xl border border-slate-200/80 dark:border-neutral-800 bg-white dark:bg-neutral-900 p-5 sm:p-6 shadow-none space-y-4">
               <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2.5">
                 <div className="flex items-center gap-2 flex-1 mr-3">
                   <Code className="h-4 w-4 text-purple-600 dark:text-purple-400 shrink-0" />
@@ -1062,7 +1062,7 @@ export const PresetEditor: React.FC<PresetEditorProps> = ({
 
           {/* Education Block */}
           {eduBlock && (
-            <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-xs space-y-4">
+            <div className="rounded-2xl border border-slate-200/80 dark:border-neutral-800 bg-white dark:bg-neutral-900 p-5 sm:p-6 shadow-none space-y-4">
               <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2.5">
                 <div className="flex items-center gap-2 flex-1 mr-3">
                   <GraduationCap className="h-4 w-4 text-indigo-600 dark:text-indigo-400 shrink-0" />
@@ -1148,7 +1148,7 @@ export const PresetEditor: React.FC<PresetEditorProps> = ({
 
           {/* Certificates Block */}
           {certsBlock && (
-            <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-xs space-y-4">
+            <div className="rounded-2xl border border-slate-200/80 dark:border-neutral-800 bg-white dark:bg-neutral-900 p-5 sm:p-6 shadow-none space-y-4">
               <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2.5">
                 <div className="flex items-center gap-2 flex-1 mr-3">
                   <Award className="h-4 w-4 text-rose-600 dark:text-rose-400 shrink-0" />
@@ -1222,7 +1222,7 @@ export const PresetEditor: React.FC<PresetEditorProps> = ({
 
           {/* Custom Blocks */}
           {customBlocks.map((cs) => (
-            <div key={cs.id} className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-xs space-y-3">
+            <div key={cs.id} className="rounded-2xl border border-slate-200/80 dark:border-neutral-800 bg-white dark:bg-neutral-900 p-5 sm:p-6 shadow-none space-y-3">
               <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2.5">
                 <div className="flex items-center gap-2 flex-1 mr-3">
                   <FolderPlus className="h-4 w-4 text-teal-600 dark:text-teal-400 shrink-0" />
@@ -1275,7 +1275,7 @@ export const PresetEditor: React.FC<PresetEditorProps> = ({
 
           {/* Clause Block */}
           {clauseBlock && (
-            <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-xs space-y-3">
+            <div className="rounded-2xl border border-slate-200/80 dark:border-neutral-800 bg-white dark:bg-neutral-900 p-5 sm:p-6 shadow-none space-y-3">
               <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2.5">
                 <div className="flex items-center gap-2">
                   <ShieldCheck className="h-4 w-4 text-blue-600 dark:text-blue-400" />

@@ -68,17 +68,17 @@ export const UpcomingEventsWidget: React.FC<UpcomingEventsWidgetProps> = ({
   };
 
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+    <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-none dark:border-neutral-800 dark:bg-neutral-900">
       <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-2">
-          <div className="p-2 rounded-lg bg-blue-50 text-blue-600 dark:bg-blue-950/60 dark:text-blue-400">
+        <div className="flex items-center gap-2.5">
+          <div className="p-2 rounded-xl bg-indigo-50 text-indigo-600 dark:bg-indigo-950/60 dark:text-indigo-400">
             <Calendar className="h-5 w-5" />
           </div>
           <div>
-            <h3 className="font-semibold text-slate-900 dark:text-slate-100">
+            <h3 className="font-bold text-slate-900 dark:text-white">
               Nadchodzące etapy i rozmowy
             </h3>
-            <p className="text-xs text-slate-500 dark:text-slate-400">
+            <p className="text-xs text-slate-500 dark:text-neutral-400">
               Zaplanowane spotkania, testy techniczne i terminy zadań
             </p>
           </div>
@@ -88,7 +88,7 @@ export const UpcomingEventsWidget: React.FC<UpcomingEventsWidgetProps> = ({
             size="sm"
             variant="outline"
             onClick={onAddEventClick}
-            className="text-xs"
+            className="text-xs rounded-xl"
           >
             <Plus className="h-3.5 w-3.5 mr-1" />
             Dodaj etap
@@ -97,31 +97,31 @@ export const UpcomingEventsWidget: React.FC<UpcomingEventsWidgetProps> = ({
       </div>
 
       {isLoading ? (
-        <div className="py-6 text-center text-sm text-slate-400 dark:text-slate-500 animate-pulse">
+        <div className="py-6 text-center text-sm text-slate-400 dark:text-neutral-500 animate-pulse">
           Ładowanie nadchodzących wydarzeń...
         </div>
       ) : error ? (
-        <div className="rounded-lg bg-rose-50 p-3 text-xs text-rose-700 dark:bg-rose-950/50 dark:text-rose-300 dark:border dark:border-rose-900">
+        <div className="rounded-xl bg-rose-50 p-3 text-xs text-rose-700 dark:bg-rose-950/50 dark:text-rose-300 dark:border dark:border-rose-900">
           {error}
         </div>
       ) : events.length === 0 ? (
-        <div className="rounded-lg border border-dashed border-slate-200 dark:border-slate-800 py-6 text-center">
-          <p className="text-xs text-slate-500 dark:text-slate-400">
+        <div className="rounded-2xl border border-dashed border-slate-200/90 dark:border-neutral-800 py-6 text-center bg-slate-50/40 dark:bg-neutral-900/40">
+          <p className="text-xs text-slate-500 dark:text-neutral-400">
             Brak zaplanowanych rozmów rekrutacyjnych w najbliższym czasie.
           </p>
         </div>
       ) : (
-        <div className="divide-y divide-slate-100 dark:divide-slate-800">
+        <div className="divide-y divide-slate-100 dark:divide-neutral-800">
           {events.map((ev) => (
             <div
               key={ev.id}
-              className="py-3 flex items-start justify-between gap-3 group hover:bg-slate-50/60 dark:hover:bg-slate-800/60 -mx-2 px-2 rounded-lg transition-colors"
+              className="py-3 flex items-start justify-between gap-3 group hover:bg-slate-50/80 dark:hover:bg-neutral-850 -mx-2 px-3 rounded-xl transition-colors"
             >
               <div className="flex items-start gap-3">
                 <button
                   type="button"
                   onClick={() => handleToggleComplete(ev)}
-                  className="mt-0.5 text-slate-400 hover:text-emerald-600 dark:text-slate-500 dark:hover:text-emerald-400 transition-colors"
+                  className="mt-0.5 text-slate-400 hover:text-emerald-600 dark:text-neutral-500 dark:hover:text-emerald-400 transition-colors"
                   title={
                     ev.is_completed
                       ? "Oznacz jako nieukończone"
@@ -129,7 +129,7 @@ export const UpcomingEventsWidget: React.FC<UpcomingEventsWidgetProps> = ({
                   }
                 >
                   {ev.is_completed ? (
-                    <CheckCircle2 className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+                    <CheckCircle2 className="h-5 w-5 text-emerald-500" />
                   ) : (
                     <Circle className="h-5 w-5" />
                   )}
@@ -137,8 +137,8 @@ export const UpcomingEventsWidget: React.FC<UpcomingEventsWidgetProps> = ({
                 <div>
                   <div className="flex items-center gap-2">
                     <span
-                      className={`font-medium text-sm text-slate-900 dark:text-slate-100 ${
-                        ev.is_completed ? "line-through text-slate-400 dark:text-slate-600" : ""
+                      className={`font-semibold text-sm text-slate-900 dark:text-white ${
+                        ev.is_completed ? "line-through text-slate-400 dark:text-neutral-600" : ""
                       }`}
                     >
                       {ev.title}
@@ -148,8 +148,8 @@ export const UpcomingEventsWidget: React.FC<UpcomingEventsWidgetProps> = ({
                     </Badge>
                   </div>
 
-                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1 text-xs text-slate-500 dark:text-slate-400">
-                    <span className="flex items-center gap-1 font-medium text-blue-600 dark:text-blue-400">
+                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1 text-xs text-slate-500 dark:text-neutral-400">
+                    <span className="flex items-center gap-1 font-semibold text-indigo-600 dark:text-indigo-400">
                       <Clock className="h-3.5 w-3.5" />
                       {formatDateTime(ev.scheduled_at)}
                       {ev.duration_minutes ? ` (${ev.duration_minutes} min)` : ""}
@@ -162,14 +162,14 @@ export const UpcomingEventsWidget: React.FC<UpcomingEventsWidgetProps> = ({
                             href={ev.location_or_link}
                             target="_blank"
                             rel="noreferrer"
-                            className="flex items-center gap-1 text-blue-600 dark:text-blue-400 hover:underline"
+                            className="flex items-center gap-1 text-indigo-600 dark:text-indigo-400 hover:underline font-medium"
                           >
                             <Video className="h-3.5 w-3.5" />
                             Dołącz do spotkania
                           </a>
                         ) : (
                           <span className="flex items-center gap-1">
-                            <MapPin className="h-3.5 w-3.5" />
+                            <MapPin className="h-3.5 w-3.5 text-indigo-500" />
                             {ev.location_or_link}
                           </span>
                         )}
@@ -177,7 +177,7 @@ export const UpcomingEventsWidget: React.FC<UpcomingEventsWidgetProps> = ({
                     )}
 
                     {ev.interviewers && (
-                      <span className="flex items-center gap-1 text-slate-500 dark:text-slate-400">
+                      <span className="flex items-center gap-1 text-slate-500 dark:text-neutral-400">
                         <User className="h-3.5 w-3.5" />
                         {ev.interviewers}
                       </span>
@@ -191,7 +191,7 @@ export const UpcomingEventsWidget: React.FC<UpcomingEventsWidgetProps> = ({
                   size="sm"
                   variant="ghost"
                   onClick={() => onSelectJob(ev.job_offer_id)}
-                  className="opacity-0 group-hover:opacity-100 transition-opacity text-xs"
+                  className="opacity-0 group-hover:opacity-100 transition-opacity text-xs rounded-xl"
                 >
                   Przejdź do oferty
                   <ExternalLink className="h-3 w-3 ml-1" />

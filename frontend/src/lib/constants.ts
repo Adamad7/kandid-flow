@@ -19,20 +19,61 @@ export const STATUS_LABELS: Record<JobStatusType, string> = {
 
 export const STATUS_COLORS: Record<
   JobStatusType,
-  { bg: string; text: string; border: string }
+  { bg: string; text: string; border: string; dot: string }
 > = {
-  inbox: { bg: "bg-slate-100 dark:bg-slate-800/80", text: "text-slate-700 dark:text-slate-300", border: "border-slate-300 dark:border-slate-700" },
-  parsing: { bg: "bg-blue-50 dark:bg-blue-950/60", text: "text-blue-700 dark:text-blue-300", border: "border-blue-300 dark:border-blue-800" },
-  failed_parsing: { bg: "bg-rose-50 dark:bg-rose-950/60", text: "text-rose-700 dark:text-rose-300", border: "border-rose-300 dark:border-rose-800" },
-  ready: { bg: "bg-indigo-50 dark:bg-indigo-950/60", text: "text-indigo-700 dark:text-indigo-300", border: "border-indigo-300 dark:border-indigo-800" },
-  applied: { bg: "bg-amber-50 dark:bg-amber-950/60", text: "text-amber-700 dark:text-amber-300", border: "border-amber-300 dark:border-amber-800" },
-  interview: { bg: "bg-purple-50 dark:bg-purple-950/60", text: "text-purple-700 dark:text-purple-300", border: "border-purple-300 dark:border-purple-800" },
-  offer: { bg: "bg-emerald-50 dark:bg-emerald-950/60", text: "text-emerald-700 dark:text-emerald-300", border: "border-emerald-300 dark:border-emerald-800" },
-  rejected: { bg: "bg-zinc-100 dark:bg-zinc-800/80", text: "text-zinc-600 dark:text-zinc-400", border: "border-zinc-300 dark:border-zinc-700" },
+  inbox: {
+    bg: "bg-slate-100 dark:bg-neutral-800",
+    text: "text-slate-700 dark:text-neutral-300",
+    border: "border-2 border-slate-300 dark:border-neutral-600",
+    dot: "bg-slate-400",
+  },
+  parsing: {
+    bg: "bg-indigo-50 dark:bg-indigo-950/60",
+    text: "text-indigo-700 dark:text-indigo-300",
+    border: "border-2 border-indigo-300 dark:border-indigo-700",
+    dot: "bg-indigo-500",
+  },
+  failed_parsing: {
+    bg: "bg-rose-50 dark:bg-rose-950/60",
+    text: "text-rose-700 dark:text-rose-300",
+    border: "border-2 border-rose-400 dark:border-rose-600",
+    dot: "bg-rose-500",
+  },
+  ready: {
+    bg: "bg-indigo-50 dark:bg-indigo-950/60",
+    text: "text-indigo-700 dark:text-indigo-300",
+    border: "border-2 border-indigo-400 dark:border-indigo-600",
+    dot: "bg-indigo-600",
+  },
+  applied: {
+    bg: "bg-amber-50 dark:bg-amber-950/60",
+    text: "text-amber-700 dark:text-amber-300",
+    border: "border-2 border-amber-400 dark:border-amber-600",
+    dot: "bg-amber-500",
+  },
+  interview: {
+    bg: "bg-purple-50 dark:bg-purple-950/60",
+    text: "text-purple-700 dark:text-purple-300",
+    border: "border-2 border-purple-400 dark:border-purple-600",
+    dot: "bg-purple-600",
+  },
+  offer: {
+    bg: "bg-emerald-50 dark:bg-emerald-950/60",
+    text: "text-emerald-700 dark:text-emerald-300",
+    border: "border-2 border-emerald-400 dark:border-emerald-600",
+    dot: "bg-emerald-500",
+  },
+  rejected: {
+    bg: "bg-rose-50 dark:bg-rose-950/60",
+    text: "text-rose-700 dark:text-rose-300",
+    border: "border-2 border-red-400 dark:border-red-600",
+    dot: "bg-rose-500",
+  },
   archived: {
-    bg: "bg-stone-100 dark:bg-stone-800/80",
-    text: "text-stone-700 dark:text-stone-300",
-    border: "border-stone-300 dark:border-stone-700",
+    bg: "bg-slate-100 dark:bg-neutral-800",
+    text: "text-slate-700 dark:text-neutral-300",
+    border: "border-2 border-slate-300 dark:border-neutral-600",
+    dot: "bg-slate-400",
   },
 };
 
