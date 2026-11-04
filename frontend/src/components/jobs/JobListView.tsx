@@ -5,6 +5,7 @@ import {
   Filter,
   RefreshCw,
   Building,
+  MapPin,
   Clock,
   Sparkles,
   MoreVertical,
@@ -19,6 +20,7 @@ import {
   HelpCircle,
   Archive,
   ArchiveRestore,
+  XCircle,
 } from "lucide-react";
 import { api } from "../../lib/api";
 import type {
@@ -44,9 +46,11 @@ import { cn } from "../../lib/utils";
 import { Badge } from "../ui/Badge";
 import { Button } from "../ui/Button";
 import { Input } from "../ui/Input";
+import { RatingStars } from "../ui/RatingStars";
 
 export type SortField =
   | "role_title"
+  | "location"
   | "status"
   | "created_at"
   | "work_model"
@@ -110,6 +114,7 @@ export const JobListView: React.FC<JobListViewProps> = ({
   const [searchTerm, setSearchTerm] = useState("");
   const [workModelFilter, setWorkModelFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [locationFilter, setLocationFilter] = useState<string>("all");
   const [tagFilter, setTagFilter] = useState<string>("all");
   const [availableTags, setAvailableTags] = useState<string[]>([]);
   const [showFilters, setShowFilters] = useState(false);
@@ -198,6 +203,23 @@ export const JobListView: React.FC<JobListViewProps> = ({
     fetchJobs();
   }, [refreshTrigger, isArchive]);
 
+  const availableLocations = useMemo(() => {
+    const locSet = new Set<string>();
+    jobs.forEach((job) => {
+      if (job.locations && job.locations.length > 0) {
+        job.locations.forEach((loc) => {
+          const trimmed = loc.trim();
+          if (trimmed) locSet.add(trimmed);
+        });
+      } else if (job.location_raw && job.location_raw.trim()) {
+        locSet.add(job.location_raw.trim());
+      }
+    });
+    return Array.from(locSet).sort((a, b) =>
+      a.localeCompare(b, "pl", { sensitivity: "base" })
+    );
+  }, [jobs]);
+
   const handleRestoreJob = async (job: JobOfferRead) => {
     try {
       const updated = await api.jobs.update(job.id, { status: "ready" });
@@ -225,6 +247,33 @@ export const JobListView: React.FC<JobListViewProps> = ({
       });
     } catch {
       alert("Nie udało się zarchiwizować oferty.");
+    }
+  };
+
+  const handleRejectJob = async (job: JobOfferRead) => {
+    try {
+      const updated = await api.jobs.update(job.id, { status: "rejected" });
+      if (!isArchive) {
+        setJobs((prev) => prev.filter((j) => j.id !== updated.id));
+        setSelectedJobIds((prev) => {
+          const next = new Set(prev);
+          next.delete(job.id);
+          return next;
+        });
+      } else {
+        setJobs((prev) => prev.map((j) => (j.id === updated.id ? updated : j)));
+      }
+    } catch {
+      alert("Nie udało się odrzucić oferty.");
+    }
+  };
+
+  const handleRatingChange = async (job: JobOfferRead, newRating: number) => {
+    try {
+      const updated = await api.jobs.update(job.id, { rating: newRating });
+      setJobs((prev) => prev.map((j) => (j.id === updated.id ? updated : j)));
+    } catch {
+      alert("Nie udało się zaktualizować rangi oferty.");
     }
   };
 
@@ -280,9 +329,13 @@ export const JobListView: React.FC<JobListViewProps> = ({
       setIsBatchProcessing(true);
       const ids = Array.from(selectedJobIds);
       await api.jobs.batchUpdateStatus(ids, bulkStatus);
-      setJobs((prev) =>
-        prev.map((j) => (selectedJobIds.has(j.id) ? { ...j, status: bulkStatus } : j))
-      );
+      if (!isArchive && (bulkStatus === "rejected" || bulkStatus === "archived")) {
+        setJobs((prev) => prev.filter((j) => !selectedJobIds.has(j.id)));
+      } else {
+        setJobs((prev) =>
+          prev.map((j) => (selectedJobIds.has(j.id) ? { ...j, status: bulkStatus } : j))
+        );
+      }
       setSelectedJobIds(new Set());
     } catch {
       alert("Nie udało się zaktualizować statusu zaznaczonych ofert.");
@@ -419,6 +472,20 @@ export const JobListView: React.FC<JobListViewProps> = ({
           return false;
         }
 
+        // Location filter
+        if (locationFilter !== "all") {
+          const matchLoc =
+            (job.locations &&
+              job.locations.some(
+                (l) => l.toLowerCase() === locationFilter.toLowerCase()
+              )) ||
+            (job.location_raw &&
+              job.location_raw.toLowerCase().includes(locationFilter.toLowerCase()));
+          if (!matchLoc) {
+            return false;
+          }
+        }
+
         // Status filter
         if (statusFilter !== "all" && job.status !== statusFilter) {
           return false;
@@ -439,6 +506,22 @@ export const JobListView: React.FC<JobListViewProps> = ({
             const titleA = a.role_title || "";
             const titleB = b.role_title || "";
             result = titleA.localeCompare(titleB, "pl", { sensitivity: "base" });
+            break;
+          }
+
+          case "location": {
+            const locA =
+              a.locations && a.locations.length > 0
+                ? a.locations.join(", ")
+                : a.location_raw || "";
+            const locB =
+              b.locations && b.locations.length > 0
+                ? b.locations.join(", ")
+                : b.location_raw || "";
+            if (!locA && !locB) result = 0;
+            else if (!locA) result = 1;
+            else if (!locB) result = -1;
+            else result = locA.localeCompare(locB, "pl", { sensitivity: "base" });
             break;
           }
 
@@ -496,7 +579,7 @@ export const JobListView: React.FC<JobListViewProps> = ({
 
         return sortDirection === "asc" ? result : -result;
       });
-  }, [jobs, searchTerm, workModelFilter, statusFilter, tagFilter, sortField, sortDirection]);
+  }, [jobs, searchTerm, workModelFilter, statusFilter, locationFilter, tagFilter, sortField, sortDirection]);
 
   const visibleJobIds = useMemo(
     () => filteredAndSortedJobs.map((j) => j.id),
@@ -596,7 +679,7 @@ export const JobListView: React.FC<JobListViewProps> = ({
             >
               <Filter className="h-3.5 w-3.5 mr-1.5" />
               Filtry
-              {(workModelFilter !== "all" || (!isArchive && statusFilter !== "all") || tagFilter !== "all") && (
+              {(workModelFilter !== "all" || statusFilter !== "all" || locationFilter !== "all" || tagFilter !== "all") && (
                 <span className="ml-1.5 rounded-full bg-indigo-100 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300 px-1.5 py-0.2 text-[10px] font-bold">
                   !
                 </span>
@@ -618,7 +701,7 @@ export const JobListView: React.FC<JobListViewProps> = ({
 
         {/* Collapsible Filters */}
         {showFilters && (
-          <div className="mt-3 pt-3 border-t border-slate-100 dark:border-neutral-800/80 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
+          <div className="mt-3 pt-3 border-t border-slate-100 dark:border-neutral-800/80 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
             <div>
               <label className="block text-xs font-semibold text-slate-700 dark:text-neutral-300 mb-1">
                 Tryb pracy:
@@ -635,7 +718,40 @@ export const JobListView: React.FC<JobListViewProps> = ({
               </select>
             </div>
 
-            {!isArchive && (
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 dark:text-neutral-300 mb-1">
+                Lokalizacja:
+              </label>
+              <select
+                value={locationFilter}
+                onChange={(e) => setLocationFilter(e.target.value)}
+                className="w-full text-xs font-medium rounded-xl border border-slate-200 dark:border-transparent bg-slate-50/60 dark:bg-neutral-950 px-2.5 py-2 text-slate-800 dark:text-neutral-200 outline-none focus:outline-none focus:bg-white dark:focus:bg-neutral-950 focus:border-indigo-500 dark:focus:border-indigo-500/50 focus:ring-2 focus:ring-indigo-500/20 dark:focus:ring-indigo-500/40 transition-colors cursor-pointer"
+              >
+                <option value="all">Wszystkie lokalizacje</option>
+                {availableLocations.map((loc) => (
+                  <option key={loc} value={loc}>
+                    {loc}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {isArchive ? (
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 dark:text-neutral-300 mb-1">
+                  Status w archiwum:
+                </label>
+                <select
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value)}
+                  className="w-full text-xs font-medium rounded-xl border border-slate-200 dark:border-transparent bg-slate-50/60 dark:bg-neutral-950 px-2.5 py-2 text-slate-800 dark:text-neutral-200 outline-none focus:outline-none focus:bg-white dark:focus:bg-neutral-950 focus:border-indigo-500 dark:focus:border-indigo-500/50 focus:ring-2 focus:ring-indigo-500/20 dark:focus:ring-indigo-500/40 transition-colors cursor-pointer"
+                >
+                  <option value="all">Wszystkie statusy w archiwum</option>
+                  <option value="rejected">Odrzucone</option>
+                  <option value="archived">Zarchiwizowane</option>
+                </select>
+              </div>
+            ) : (
               <div>
                 <label className="block text-xs font-semibold text-slate-700 dark:text-neutral-300 mb-1">
                   Status oferty:
@@ -651,7 +767,6 @@ export const JobListView: React.FC<JobListViewProps> = ({
                   <option value="applied">Zaaplikowano</option>
                   <option value="interview">Rozmowy rekrutacyjne</option>
                   <option value="offer">Oferty</option>
-                  <option value="rejected">Odrzucone</option>
                 </select>
               </div>
             )}
@@ -682,6 +797,7 @@ export const JobListView: React.FC<JobListViewProps> = ({
                   setSearchTerm("");
                   setWorkModelFilter("all");
                   setStatusFilter("all");
+                  setLocationFilter("all");
                   setTagFilter("all");
                 }}
                 className="text-xs w-full rounded-xl"
@@ -803,9 +919,9 @@ export const JobListView: React.FC<JobListViewProps> = ({
       {/* Main List Container */}
       <div className="rounded-2xl border border-slate-200/80 bg-white shadow-none dark:border-transparent dark:bg-neutral-900 overflow-hidden">
         <div className="overflow-x-auto min-w-full">
-          <div className="md:min-w-[960px]">
+          <div className="md:min-w-[1080px]">
             {/* Table / List Header */}
-            <div className="bg-slate-50/80 border-b border-slate-200/80 px-6 py-3.5 hidden md:grid md:grid-cols-[40px_minmax(50px,0.5fr)_minmax(180px,2.5fr)_minmax(110px,1.4fr)_minmax(120px,1.4fr)_minmax(95px,1.1fr)_minmax(110px,1.3fr)_minmax(130px,1.6fr)] gap-4 text-xs font-semibold text-slate-600 select-none dark:bg-neutral-800/80 dark:border-neutral-800 dark:text-neutral-300">
+            <div className="bg-slate-50/80 border-b border-slate-200/80 px-6 py-3.5 hidden md:grid md:grid-cols-[40px_minmax(50px,0.4fr)_minmax(180px,2.2fr)_minmax(105px,1.2fr)_minmax(110px,1.3fr)_minmax(115px,1.3fr)_minmax(90px,1fr)_minmax(110px,1.2fr)_minmax(125px,1.4fr)] gap-4 text-xs font-semibold text-slate-600 select-none dark:bg-neutral-800/80 dark:border-neutral-800 dark:text-neutral-300">
               {/* Checkbox (zaznacz wszystkie) */}
               <div className="flex items-center justify-center">
                 <input
@@ -840,6 +956,15 @@ export const JobListView: React.FC<JobListViewProps> = ({
               {/* Firma (NON-SORTABLE by user requirement: "poza nazwą firmy") */}
               <div className="flex items-center text-slate-500 dark:text-slate-400 font-medium">
                 <span>Firma</span>
+              </div>
+
+              {/* Lokalizacja firmy (Sortable alfabetycznie) */}
+              <div
+                onClick={() => handleToggleSort("location")}
+                className="flex items-center gap-1.5 cursor-pointer hover:text-slate-900 dark:hover:text-white group"
+              >
+                <span>Lokalizacja</span>
+                {renderSortIndicator("location")}
               </div>
 
               {/* Status (Sortable) */}
@@ -908,6 +1033,10 @@ export const JobListView: React.FC<JobListViewProps> = ({
                   );
                   const deadlineInfo = formatDeadline(job.application_deadline);
                   const createdDateInfo = formatRelativeCreatedDate(job.created_at);
+                  const locationDisplay =
+                    job.locations && job.locations.length > 0
+                      ? job.locations.join(", ")
+                      : job.location_raw || "Brak danych";
                   const isReparsing = reparsingIds.has(job.id);
                   const isSelected = selectedJobIds.has(job.id);
                   const isMenuOpen = activeMenu?.job.id === job.id;
@@ -917,7 +1046,7 @@ export const JobListView: React.FC<JobListViewProps> = ({
                       key={job.id}
                       onClick={() => onSelectJob(job)}
                       className={cn(
-                        "group px-6 py-4 hover:bg-slate-50/80 dark:hover:bg-neutral-800/35 transition-colors cursor-pointer grid grid-cols-1 md:grid-cols-[40px_minmax(50px,0.5fr)_minmax(180px,2.5fr)_minmax(110px,1.4fr)_minmax(120px,1.4fr)_minmax(95px,1.1fr)_minmax(110px,1.3fr)_minmax(130px,1.6fr)] gap-3 md:gap-4 items-center",
+                        "group px-6 py-4 hover:bg-slate-50/80 dark:hover:bg-neutral-800/35 transition-colors cursor-pointer grid grid-cols-1 md:grid-cols-[40px_minmax(50px,0.4fr)_minmax(180px,2.2fr)_minmax(105px,1.2fr)_minmax(110px,1.3fr)_minmax(115px,1.3fr)_minmax(90px,1fr)_minmax(110px,1.2fr)_minmax(125px,1.4fr)] gap-3 md:gap-4 items-center",
                         isSelected && "ring-2 ring-indigo-600 dark:ring-indigo-500 bg-indigo-50/20 dark:bg-neutral-900"
                       )}
                     >
@@ -964,6 +1093,19 @@ export const JobListView: React.FC<JobListViewProps> = ({
                             {job.role_title || "Nieokreślone stanowisko"}
                           </span>
 
+                          <div
+                            onClick={(e) => e.stopPropagation()}
+                            className="inline-flex items-center"
+                            title="Ranga oferty (kliknij, aby zmienić)"
+                          >
+                            <RatingStars
+                              rating={job.rating || 1}
+                              interactive
+                              size="xs"
+                              onChange={(newRating) => handleRatingChange(job, newRating)}
+                            />
+                          </div>
+
                           {job.source_portal && (
                             <span className="shrink-0 text-[10px] py-0.5 px-2.5 rounded-full font-bold uppercase tracking-wider bg-slate-100 dark:bg-neutral-800 text-slate-600 dark:text-neutral-300 border border-slate-200/60 dark:border-neutral-700/60">
                               {PORTAL_LABELS[job.source_portal] || job.source_portal}
@@ -990,6 +1132,12 @@ export const JobListView: React.FC<JobListViewProps> = ({
                           <Building className="h-3.5 w-3.5 text-indigo-500 shrink-0 mt-0.5" />
                           <span className="break-words">{job.company_name || "Nieznana firma"}</span>
                         </div>
+
+                        {/* Mobile-only location view */}
+                        <div className="md:hidden flex items-start gap-1.5 mt-1 text-xs text-slate-500 dark:text-neutral-400 font-medium">
+                          <MapPin className="h-3.5 w-3.5 text-indigo-500 shrink-0 mt-0.5" />
+                          <span className="break-words">{locationDisplay}</span>
+                        </div>
                       </div>
 
                       {/* Firma */}
@@ -997,6 +1145,17 @@ export const JobListView: React.FC<JobListViewProps> = ({
                         <Building className="h-3.5 w-3.5 text-indigo-500 shrink-0 mt-0.5" />
                         <span className="break-words" title={job.company_name || undefined}>
                           {job.company_name || "Nieznana firma"}
+                        </span>
+                      </div>
+
+                      {/* Lokalizacja firmy */}
+                      <div className="hidden md:flex items-start gap-1.5 text-xs text-slate-600 dark:text-neutral-400 font-medium min-w-0">
+                        <MapPin className="h-3.5 w-3.5 text-indigo-500 shrink-0 mt-0.5" />
+                        <span
+                          className="break-words line-clamp-2"
+                          title={locationDisplay !== "Brak danych" ? locationDisplay : undefined}
+                        >
+                          {locationDisplay}
                         </span>
                       </div>
 
@@ -1373,6 +1532,34 @@ export const JobListView: React.FC<JobListViewProps> = ({
                   <Archive className="h-3.5 w-3.5" />
                   Zarchiwizuj ofertę
                 </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    const currentJob = activeMenu.job;
+                    setActiveMenu(null);
+                    handleRejectJob(currentJob);
+                  }}
+                  className="w-full px-4 py-2 text-left text-xs text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-neutral-800 flex items-center gap-2 cursor-pointer font-medium"
+                >
+                  <XCircle className="h-3.5 w-3.5" />
+                  Odrzuć ofertę
+                </button>
+
+                <div className="px-4 py-2 border-t border-slate-100 dark:border-neutral-800">
+                  <div className="text-[10px] text-slate-400 dark:text-neutral-500 font-semibold uppercase tracking-wider mb-1">
+                    Ranga oferty:
+                  </div>
+                  <RatingStars
+                    rating={activeMenu.job.rating || 1}
+                    interactive
+                    size="xs"
+                    onChange={(newRating) => {
+                      handleRatingChange(activeMenu.job, newRating);
+                      setActiveMenu(null);
+                    }}
+                  />
+                </div>
               </>
             )}
 

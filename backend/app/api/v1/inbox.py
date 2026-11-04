@@ -140,6 +140,7 @@ async def ingest_job_offer(
             existing.role_title = payload.title
         if payload.notes:
             existing.notes = payload.notes
+        existing.rating = payload.rating
         existing.raw_payload = raw_dict
         await db.commit()
         await db.refresh(existing)
@@ -176,6 +177,7 @@ async def ingest_job_offer(
         salary_max=payload.salary_max,
         salary_currency=payload.salary_currency or "PLN",
         salary_period=payload.salary_period or "month",
+        rating=payload.rating,
         raw_payload=raw_dict,
         notes=payload.notes,
     )

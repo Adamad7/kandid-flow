@@ -8,7 +8,6 @@ import {
   Send,
   Users,
   Award,
-  XCircle,
 } from "lucide-react";
 import { api } from "../../lib/api";
 import type {
@@ -72,13 +71,6 @@ const COLUMNS: ColumnDef[] = [
     icon: <Award className="h-4 w-4 text-emerald-500 dark:text-emerald-400" />,
     headerColor: "bg-emerald-50 text-emerald-700 border-2 border-emerald-400 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-600",
   },
-  {
-    id: "rejected_col",
-    title: "Odrzucone",
-    statuses: ["rejected"],
-    icon: <XCircle className="h-4 w-4 text-rose-500 dark:text-rose-400" />,
-    headerColor: "bg-rose-50 text-rose-700 border-2 border-red-400 dark:bg-rose-950/60 dark:text-rose-300 dark:border-red-600",
-  },
 ];
 
 export const KanbanBoard: React.FC<KanbanBoardProps> = ({
@@ -129,9 +121,22 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
     }
     try {
       const updated = await api.jobs.update(job.id, { status: newStatus });
-      setJobs((prev) => prev.map((j) => (j.id === updated.id ? updated : j)));
+      if (newStatus === "rejected" || newStatus === "archived") {
+        setJobs((prev) => prev.filter((j) => j.id !== updated.id));
+      } else {
+        setJobs((prev) => prev.map((j) => (j.id === updated.id ? updated : j)));
+      }
     } catch {
       alert("Nie udało się zaktualizować statusu oferty.");
+    }
+  };
+
+  const handleRatingChange = async (job: JobOfferRead, newRating: number) => {
+    try {
+      const updated = await api.jobs.update(job.id, { rating: newRating });
+      setJobs((prev) => prev.map((j) => (j.id === updated.id ? updated : j)));
+    } catch {
+      alert("Nie udało się zaktualizować rangi oferty.");
     }
   };
 
@@ -376,6 +381,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                       onSelect={onSelectJob}
                       onGenerateCV={onGenerateCV}
                       onStatusChange={handleStatusChange}
+                      onRatingChange={handleRatingChange}
                       onReparse={handleReparse}
                       onDelete={handleDelete}
                       onOpenFollowUp={(j) => setFollowUpJob(j)}
@@ -398,7 +404,11 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
           onClose={() => setStatusTransitionJob(null)}
           onSuccess={(updated) => {
             setStatusTransitionJob(null);
-            setJobs((prev) => prev.map((j) => (j.id === updated.id ? updated : j)));
+            if (updated.status === "rejected" || updated.status === "archived") {
+              setJobs((prev) => prev.filter((j) => j.id !== updated.id));
+            } else {
+              setJobs((prev) => prev.map((j) => (j.id === updated.id ? updated : j)));
+            }
           }}
         />
       )}

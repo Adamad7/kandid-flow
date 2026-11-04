@@ -17,6 +17,7 @@ import {
   CheckCircle,
   Archive,
   HelpCircle,
+  XCircle,
 } from "lucide-react";
 import type { JobOfferRead, JobStatusType } from "../../types";
 import {
@@ -32,12 +33,14 @@ import {
 import { cn } from "../../lib/utils";
 import { Badge } from "../ui/Badge";
 import { Button } from "../ui/Button";
+import { RatingStars } from "../ui/RatingStars";
 
 interface KanbanCardProps {
   job: JobOfferRead;
   onSelect: (job: JobOfferRead) => void;
   onGenerateCV: (job: JobOfferRead) => void;
   onStatusChange: (job: JobOfferRead, newStatus: JobStatusType) => void;
+  onRatingChange?: (job: JobOfferRead, newRating: number) => void;
   onReparse: (job: JobOfferRead, mode: "ai" | "traditional") => void;
   onDelete: (job: JobOfferRead) => void;
   onOpenFollowUp?: (job: JobOfferRead) => void;
@@ -50,6 +53,7 @@ export const KanbanCard: React.FC<KanbanCardProps> = ({
   onSelect,
   onGenerateCV,
   onStatusChange,
+  onRatingChange,
   onReparse,
   onDelete,
   onOpenFollowUp,
@@ -85,7 +89,7 @@ export const KanbanCard: React.FC<KanbanCardProps> = ({
           : "border-slate-200/80 hover:border-indigo-400 hover:bg-slate-50/60 dark:border-neutral-800 dark:hover:border-neutral-700 dark:hover:bg-neutral-850"
       }`}
     >
-      {/* Top Header: Portal & Status */}
+      {/* Top Header: Portal, Badges & Rating */}
       <div className="flex items-start justify-between gap-2 mb-2">
         <div className="flex flex-wrap items-center gap-1.5">
           <span className="text-[10px] py-0.5 px-2.5 rounded-full font-bold uppercase tracking-wider bg-slate-100 dark:bg-neutral-800 text-slate-600 dark:text-neutral-300 border border-slate-200/60 dark:border-neutral-700/60">
@@ -100,6 +104,19 @@ export const KanbanCard: React.FC<KanbanCardProps> = ({
               {WORK_MODEL_LABELS[job.work_model] || job.work_model}
             </span>
           )}
+
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="inline-flex items-center ml-0.5"
+            title="Ranga oferty"
+          >
+            <RatingStars
+              rating={job.rating || 1}
+              size="xs"
+              interactive={!!onRatingChange}
+              onChange={(newRating) => onRatingChange?.(job, newRating)}
+            />
+          </div>
         </div>
 
         {/* Quick Menu */}
@@ -217,7 +234,36 @@ export const KanbanCard: React.FC<KanbanCardProps> = ({
                   <option value="archived">Zarchiwizowane</option>
                 </select>
               </div>
+
+              {onRatingChange && (
+                <div className="px-3.5 py-1.5 border-t border-slate-100 dark:border-neutral-800">
+                  <div className="text-[10px] text-slate-400 dark:text-neutral-500 font-semibold uppercase tracking-wider mb-1">
+                    Ranga:
+                  </div>
+                  <RatingStars
+                    rating={job.rating || 1}
+                    interactive
+                    size="xs"
+                    onChange={(newRating) => {
+                      onRatingChange(job, newRating);
+                      setShowMenu(false);
+                    }}
+                  />
+                </div>
+              )}
+
               <div className="my-1.5 border-t border-slate-100 dark:border-neutral-800" />
+              <button
+                type="button"
+                onClick={() => {
+                  setShowMenu(false);
+                  onStatusChange(job, "rejected");
+                }}
+                className="w-full px-3.5 py-1.5 text-left text-xs text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-neutral-800 flex items-center gap-2 cursor-pointer font-medium"
+              >
+                <XCircle className="h-3.5 w-3.5 text-rose-500" />
+                Odrzuć ofertę
+              </button>
               <button
                 type="button"
                 onClick={() => {

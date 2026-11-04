@@ -77,6 +77,47 @@
           </div>
         </div>
 
+        <!-- Offer Rating / Priority -->
+        <div class="form-group rating-form-group">
+          <label class="field-label" for="rating-stars">
+            <span>Ranga oferty (priorytet):</span>
+            <span id="rating-text-hint" class="rating-text-hint">1 — Mało ważna</span>
+          </label>
+          <div class="rating-selector-wrapper">
+            <div id="rating-stars" class="rating-stars" data-rating="1" data-active-color="1" role="radiogroup" aria-label="Ranga oferty (od 1 do 5)">
+              <button type="button" class="star-btn active" data-rating="1" role="radio" aria-checked="true" aria-label="Ranga 1: Mało ważna" title="1 — Mało ważna">
+                <svg class="star-icon" viewBox="0 0 24 24" width="22" height="22">
+                  <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/>
+                </svg>
+              </button>
+              <button type="button" class="star-btn" data-rating="2" role="radio" aria-checked="false" aria-label="Ranga 2: Standardowa" title="2 — Standardowa">
+                <svg class="star-icon" viewBox="0 0 24 24" width="22" height="22">
+                  <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/>
+                </svg>
+              </button>
+              <button type="button" class="star-btn" data-rating="3" role="radio" aria-checked="false" aria-label="Ranga 3: Umiarkowana" title="3 — Umiarkowana">
+                <svg class="star-icon" viewBox="0 0 24 24" width="22" height="22">
+                  <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/>
+                </svg>
+              </button>
+              <button type="button" class="star-btn" data-rating="4" role="radio" aria-checked="false" aria-label="Ranga 4: Ważna" title="4 — Ważna">
+                <svg class="star-icon" viewBox="0 0 24 24" width="22" height="22">
+                  <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/>
+                </svg>
+              </button>
+              <button type="button" class="star-btn" data-rating="5" role="radio" aria-checked="false" aria-label="Ranga 5: Priorytet" title="5 — Priorytet">
+                <svg class="star-icon" viewBox="0 0 24 24" width="22" height="22">
+                  <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/>
+                </svg>
+              </button>
+            </div>
+            <div class="rating-scale-legend">
+              <span>1: mało ważna</span>
+              <span>5: priorytet</span>
+            </div>
+          </div>
+        </div>
+
         <!-- Notes Field -->
         <div class="form-group">
           <label for="custom-notes" class="field-label">

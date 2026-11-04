@@ -1,6 +1,7 @@
 """Unit and integration tests for salary_period and tech_stack_raw ingestion."""
 
 import uuid
+
 import httpx
 import pytest
 from sqlalchemy import select

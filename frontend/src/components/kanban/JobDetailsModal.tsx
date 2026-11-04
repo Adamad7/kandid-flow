@@ -25,8 +25,10 @@ import {
   Archive,
   ArchiveRestore,
   HelpCircle,
+  XCircle,
 } from "lucide-react";
 import { api } from "../../lib/api";
+import { RatingStars } from "../ui/RatingStars";
 import type {
   CVVersionRead,
   JobOfferRead,
@@ -159,6 +161,15 @@ export const JobDetailsModal: React.FC<JobDetailsModalProps> = ({
     }
   };
 
+  const handleRatingChange = async (newRating: number) => {
+    try {
+      const updated = await api.jobs.update(job.id, { rating: newRating });
+      onJobUpdated(updated);
+    } catch {
+      alert("Nie udało się zaktualizować rangi oferty.");
+    }
+  };
+
   const handleAddTag = async () => {
     const trimmed = newTagInput.trim().toLowerCase();
     if (!trimmed) return;
@@ -271,6 +282,20 @@ export const JobDetailsModal: React.FC<JobDetailsModalProps> = ({
                   )}
                 </span>
               )}
+            </div>
+
+            {/* Rating Stars row */}
+            <div className="flex items-center gap-2 mt-2.5">
+              <span className="text-xs font-semibold text-slate-500 dark:text-neutral-400">
+                Ranga oferty:
+              </span>
+              <RatingStars
+                rating={job.rating || 1}
+                interactive
+                size="sm"
+                onChange={handleRatingChange}
+                showLabel
+              />
             </div>
 
             {/* Tags row */}
@@ -472,7 +497,32 @@ export const JobDetailsModal: React.FC<JobDetailsModalProps> = ({
                 </Button>
               )}
 
-              {job.status !== "archived" && (
+              {job.status === "rejected" && (
+                <Button
+                  size="sm"
+                  variant="success"
+                  onClick={() => handleStatusChange("ready")}
+                  className="text-xs rounded-xl font-bold"
+                >
+                  <ArchiveRestore className="h-3.5 w-3.5 mr-1.5" />
+                  Przywróć do gotowych
+                </Button>
+              )}
+
+              {job.status !== "rejected" && job.status !== "archived" && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => handleStatusChange("rejected")}
+                  className="text-xs rounded-xl text-rose-600 dark:text-rose-400 border-rose-200 dark:border-rose-900/60 hover:bg-rose-50 dark:hover:bg-neutral-800"
+                  title="Odrzuć ofertę i przenieś do archiwum"
+                >
+                  <XCircle className="h-3.5 w-3.5 mr-1" />
+                  Odrzuć ofertę
+                </Button>
+              )}
+
+              {job.status !== "archived" && job.status !== "rejected" && (
                 <Button
                   size="sm"
                   variant="outline"

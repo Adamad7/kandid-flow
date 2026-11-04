@@ -77,6 +77,7 @@ class ExtractedJobPayload(BaseModel):
     notes: str | None = Field(
         default=None, description="Optional custom notes entered in the extension popup"
     )
+    rating: int = Field(default=1, ge=1, le=5, description="Offer priority/rating (1-5)")
     custom_metadata: ExtractorDiagnosticMetadata | None = Field(
         default=None, description="Extractor-specific diagnostic metadata"
     )

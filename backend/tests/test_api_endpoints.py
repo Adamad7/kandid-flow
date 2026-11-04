@@ -370,3 +370,65 @@ async def test_inbox_work_model_details_sanitization(async_client: httpx.AsyncCl
         assert job_check3.json()["work_model_details"] is None
     finally:
         await async_client.delete(f"/api/v1/jobs/{job_id}")
+
+
+@pytest.mark.asyncio
+async def test_job_offer_rating_lifecycle(async_client: httpx.AsyncClient):
+    """Verify rating default value, updates via inbox & PATCH, and validation constraints."""
+    test_url = f"https://justjoin.it/offers/rating-test-{uuid.uuid4()}"
+    headers = {"Authorization": f"Bearer {settings.EXTENSION_API_TOKEN}"}
+
+    # 1. Ingest without rating -> defaults to 1
+    payload = {
+        "source_url": test_url,
+        "source_portal": "justjoin",
+        "title": "Rating QA Engineer",
+        "company": "RatingCorp",
+        "description_text": "Role testing rating lifecycle.",
+    }
+    create_res = await async_client.post("/api/v1/inbox", headers=headers, json=payload)
+    assert create_res.status_code == 201
+    job_id = create_res.json()["id"]
+
+    try:
+        get_res = await async_client.get(f"/api/v1/jobs/{job_id}")
+        assert get_res.status_code == 200
+        assert get_res.json()["rating"] == 1
+
+        # 2. Re-ingest with updated rating=4
+        payload["rating"] = 4
+        update_inbox_res = await async_client.post("/api/v1/inbox", headers=headers, json=payload)
+        assert update_inbox_res.status_code == 201
+
+        get_res2 = await async_client.get(f"/api/v1/jobs/{job_id}")
+        assert get_res2.status_code == 200
+        assert get_res2.json()["rating"] == 4
+
+        # 3. PATCH rating to 5
+        patch_res = await async_client.patch(f"/api/v1/jobs/{job_id}", json={"rating": 5})
+        assert patch_res.status_code == 200
+        assert patch_res.json()["rating"] == 5
+
+        # 4. Ingest with invalid rating (< 1) -> 422
+        bad_url = f"https://justjoin.it/offers/rating-bad-{uuid.uuid4()}"
+        bad_payload_low = {**payload, "source_url": bad_url, "rating": 0}
+        res_bad_low = await async_client.post(
+            "/api/v1/inbox", headers=headers, json=bad_payload_low
+        )
+        assert res_bad_low.status_code == 422
+
+        # 5. Ingest with invalid rating (> 5) -> 422
+        bad_payload_high = {**payload, "source_url": bad_url, "rating": 6}
+        res_bad_high = await async_client.post(
+            "/api/v1/inbox", headers=headers, json=bad_payload_high
+        )
+        assert res_bad_high.status_code == 422
+
+        # 6. PATCH with invalid rating (< 1 or > 5) -> 422
+        patch_bad_low = await async_client.patch(f"/api/v1/jobs/{job_id}", json={"rating": 0})
+        assert patch_bad_low.status_code == 422
+
+        patch_bad_high = await async_client.patch(f"/api/v1/jobs/{job_id}", json={"rating": 6})
+        assert patch_bad_high.status_code == 422
+    finally:
+        await async_client.delete(f"/api/v1/jobs/{job_id}")

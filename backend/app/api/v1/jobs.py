@@ -64,9 +64,9 @@ async def list_jobs(
         stmt = stmt.where(JobOffer.status == status_filter)
     else:
         if archived:
-            stmt = stmt.where(JobOffer.status == "archived")
+            stmt = stmt.where(JobOffer.status.in_(["archived", "rejected"]))
         else:
-            stmt = stmt.where(JobOffer.status != "archived")
+            stmt = stmt.where(JobOffer.status.not_in(["archived", "rejected"]))
     if work_model:
         stmt = stmt.where(JobOffer.work_model == work_model)
     if source_portal:
@@ -124,7 +124,7 @@ async def batch_update_job_status(
         today = datetime.now(UTC).date()
         check_stmt = select(JobOffer.id).where(
             JobOffer.id.in_(payload.job_ids),
-            JobOffer.status == "archived",
+            JobOffer.status.in_(["archived", "rejected"]),
             JobOffer.application_deadline.is_not(None),
             JobOffer.application_deadline < today,
             JobOffer.applied_at.is_(None),
@@ -245,7 +245,7 @@ async def update_job_by_id(
     target_status = update_dict.get("status")
     if target_status:
         pre_app_statuses = {"inbox", "parsing", "failed_parsing", "ready"}
-        if job.status == "archived" and target_status in pre_app_statuses:
+        if job.status in ("archived", "rejected") and target_status in pre_app_statuses:
             today = datetime.now(UTC).date()
             if (
                 job.application_deadline is not None

@@ -76,6 +76,7 @@ Stores imported job postings and recruitment pipeline statuses.
 * `salary_max`: `INTEGER NULL`
 * `salary_currency`: `VARCHAR(10) DEFAULT 'PLN'`
 * `contract_type`: `VARCHAR(50)` (B2B, UoP, etc.)
+* `rating`: `INTEGER NOT NULL DEFAULT 1` (offer priority score from 1 [least important] to 5 [critical/top priority])
 * `raw_payload`: `JSONB NOT NULL` (original extraction payload from extension validated via `ExtractedJobPayload`)
 * `structured_data`: `JSONB NULL` (must-have/nice-to-have requirements, tech stack, role summary parsed by AI validated via `StructuredJobData`)
 * `notes`: `TEXT NULL`
@@ -176,10 +177,11 @@ Runtime application configuration (Non-secret settings only; all API keys and to
 * **Stack:** React 18/19 + Vite + TypeScript + Tailwind CSS + shadcn/ui.
 * **Localization:** UI labels, placeholders, and actions are rendered in Polish.
 * **Core Views:**
-  1. **Job Pipeline (Queue / Kanban):** Job cards with work model badges, location badges, salary badges, parsing status indicators (`parsing` spinner / `failed_parsing` retry button), and application countdown timers. Includes an "Upcoming Interviews" widget highlighting scheduled recruitment events.
-  2. **Job Details & Recruitment Timeline:** Detailed job description, structured requirements breakdown, and recruitment events management (`/api/v1/events`: add/edit stages, interview links, preparation notes, mark as completed).
-  3. **CV Generator Dialog:** Modal offering starting point selection: either raw Candidate Knowledge Base or an existing **Archetype Preset** (`base_cv_presets`), tailoring mode selector (*"Tylko podsumowanie i słowa kluczowe"* [`targeted_summary_keywords`] vs *"Pełne dostosowanie"* [`full`]), section selection modal (persisting defaults), custom AI instructions field, 2D loading animation during processing, immediately saving `v1` (with `parent_preset_id` if selected) to the database before redirecting to the editor.
-  4. **CV Editor (Split-View):**
+  1. **Job Pipeline (Queue / Kanban):** Job cards with work model badges, location badges, salary badges, parsing status indicators (`parsing` spinner / `failed_parsing` retry button), application countdown timers, and priority rating stars (`RatingStars`, 1-5 filled stars). The active Kanban board strictly excludes rejected offers (which automatically route to the archive) across active columns: `inbox`, `ready`, `applied`, `interview`, and `offer`. Includes an "Upcoming Interviews" widget highlighting scheduled recruitment events.
+  2. **Job List View (Lista ofert):** Data grid with company location column (`Lokalizacja`), alphabetical location sorting (`sortField === "location"`), location filter dropdown derived from loaded postings, interactive priority rating (`RatingStars` 1-5 with smooth color transitions: yellow -> warm gold -> amber -> dark amber -> deep amber), and bulk management. Active list automatically routes rejected offers to the Archive.
+  3. **Job Details & Recruitment Timeline:** Detailed job description, structured requirements breakdown, interactive priority rating selector with instant backend synchronization, recruitment events management (`/api/v1/events`), and stage transition controls (including direct rejection).
+  4. **CV Generator Dialog:** Modal offering starting point selection: either raw Candidate Knowledge Base or an existing **Archetype Preset** (`base_cv_presets`), tailoring mode selector (*"Tylko podsumowanie i słowa kluczowe"* [`targeted_summary_keywords`] vs *"Pełne dostosowanie"* [`full`]), section selection modal (persisting defaults), custom AI instructions field, 2D loading animation during processing, immediately saving `v1` (with `parent_preset_id` if selected) to the database before redirecting to the editor.
+  5. **CV Editor (Split-View):**
      * Header navbar: role & company title, active version switcher (`v1`, `v2`...), quick-save button with visual indicators, and global theme switcher (`ThemeToggle`).
      * Left pane: structured block editing with inline AI refinement actions (*"Skróć podsumowanie"*, *"Zmień nacisk na DevOps"*), and dedicated CV styling panel (`CVStylePanel`):
        - Typography controls: 2-column font family and weight (clean Polish labels), full-width font size range slider with dedicated `+` / `-` step buttons and direct numeric input, and per-element reset button defaulting individual font family to the active document font.
@@ -188,9 +190,9 @@ Runtime application configuration (Non-secret settings only; all API keys and to
      * Draggable Resizer: interactive splitter bar allowing smooth horizontal resizing of the left and right panes on desktop (25% to 75% range).
      * Right pane: live, debounced (400ms) multi-page vector SVG preview (`string[]` rendered vertically page-by-page) with interactive zoom toolbar and non-passive `Ctrl + mouse wheel` zooming.
      * Mobile view: automatic tab switching (*Edycja* vs *Podgląd*) for ergonomic mobile editing.
-  5. **Candidate Knowledge Base:** Modular block management (education, certificates, projects, experience) supporting flexible date expressions (`YYYY`, `YYYY-MM`, `YYYY-MM-DD`, `present`).
-  6. **Base CV Presets / Archetypes Manager:** Management workspace (`/api/v1/presets`) for creating, editing, live-previewing (via Typst SVG), and deleting role archetype presets.
-  7. **Archived Offers (Archiwum):** Dedicated workspace presenting archived and expired job offers, featuring status restoration workflow, auto-archiving inspection, and batch restoration/deletion.
+  6. **Candidate Knowledge Base:** Modular block management (education, certificates, projects, experience) supporting flexible date expressions (`YYYY`, `YYYY-MM`, `YYYY-MM-DD`, `present`).
+  7. **Base CV Presets / Archetypes Manager:** Management workspace (`/api/v1/presets`) for creating, editing, live-previewing (via Typst SVG), and deleting role archetype presets.
+  8. **Archived Offers (Archiwum):** Dedicated workspace presenting archived and rejected job offers (`status IN ('archived', 'rejected')`), featuring a status filter (*Wszystkie statusy w archiwum*, *Odrzucone*, *Zarchiwizowane*), distinctive rose badge for rejected postings, status restoration workflow, auto-archiving inspection, and batch restoration/deletion.
 
 ---
 

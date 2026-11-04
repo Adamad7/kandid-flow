@@ -20,6 +20,7 @@ export const MOCK_JOB_OFFERS: JobOfferRead[] = [
     salary_currency: "PLN",
     salary_period: "month",
     contract_type: "B2B (+ 26 dni płatnego urlopu)",
+    rating: 5,
     notes: "Bardzo ciekawy stack technologiczny, projekt oparty na architekturze mikroserwisowej z LLM.",
     raw_payload: {
       source_url: "https://justjoin.it/offers/innovatetech-senior-fullstack-python-react",
@@ -33,6 +34,7 @@ export const MOCK_JOB_OFFERS: JobOfferRead[] = [
       tech_stack_raw: ["Python", "React", "Docker"],
       salary_raw: "22 000 - 28 000 PLN netto B2B",
       work_model: "remote",
+      rating: 5,
       custom_metadata: {
         raw_selectors: [".offer-details", ".salary-badge"],
       },
@@ -90,6 +92,7 @@ export const MOCK_JOB_OFFERS: JobOfferRead[] = [
     salary_currency: "PLN",
     salary_period: "month",
     contract_type: "B2B",
+    rating: 4,
     notes: "Etap: Rozmowa techniczna zaplanowana na czwartek godz. 11:00.",
     raw_payload: {
       source_url: "https://nofluffjobs.com/job/cloud-devops-kubernetes-specialist",
@@ -103,6 +106,7 @@ export const MOCK_JOB_OFFERS: JobOfferRead[] = [
       tech_stack_raw: ["Kubernetes", "AWS", "Terraform"],
       salary_raw: "25 000 - 32 000 PLN B2B",
       work_model: "remote",
+      rating: 4,
       custom_metadata: {
         raw_selectors: [".nfj-salary", ".nfj-details"],
       },
@@ -149,6 +153,7 @@ export const MOCK_JOB_OFFERS: JobOfferRead[] = [
     salary_currency: "PLN",
     salary_period: "month",
     contract_type: "Umowa o Pracę",
+    rating: 3,
     notes: "Aplikacja wysłana z dopasowanym CV zoptymalizowanym pod kątem Design Systemów.",
     raw_payload: {
       source_url: "https://pracuj.pl/praca/frontend-lead-architect-krakow",
@@ -162,6 +167,7 @@ export const MOCK_JOB_OFFERS: JobOfferRead[] = [
       tech_stack_raw: ["React", "TypeScript", "Tailwind"],
       salary_raw: "20 000 - 26 000 PLN brutto UoP",
       work_model: "hybrid",
+      rating: 3,
       custom_metadata: {
         raw_selectors: [".offer-view", ".salary"],
       },

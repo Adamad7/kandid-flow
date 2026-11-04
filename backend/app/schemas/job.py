@@ -119,6 +119,7 @@ class JobOfferBase(BaseModel):
         default="month", description="Compensation period: month, day, or hour"
     )
     contract_type: str | None = Field(default=None, description="Type of contract: B2B, UoP, etc.")
+    rating: int = Field(default=1, ge=1, le=5, description="Offer priority/rating (1-5)")
     notes: str | None = Field(
         default=None, description="Personal candidate notes regarding this offer"
     )
@@ -162,6 +163,7 @@ class JobOfferUpdate(BaseModel):
     salary_currency: str | None = None
     salary_period: SalaryPeriodType | None = None
     contract_type: str | None = None
+    rating: int | None = Field(default=None, ge=1, le=5, description="Offer priority/rating (1-5)")
     structured_data: StructuredJobData | None = None
     notes: str | None = None
 

@@ -376,7 +376,11 @@ class JobParserWorker:
             if mode == "traditional":
                 # Heuristic / traditional rule-based normalization without calling LLM
                 logger.info("Executing traditional (rule-based) parsing for job %s", job.id)
-                traditional_tech = tech_stack_raw if tech_stack_raw else [r for r in requirements if len(r) < 30][:8]
+                traditional_tech = (
+                    tech_stack_raw
+                    if tech_stack_raw
+                    else [r for r in requirements if len(r) < 30][:8]
+                )
                 structured = StructuredJobData(
                     role_summary=f"Rola {role_label} w firmie {company_label}.",
                     must_have=requirements[:8] if requirements else ["Znajomość technologii IT"],
@@ -465,13 +469,14 @@ class JobParserWorker:
                     f"({job.work_model_details or ''})"
                 )
                 initial_tech_stack_info = (
-                    f"\nExplicit Portal Tech Stack:\n" + "\n".join(f"- {t}" for t in tech_stack_raw)
+                    "\nExplicit Portal Tech Stack:\n" + "\n".join(f"- {t}" for t in tech_stack_raw)
                     if tech_stack_raw
                     else ""
                 )
 
                 user_prompt = (
-                    f"Title: {title}\nCompany: {company}\n{initial_model_info}{initial_tech_stack_info}\nRequirements:\n"
+                    f"Title: {title}\nCompany: {company}\n"
+                    f"{initial_model_info}{initial_tech_stack_info}\nRequirements:\n"
                     + "\n".join(f"- {r}" for r in requirements[:15])
                     + f"\n\nDescription:\n{raw_text[:8000]}\n\n"
                     + f"{work_model_rule}\n\n"
@@ -492,9 +497,7 @@ class JobParserWorker:
                 # Normalize structured data with Pydantic
                 ai_tech = parsed_data.get("tech_stack") or []
                 final_tech = (
-                    list(dict.fromkeys(tech_stack_raw + ai_tech))
-                    if tech_stack_raw
-                    else ai_tech
+                    list(dict.fromkeys(tech_stack_raw + ai_tech)) if tech_stack_raw else ai_tech
                 )
                 structured = StructuredJobData(
                     role_summary=parsed_data.get("role_summary"),

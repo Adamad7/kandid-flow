@@ -139,7 +139,7 @@ async def test_auto_archive_does_not_move_applied_or_non_expired_jobs():
 
 @pytest.mark.asyncio
 async def test_list_jobs_archived_filter(async_client: httpx.AsyncClient):
-    """Verify list_jobs filters archived offers according to the archived query parameter."""
+    """Verify list_jobs filters archived and rejected offers by the archived param."""
     today = datetime.now(UTC).date()
     url_id = uuid.uuid4()
 
@@ -159,19 +159,29 @@ async def test_list_jobs_archived_filter(async_client: httpx.AsyncClient):
         application_deadline=today - timedelta(days=1),
         applied_at=None,
     )
+    rejected_job = create_job(
+        url=f"https://justjoin.it/offers/pytest-list-rejected-{url_id}",
+        company_name="Rejected Corp",
+        role_title="Rejected Role",
+        status="rejected",
+        application_deadline=today - timedelta(days=1),
+        applied_at=None,
+    )
 
     async with db_session_factory() as session:
-        session.add_all([active_job, archived_job])
+        session.add_all([active_job, archived_job, rejected_job])
         await session.commit()
         await session.refresh(active_job)
         await session.refresh(archived_job)
+        await session.refresh(rejected_job)
 
-    # 1. Default (archived=False) should include active_job and exclude archived_job
+    # 1. Default (archived=False) excludes archived and rejected
     res_default = await async_client.get("/api/v1/jobs")
     assert res_default.status_code == 200
     ids_default = [j["id"] for j in res_default.json()]
     assert str(active_job.id) in ids_default
     assert str(archived_job.id) not in ids_default
+    assert str(rejected_job.id) not in ids_default
 
     # 2. Explicit archived=false
     res_active = await async_client.get("/api/v1/jobs?archived=false")
@@ -179,12 +189,14 @@ async def test_list_jobs_archived_filter(async_client: httpx.AsyncClient):
     ids_active = [j["id"] for j in res_active.json()]
     assert str(active_job.id) in ids_active
     assert str(archived_job.id) not in ids_active
+    assert str(rejected_job.id) not in ids_active
 
-    # 3. Explicit archived=true
+    # 3. Explicit archived=true should return both archived and rejected jobs
     res_archived = await async_client.get("/api/v1/jobs?archived=true")
     assert res_archived.status_code == 200
     ids_archived = [j["id"] for j in res_archived.json()]
     assert str(archived_job.id) in ids_archived
+    assert str(rejected_job.id) in ids_archived
     assert str(active_job.id) not in ids_archived
 
     # 4. Filter by status=archived
@@ -193,6 +205,15 @@ async def test_list_jobs_archived_filter(async_client: httpx.AsyncClient):
     ids_status_archived = [j["id"] for j in res_status_archived.json()]
     assert str(archived_job.id) in ids_status_archived
     assert str(active_job.id) not in ids_status_archived
+    assert str(rejected_job.id) not in ids_status_archived
+
+    # 5. Filter by status=rejected
+    res_status_rejected = await async_client.get("/api/v1/jobs?status=rejected")
+    assert res_status_rejected.status_code == 200
+    ids_status_rejected = [j["id"] for j in res_status_rejected.json()]
+    assert str(rejected_job.id) in ids_status_rejected
+    assert str(active_job.id) not in ids_status_rejected
+    assert str(archived_job.id) not in ids_status_rejected
 
 
 @pytest.mark.asyncio
@@ -237,6 +258,53 @@ async def test_restore_expired_unapplied_job_to_ready_raises_400(
     batch_res = await async_client.post(
         "/api/v1/jobs/batch/status",
         json={"job_ids": [str(expired_archived_job.id)], "status": "ready"},
+    )
+    assert batch_res.status_code == 400
+    assert "Nie można przywrócić oferty do etapu przygotowania" in batch_res.json()["detail"]
+
+
+@pytest.mark.asyncio
+async def test_restore_expired_unapplied_rejected_job_to_ready_raises_400(
+    async_client: httpx.AsyncClient,
+):
+    """Verify attempting to restore expired unapplied rejected job raises 400."""
+    today = datetime.now(UTC).date()
+    url_id = uuid.uuid4()
+
+    expired_rejected_job = create_job(
+        url=f"https://justjoin.it/offers/pytest-restore-rejected-{url_id}",
+        company_name="Rejected Block Corp",
+        role_title="Expired Rejected Role",
+        status="rejected",
+        application_deadline=today - timedelta(days=2),
+        applied_at=None,
+    )
+
+    async with db_session_factory() as session:
+        session.add(expired_rejected_job)
+        await session.commit()
+        await session.refresh(expired_rejected_job)
+
+    # 1. Attempt PATCH to 'ready'
+    patch_res = await async_client.patch(
+        f"/api/v1/jobs/{expired_rejected_job.id}",
+        json={"status": "ready"},
+    )
+    assert patch_res.status_code == 400
+    assert "Nie można przywrócić oferty do etapu przygotowania" in patch_res.json()["detail"]
+
+    # 2. Attempt PATCH to 'inbox'
+    patch_inbox_res = await async_client.patch(
+        f"/api/v1/jobs/{expired_rejected_job.id}",
+        json={"status": "inbox"},
+    )
+    assert patch_inbox_res.status_code == 400
+    assert "Nie można przywrócić oferty do etapu przygotowania" in patch_inbox_res.json()["detail"]
+
+    # 3. Attempt batch status update to 'ready'
+    batch_res = await async_client.post(
+        "/api/v1/jobs/batch/status",
+        json={"job_ids": [str(expired_rejected_job.id)], "status": "ready"},
     )
     assert batch_res.status_code == 400
     assert "Nie można przywrócić oferty do etapu przygotowania" in batch_res.json()["detail"]

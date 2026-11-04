@@ -51,6 +51,9 @@ document.addEventListener("DOMContentLoaded", async () => {
   const duplicateIcon = document.getElementById("duplicate-icon");
   const duplicateTitle = document.getElementById("duplicate-title");
   const duplicateDesc = document.getElementById("duplicate-desc");
+  const ratingStarsContainer = document.getElementById("rating-stars");
+  const ratingTextHint = document.getElementById("rating-text-hint");
+  const starButtons = ratingStarsContainer ? ratingStarsContainer.querySelectorAll(".star-btn") : [];
   const customNotesEl = document.getElementById("custom-notes");
   const saveJobBtn = document.getElementById("save-job-btn");
   const saveSpinner = document.getElementById("save-spinner");
@@ -72,10 +75,52 @@ document.addEventListener("DOMContentLoaded", async () => {
   let currentPayload = null;
   let activeTab = null;
   let isCurrentPageSupported = false;
+  let selectedRating = 1;
+
+  const RATING_LABELS = {
+    1: "1 — Mało ważna",
+    2: "2 — Standardowa",
+    3: "3 — Umiarkowana",
+    4: "4 — Ważna",
+    5: "5 — Priorytet",
+  };
 
   const DEFAULT_BACKEND_URL = "http://localhost:8000";
   const DEFAULT_API_TOKEN = "kandid_dev_secret_token_replace_in_production_32chars";
   const CURRENT_EXTRACTOR_VERSION = "1.3.1";
+
+  /**
+   * Updates rating UI elements (active star classes, container data-active-color, aria tags, and hint text).
+   */
+  function updateRatingUI(rating, isPreview = false) {
+    if (!ratingStarsContainer) return;
+
+    ratingStarsContainer.setAttribute("data-active-color", String(rating));
+    if (!isPreview) {
+      ratingStarsContainer.setAttribute("data-rating", String(rating));
+    }
+
+    starButtons.forEach((btn) => {
+      const btnRating = parseInt(btn.dataset.rating, 10);
+      btn.classList.toggle("active", btnRating <= rating);
+      if (!isPreview) {
+        btn.setAttribute("aria-checked", btnRating === rating ? "true" : "false");
+      }
+    });
+
+    if (ratingTextHint) {
+      ratingTextHint.textContent = RATING_LABELS[rating] || `${rating}`;
+    }
+  }
+
+  /**
+   * Sets the active selected rating (clamped between 1 and 5) and updates UI.
+   */
+  function setRating(rating) {
+    const clamped = Math.max(1, Math.min(5, parseInt(rating, 10) || 1));
+    selectedRating = clamped;
+    updateRatingUI(clamped, false);
+  }
 
   /**
    * Extracts hostname from a given URL string safely.
@@ -199,6 +244,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   function showUnsupportedView(tabUrl, isSystemPage) {
     isCurrentPageSupported = false;
     currentPayload = null;
+    setRating(1);
 
     supportedContent.classList.add("hidden");
     unsupportedView.classList.remove("hidden");
@@ -281,6 +327,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         currentPayload = response.payload;
       }
 
+      setRating(1);
       renderExtractedOffer(currentPayload);
       await checkDuplicateOffer(currentPayload.source_url);
     } catch (error) {
@@ -469,6 +516,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       requirements_raw: currentPayload.requirements_raw || [],
       application_deadline: currentPayload.application_deadline || null,
       notes: notesValue || null,
+      rating: selectedRating,
       custom_metadata: currentPayload.custom_metadata || null,
     };
 
@@ -504,6 +552,9 @@ document.addEventListener("DOMContentLoaded", async () => {
       saveBtnText.textContent = "✅ Oferta zapisana!";
       saveJobBtn.disabled = true;
 
+      // Reset rating to default state (1)
+      setRating(1);
+
       dashboardLinkWrapper.classList.remove("hidden");
     } catch (err) {
       saveSpinner.classList.add("hidden");
@@ -514,6 +565,35 @@ document.addEventListener("DOMContentLoaded", async () => {
       statusMessage.className = "status-banner error";
       statusMessage.classList.remove("hidden");
     }
+  }
+
+  // Star Rating Interaction Listeners
+  if (ratingStarsContainer) {
+    starButtons.forEach((btn) => {
+      const btnRating = parseInt(btn.dataset.rating, 10);
+
+      btn.addEventListener("click", () => {
+        setRating(btnRating);
+      });
+
+      btn.addEventListener("mouseenter", () => {
+        updateRatingUI(btnRating, true);
+      });
+
+      btn.addEventListener("focus", () => {
+        updateRatingUI(btnRating, true);
+      });
+    });
+
+    ratingStarsContainer.addEventListener("mouseleave", () => {
+      updateRatingUI(selectedRating, false);
+    });
+
+    ratingStarsContainer.addEventListener("focusout", (event) => {
+      if (!ratingStarsContainer.contains(event.relatedTarget)) {
+        updateRatingUI(selectedRating, false);
+      }
+    });
   }
 
   // Event Listeners — Main View Actions

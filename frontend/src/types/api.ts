@@ -86,6 +86,7 @@ export interface ExtractedJobPayload {
   tech_stack_raw?: string[];
   application_deadline?: string | null;
   notes?: string | null;
+  rating: number;
   custom_metadata?: ExtractorDiagnosticMetadata | null;
 }
 
@@ -352,6 +353,7 @@ export interface JobOfferBase {
   salary_currency?: string | null;
   salary_period?: SalaryPeriodType | null;
   contract_type?: string | null;
+  rating: number;
   notes?: string | null;
 }
 
@@ -380,12 +382,14 @@ export interface JobOfferUpdate {
   salary_currency?: string | null;
   salary_period?: SalaryPeriodType | null;
   contract_type?: string | null;
+  rating?: number;
   structured_data?: StructuredJobData | null;
   notes?: string | null;
 }
 
 export interface JobOfferRead extends JobOfferBase {
   id: string; // UUID
+  rating: number;
   raw_payload: ExtractedJobPayload;
   structured_data?: StructuredJobData | null;
   created_at: string; // ISO 8601
