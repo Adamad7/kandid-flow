@@ -232,7 +232,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
   return (
     <div className="space-y-4">
       {/* Top Filter and Search Bar */}
-      <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-none dark:border-neutral-800 dark:bg-neutral-900">
+      <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-none dark:border-transparent dark:bg-neutral-900">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
           <div className="flex flex-1 items-center gap-3 max-w-xl">
             <div className="relative flex-1 max-w-md">
@@ -283,7 +283,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
               <select
                 value={workModelFilter}
                 onChange={(e) => setWorkModelFilter(e.target.value)}
-                className="w-full text-xs font-medium rounded-xl border border-slate-200 dark:border-neutral-700 bg-slate-50/60 dark:bg-neutral-950 px-2.5 py-2 text-slate-800 dark:text-neutral-200 focus:bg-white dark:focus:bg-neutral-900 focus:border-indigo-500 dark:focus:border-indigo-400 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none transition-all cursor-pointer"
+                className="w-full text-xs font-medium rounded-xl border border-slate-200 dark:border-transparent bg-slate-50/60 dark:bg-neutral-950 px-2.5 py-2 text-slate-800 dark:text-neutral-200 outline-none focus:outline-none focus:bg-white dark:focus:bg-neutral-950 focus:border-indigo-500 dark:focus:border-indigo-500/50 focus:ring-2 focus:ring-indigo-500/20 dark:focus:ring-indigo-500/40 transition-colors cursor-pointer"
               >
                 <option value="all">Wszystkie tryby</option>
                 <option value="remote">Tylko zdalnie</option>
@@ -299,7 +299,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
               <select
                 value={portalFilter}
                 onChange={(e) => setPortalFilter(e.target.value)}
-                className="w-full text-xs font-medium rounded-xl border border-slate-200 dark:border-neutral-700 bg-slate-50/60 dark:bg-neutral-950 px-2.5 py-2 text-slate-800 dark:text-neutral-200 focus:bg-white dark:focus:bg-neutral-900 focus:border-indigo-500 dark:focus:border-indigo-400 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none transition-all cursor-pointer"
+                className="w-full text-xs font-medium rounded-xl border border-slate-200 dark:border-transparent bg-slate-50/60 dark:bg-neutral-950 px-2.5 py-2 text-slate-800 dark:text-neutral-200 outline-none focus:outline-none focus:bg-white dark:focus:bg-neutral-950 focus:border-indigo-500 dark:focus:border-indigo-500/50 focus:ring-2 focus:ring-indigo-500/20 dark:focus:ring-indigo-500/40 transition-colors cursor-pointer"
               >
                 <option value="all">Wszystkie portale</option>
                 <option value="justjoin">Just Join IT</option>

@@ -557,7 +557,7 @@ export const JobListView: React.FC<JobListViewProps> = ({
     <div className="space-y-4">
       {/* Archive Header Banner */}
       {isArchive && (
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-2xl border border-slate-200/80 bg-white p-5 shadow-none dark:border-neutral-800 dark:bg-neutral-900">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-2xl border border-slate-200/80 bg-white p-5 shadow-none dark:border-transparent dark:bg-neutral-900">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-700 dark:bg-neutral-800 dark:text-neutral-300">
               <Archive className="h-5 w-5" />
@@ -575,7 +575,7 @@ export const JobListView: React.FC<JobListViewProps> = ({
       )}
 
       {/* Control Bar: Search & Filters */}
-      <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-none dark:border-neutral-800 dark:bg-neutral-900">
+      <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-none dark:border-transparent dark:bg-neutral-900">
         <div className="flex items-center justify-between gap-3">
           <div className="flex flex-1 items-center gap-3 max-w-xl">
             <div className="relative flex-1">
@@ -626,7 +626,7 @@ export const JobListView: React.FC<JobListViewProps> = ({
               <select
                 value={workModelFilter}
                 onChange={(e) => setWorkModelFilter(e.target.value)}
-                className="w-full text-xs font-medium rounded-xl border border-slate-200 dark:border-neutral-700 bg-slate-50/60 dark:bg-neutral-950 px-2.5 py-2 text-slate-800 dark:text-neutral-200 focus:bg-white dark:focus:bg-neutral-900 focus:border-indigo-500 dark:focus:border-indigo-400 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none transition-all cursor-pointer"
+                className="w-full text-xs font-medium rounded-xl border border-slate-200 dark:border-transparent bg-slate-50/60 dark:bg-neutral-950 px-2.5 py-2 text-slate-800 dark:text-neutral-200 outline-none focus:outline-none focus:bg-white dark:focus:bg-neutral-950 focus:border-indigo-500 dark:focus:border-indigo-500/50 focus:ring-2 focus:ring-indigo-500/20 dark:focus:ring-indigo-500/40 transition-colors cursor-pointer"
               >
                 <option value="all">Wszystkie tryby</option>
                 <option value="remote">Tylko zdalnie</option>
@@ -643,7 +643,7 @@ export const JobListView: React.FC<JobListViewProps> = ({
                 <select
                   value={statusFilter}
                   onChange={(e) => setStatusFilter(e.target.value)}
-                  className="w-full text-xs font-medium rounded-xl border border-slate-200 dark:border-neutral-700 bg-slate-50/60 dark:bg-neutral-950 px-2.5 py-2 text-slate-800 dark:text-neutral-200 focus:bg-white dark:focus:bg-neutral-900 focus:border-indigo-500 dark:focus:border-indigo-400 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none transition-all cursor-pointer"
+                  className="w-full text-xs font-medium rounded-xl border border-slate-200 dark:border-transparent bg-slate-50/60 dark:bg-neutral-950 px-2.5 py-2 text-slate-800 dark:text-neutral-200 outline-none focus:outline-none focus:bg-white dark:focus:bg-neutral-950 focus:border-indigo-500 dark:focus:border-indigo-500/50 focus:ring-2 focus:ring-indigo-500/20 dark:focus:ring-indigo-500/40 transition-colors cursor-pointer"
                 >
                   <option value="all">Wszystkie statusy</option>
                   <option value="inbox">Do przetworzenia</option>
@@ -663,7 +663,7 @@ export const JobListView: React.FC<JobListViewProps> = ({
               <select
                 value={tagFilter}
                 onChange={(e) => setTagFilter(e.target.value)}
-                className="w-full text-xs font-medium rounded-xl border border-slate-200 dark:border-neutral-700 bg-slate-50/60 dark:bg-neutral-950 px-2.5 py-2 text-slate-800 dark:text-neutral-200 focus:bg-white dark:focus:bg-neutral-900 focus:border-indigo-500 dark:focus:border-indigo-400 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none transition-all cursor-pointer"
+                className="w-full text-xs font-medium rounded-xl border border-slate-200 dark:border-transparent bg-slate-50/60 dark:bg-neutral-950 px-2.5 py-2 text-slate-800 dark:text-neutral-200 outline-none focus:outline-none focus:bg-white dark:focus:bg-neutral-950 focus:border-indigo-500 dark:focus:border-indigo-500/50 focus:ring-2 focus:ring-indigo-500/20 dark:focus:ring-indigo-500/40 transition-colors cursor-pointer"
               >
                 <option value="all">Wszystkie tagi</option>
                 {availableTags.map((t) => (
@@ -746,7 +746,7 @@ export const JobListView: React.FC<JobListViewProps> = ({
                     value={bulkStatus}
                     onChange={(e) => setBulkStatus(e.target.value as JobStatusType)}
                     disabled={isBatchProcessing}
-                    className="h-8.5 rounded-xl border border-slate-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 px-3 py-1 text-xs text-slate-800 dark:text-neutral-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 disabled:opacity-50 cursor-pointer"
+                    className="h-8.5 rounded-xl border border-slate-200 dark:border-transparent bg-white dark:bg-neutral-800 px-3 py-1 text-xs text-slate-800 dark:text-neutral-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 disabled:opacity-50 cursor-pointer"
                   >
                     <option value="inbox">Do przetworzenia</option>
                     <option value="ready">Gotowe do aplikacji</option>
@@ -801,7 +801,7 @@ export const JobListView: React.FC<JobListViewProps> = ({
       )}
 
       {/* Main List Container */}
-      <div className="rounded-2xl border border-slate-200/80 bg-white shadow-none dark:border-neutral-800 dark:bg-neutral-900 overflow-hidden">
+      <div className="rounded-2xl border border-slate-200/80 bg-white shadow-none dark:border-transparent dark:bg-neutral-900 overflow-hidden">
         <div className="overflow-x-auto min-w-full">
           <div className="md:min-w-[960px]">
             {/* Table / List Header */}
@@ -917,7 +917,7 @@ export const JobListView: React.FC<JobListViewProps> = ({
                       key={job.id}
                       onClick={() => onSelectJob(job)}
                       className={cn(
-                        "group px-6 py-4 hover:bg-slate-50/80 dark:hover:bg-neutral-850 transition-colors cursor-pointer grid grid-cols-1 md:grid-cols-[40px_minmax(50px,0.5fr)_minmax(180px,2.5fr)_minmax(110px,1.4fr)_minmax(120px,1.4fr)_minmax(95px,1.1fr)_minmax(110px,1.3fr)_minmax(130px,1.6fr)] gap-3 md:gap-4 items-center",
+                        "group px-6 py-4 hover:bg-slate-50/80 dark:hover:bg-neutral-800/35 transition-colors cursor-pointer grid grid-cols-1 md:grid-cols-[40px_minmax(50px,0.5fr)_minmax(180px,2.5fr)_minmax(110px,1.4fr)_minmax(120px,1.4fr)_minmax(95px,1.1fr)_minmax(110px,1.3fr)_minmax(130px,1.6fr)] gap-3 md:gap-4 items-center",
                         isSelected && "ring-2 ring-indigo-600 dark:ring-indigo-500 bg-indigo-50/20 dark:bg-neutral-900"
                       )}
                     >
@@ -1214,7 +1214,7 @@ export const JobListView: React.FC<JobListViewProps> = ({
         </div>
 
         {/* Footer info banner */}
-        <div className="bg-slate-50/80 border-t border-slate-200/80 px-6 py-3 flex items-center justify-between text-xs text-slate-500 rounded-b-2xl dark:bg-neutral-850 dark:border-neutral-800 dark:text-neutral-400">
+        <div className="bg-slate-50/80 border-t border-slate-200/80 px-6 py-3 flex items-center justify-between text-xs text-slate-500 rounded-b-2xl dark:bg-neutral-800/80 dark:border-neutral-800 dark:text-neutral-400">
           <span>
             Wyświetlono {filteredAndSortedJobs.length} z {jobs.length} ofert
           </span>

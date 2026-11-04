@@ -94,7 +94,7 @@ export const SettingsView: React.FC = () => {
   return (
     <div className="max-w-4xl mx-auto space-y-6 pb-12">
       {/* Header */}
-      <div className="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-none dark:border-neutral-800 dark:bg-neutral-900 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-none dark:border-transparent dark:bg-neutral-900 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h2 className="text-xl font-bold text-slate-900 dark:text-neutral-100">
             Ustawienia aplikacji i modeli AI
@@ -132,7 +132,7 @@ export const SettingsView: React.FC = () => {
 
       <form onSubmit={handleSave} className="space-y-6">
         {/* Pipeline & Parsing Mode */}
-        <div className="bg-white rounded-2xl border border-slate-200/80 p-5 sm:p-6 shadow-none space-y-4 dark:border-neutral-800 dark:bg-neutral-900">
+        <div className="bg-white rounded-2xl border border-slate-200/80 p-5 sm:p-6 shadow-none space-y-4 dark:border-transparent dark:bg-neutral-900">
           <div className="flex items-center gap-2 border-b border-slate-100 dark:border-neutral-800 pb-3">
             <Cpu className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
             <h3 className="font-semibold text-slate-900 dark:text-neutral-100">
@@ -199,7 +199,7 @@ export const SettingsView: React.FC = () => {
         </div>
 
         {/* Ollama Configuration */}
-        <div className="bg-white rounded-2xl border border-slate-200/80 p-5 sm:p-6 shadow-none space-y-4 dark:border-neutral-800 dark:bg-neutral-900">
+        <div className="bg-white rounded-2xl border border-slate-200/80 p-5 sm:p-6 shadow-none space-y-4 dark:border-transparent dark:bg-neutral-900">
           <div className="flex items-center gap-2 border-b border-slate-100 dark:border-neutral-800 pb-3">
             <Cpu className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
             <h3 className="font-semibold text-slate-900 dark:text-neutral-100">
@@ -226,7 +226,7 @@ export const SettingsView: React.FC = () => {
         </div>
 
         {/* Cloud API Configuration */}
-        <div className="bg-white rounded-2xl border border-slate-200/80 p-5 sm:p-6 shadow-none space-y-4 dark:border-neutral-800 dark:bg-neutral-900">
+        <div className="bg-white rounded-2xl border border-slate-200/80 p-5 sm:p-6 shadow-none space-y-4 dark:border-transparent dark:bg-neutral-900">
           <div className="flex items-center gap-2 border-b border-slate-100 dark:border-neutral-800 pb-3">
             <Cloud className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
             <h3 className="font-semibold text-slate-900 dark:text-neutral-100">

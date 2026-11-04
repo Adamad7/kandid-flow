@@ -590,7 +590,7 @@ export const JobOfferDescription: React.FC<JobOfferDescriptionProps> = ({
 
       {/* Main Content View */}
       {viewMode === "formatted" ? (
-        <div className="rounded-2xl border border-slate-200/80 dark:border-neutral-800 bg-white dark:bg-neutral-900 p-6 sm:p-8 shadow-none">
+        <div className="rounded-2xl border border-slate-200/80 dark:border-transparent bg-white dark:bg-neutral-900 p-6 sm:p-8 shadow-none">
           {parsedHtmlContent ? (
             // Render rich sanitized HTML structure
             <div className="space-y-1 text-slate-800 dark:text-neutral-200">
@@ -663,7 +663,7 @@ export const JobOfferDescription: React.FC<JobOfferDescriptionProps> = ({
       ) : (
         // Raw Text View
         <div className="relative">
-          <div className="rounded-2xl border border-slate-200/80 dark:border-neutral-800 bg-neutral-950 p-5 text-xs text-neutral-200 font-mono whitespace-pre-wrap leading-relaxed max-h-[650px] overflow-y-auto">
+          <div className="rounded-2xl border border-slate-200/80 dark:border-transparent bg-neutral-950 p-5 text-xs text-neutral-200 font-mono whitespace-pre-wrap leading-relaxed max-h-[650px] overflow-y-auto">
             {descriptionText || descriptionHtml || "Brak treści"}
           </div>
         </div>

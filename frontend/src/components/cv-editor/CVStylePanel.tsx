@@ -258,7 +258,7 @@ export const CVStylePanel: React.FC<CVStylePanelProps> = ({
       </div>
 
       {/* 1. Kolor akcentu CV */}
-      <div className="rounded-2xl border border-slate-200/80 bg-white p-5 sm:p-6 shadow-none space-y-4 dark:border-neutral-800 dark:bg-neutral-900">
+      <div className="rounded-2xl border border-slate-200/80 bg-white p-5 sm:p-6 shadow-none space-y-4 dark:border-transparent dark:bg-neutral-900">
         <div className="flex items-center justify-between border-b border-slate-100 dark:border-neutral-800 pb-2.5">
           <div className="flex items-center gap-2">
             <Palette className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
@@ -355,7 +355,7 @@ export const CVStylePanel: React.FC<CVStylePanelProps> = ({
                 }}
                 placeholder="#2563eb"
                 maxLength={9}
-                className="block w-full rounded-xl border border-slate-200 bg-slate-50/60 px-3 py-1.5 text-sm font-mono text-slate-900 shadow-none placeholder-slate-400 focus:bg-white focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-neutral-700 dark:bg-neutral-950 dark:text-neutral-100 dark:placeholder-neutral-500 dark:focus:bg-neutral-900"
+                className="block w-full rounded-xl border border-slate-200 bg-slate-50/60 px-3 py-1.5 text-sm font-mono text-slate-900 shadow-none placeholder-slate-400 outline-none focus:outline-none focus:bg-white focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 dark:border-transparent dark:bg-neutral-950 dark:text-neutral-100 dark:placeholder-neutral-500 dark:focus:bg-neutral-950 dark:focus:border-indigo-500/50 dark:focus:ring-indigo-500/40"
               />
             </div>
           </div>
@@ -371,7 +371,7 @@ export const CVStylePanel: React.FC<CVStylePanelProps> = ({
       </div>
 
       {/* 2. Global Document Font Family */}
-      <div className="rounded-2xl border border-slate-200/80 bg-white p-5 sm:p-6 shadow-none space-y-3 dark:border-neutral-800 dark:bg-neutral-900">
+      <div className="rounded-2xl border border-slate-200/80 bg-white p-5 sm:p-6 shadow-none space-y-3 dark:border-transparent dark:bg-neutral-900">
         <div className="flex items-center justify-between border-b border-slate-100 dark:border-neutral-800 pb-2.5">
           <div className="flex items-center gap-2">
             <Type className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
@@ -403,7 +403,7 @@ export const CVStylePanel: React.FC<CVStylePanelProps> = ({
             id="global-font-select"
             value={currentStyling.document_font_family || "Liberation Sans"}
             onChange={(e) => handleDocumentFontChange(e.target.value)}
-            className="flex h-9.5 w-full rounded-xl border border-slate-200 bg-slate-50/60 px-3 py-1 text-sm text-slate-900 shadow-none transition-colors focus:bg-white focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 cursor-pointer dark:border-neutral-700 dark:bg-neutral-950 dark:text-neutral-100 dark:focus:bg-neutral-900"
+            className="flex h-9.5 w-full rounded-xl border border-slate-200 bg-slate-50/60 px-3 py-1 text-sm text-slate-900 shadow-none transition-colors outline-none focus:outline-none focus:bg-white focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 cursor-pointer dark:border-transparent dark:bg-neutral-950 dark:text-neutral-100 dark:focus:bg-neutral-950 dark:focus:border-indigo-500/50 dark:focus:ring-indigo-500/40"
           >
             {AVAILABLE_FONTS.map((f) => (
               <option key={f.value} value={f.value}>
@@ -449,7 +449,7 @@ export const CVStylePanel: React.FC<CVStylePanelProps> = ({
             return (
               <div
                 key={elem.key}
-                className="rounded-2xl border border-slate-200/80 bg-white p-4 sm:p-5 shadow-none dark:border-neutral-800 dark:bg-neutral-900 space-y-3"
+                className="rounded-2xl border border-slate-200/80 bg-white p-4 sm:p-5 shadow-none dark:border-transparent dark:bg-neutral-900 space-y-3"
               >
                 {/* Header: title, description & reset button */}
                 <div className="flex items-center justify-between">
@@ -483,7 +483,7 @@ export const CVStylePanel: React.FC<CVStylePanelProps> = ({
                       onChange={(e) =>
                         handleElementStyleChange(elem.key, { font_family: e.target.value })
                       }
-                      className="flex h-9 w-full rounded-xl border border-slate-200 bg-slate-50/60 px-2.5 py-1 text-xs text-slate-900 shadow-none transition-colors focus:bg-white focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 cursor-pointer dark:border-neutral-700 dark:bg-neutral-950 dark:text-neutral-100 dark:focus:bg-neutral-900"
+                      className="flex h-9 w-full rounded-xl border border-slate-200 bg-slate-50/60 px-2.5 py-1 text-xs text-slate-900 shadow-none transition-colors outline-none focus:outline-none focus:bg-white focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 cursor-pointer dark:border-transparent dark:bg-neutral-950 dark:text-neutral-100 dark:focus:bg-neutral-950 dark:focus:border-indigo-500/50 dark:focus:ring-indigo-500/40"
                     >
                       {AVAILABLE_FONTS.map((f) => (
                         <option key={f.value} value={f.value}>
@@ -503,7 +503,7 @@ export const CVStylePanel: React.FC<CVStylePanelProps> = ({
                       onChange={(e) =>
                         handleElementStyleChange(elem.key, { font_weight: e.target.value as FontWeight })
                       }
-                      className="flex h-9 w-full rounded-xl border border-slate-200 bg-slate-50/60 px-2.5 py-1 text-xs text-slate-900 shadow-none transition-colors focus:bg-white focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 cursor-pointer dark:border-neutral-700 dark:bg-neutral-950 dark:text-neutral-100 dark:focus:bg-neutral-900"
+                      className="flex h-9 w-full rounded-xl border border-slate-200 bg-slate-50/60 px-2.5 py-1 text-xs text-slate-900 shadow-none transition-colors outline-none focus:outline-none focus:bg-white focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 cursor-pointer dark:border-transparent dark:bg-neutral-950 dark:text-neutral-100 dark:focus:bg-neutral-950 dark:focus:border-indigo-500/50 dark:focus:ring-indigo-500/40"
                     >
                       {FONT_WEIGHTS.map((w) => (
                         <option key={w.value} value={w.value}>
@@ -581,7 +581,7 @@ export const CVStylePanel: React.FC<CVStylePanelProps> = ({
       </div>
 
       {/* 4. Spacing, Line Height & Margins - Arranged Strictly ONE UNDER ANOTHER */}
-      <div className="rounded-2xl border border-slate-200/80 bg-white p-5 sm:p-6 shadow-none space-y-4 dark:border-neutral-800 dark:bg-neutral-900">
+      <div className="rounded-2xl border border-slate-200/80 bg-white p-5 sm:p-6 shadow-none space-y-4 dark:border-transparent dark:bg-neutral-900">
         <div className="flex items-center gap-2 border-b border-slate-100 dark:border-neutral-800 pb-2.5">
           <Maximize2 className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
           <h4 className="font-semibold text-sm text-slate-900 dark:text-neutral-100">

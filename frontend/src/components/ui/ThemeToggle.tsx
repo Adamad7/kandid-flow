@@ -19,7 +19,7 @@ export const ThemeToggle: React.FC<ThemeToggleProps> = ({ className }) => {
       title={isDark ? "Przełącz na tryb jasny" : "Przełącz na tryb ciemny"}
       onClick={toggleTheme}
       className={cn(
-        "relative inline-flex h-8 w-16 shrink-0 items-center rounded-full border border-slate-200 dark:border-neutral-800 bg-slate-200/80 p-1 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/30 dark:bg-neutral-800 cursor-pointer shadow-none",
+        "relative inline-flex h-[36px] w-[72px] shrink-0 items-center rounded-full border border-slate-300/80 dark:border-neutral-800 bg-slate-200/90 dark:bg-neutral-950 p-1 transition-colors duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40 hover:border-slate-400/80 dark:hover:border-neutral-700 cursor-pointer shadow-inner",
         className
       )}
     >
@@ -27,25 +27,37 @@ export const ThemeToggle: React.FC<ThemeToggleProps> = ({ className }) => {
         {isDark ? "Przełącz na tryb jasny" : "Przełącz na tryb ciemny"}
       </span>
 
-      {/* Track Icons */}
-      <span className="absolute left-2 flex items-center justify-center pointer-events-none select-none">
-        <Sun className="h-3.5 w-3.5 text-amber-500/70" />
+      {/* Track Icons - Left Sun (visible in dark mode), Right Moon (visible in light mode) */}
+      <span
+        className={cn(
+          "absolute left-[9px] flex items-center justify-center pointer-events-none select-none transition-opacity duration-300",
+          isDark ? "opacity-60 text-slate-400 dark:text-neutral-500" : "opacity-0"
+        )}
+      >
+        <Sun className="h-4 w-4" />
       </span>
-      <span className="absolute right-2 flex items-center justify-center pointer-events-none select-none">
-        <Moon className="h-3.5 w-3.5 text-indigo-400/70" />
+      <span
+        className={cn(
+          "absolute right-[9px] flex items-center justify-center pointer-events-none select-none transition-opacity duration-300",
+          isDark ? "opacity-0" : "opacity-60 text-slate-500 dark:text-neutral-400"
+        )}
+      >
+        <Moon className="h-4 w-4" />
       </span>
 
       {/* Sliding Thumb */}
       <span
         className={cn(
-          "pointer-events-none flex h-6 w-6 items-center justify-center rounded-full bg-white shadow-none border border-slate-200/80 transition-transform duration-200 ease-in-out dark:bg-neutral-900 dark:border-neutral-700",
-          isDark ? "translate-x-8 text-indigo-400" : "translate-x-0 text-amber-500"
+          "pointer-events-none flex h-7 w-7 items-center justify-center rounded-full shadow-md border transition-transform duration-300 ease-in-out",
+          isDark
+            ? "translate-x-[36px] bg-neutral-850 dark:bg-neutral-800 border-neutral-700 text-indigo-400"
+            : "translate-x-0 bg-white border-slate-200/90 text-amber-500"
         )}
       >
         {isDark ? (
-          <Moon className="h-3.5 w-3.5 fill-indigo-400 text-indigo-400" />
+          <Moon className="h-4 w-4 fill-indigo-400/30 text-indigo-400" />
         ) : (
-          <Sun className="h-3.5 w-3.5 fill-amber-500 text-amber-500" />
+          <Sun className="h-4 w-4 fill-amber-400/30 text-amber-500" />
         )}
       </span>
     </button>

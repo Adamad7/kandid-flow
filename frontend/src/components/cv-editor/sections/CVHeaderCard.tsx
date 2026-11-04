@@ -30,7 +30,7 @@ export const CVHeaderCard: React.FC<CVHeaderCardProps> = React.memo(
     onUpdateContactInfo,
   }) => {
     return (
-      <div className="rounded-2xl border border-slate-200/80 bg-white shadow-none dark:border-neutral-800 dark:bg-neutral-900 [contain:content]">
+      <div className="rounded-2xl border border-slate-200/80 bg-white shadow-none dark:border-transparent dark:bg-neutral-900 [contain:content]">
         <div
           className="flex items-center justify-between p-5 cursor-pointer select-none"
           onClick={onToggleExpand}

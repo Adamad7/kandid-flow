@@ -132,7 +132,7 @@ const CVSectionCardComponent: React.FC<CVSectionCardProps> = ({
   return (
     <div
       data-cv-section-id={id}
-      className="rounded-2xl border border-slate-200/80 bg-white p-5 sm:p-6 shadow-none dark:border-neutral-800 dark:bg-neutral-900 [contain:content]"
+      className="rounded-2xl border border-slate-200/80 bg-white p-5 sm:p-6 shadow-none dark:border-transparent dark:bg-neutral-900 [contain:content]"
     >
       {/* Section Header */}
       <div className="flex items-center justify-between gap-2 sm:gap-4">

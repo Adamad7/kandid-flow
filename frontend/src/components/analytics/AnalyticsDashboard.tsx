@@ -58,7 +58,7 @@ export const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
   return (
     <div className="space-y-6 animate-in fade-in duration-200">
       {/* Top Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-2xl border border-slate-200/80 bg-white p-5 sm:p-6 shadow-none dark:border-neutral-800 dark:bg-neutral-900">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-2xl border border-slate-200/80 bg-white p-5 sm:p-6 shadow-none dark:border-transparent dark:bg-neutral-900">
         <div>
           <div className="flex items-center gap-2.5">
             <div className="p-2.5 rounded-xl bg-indigo-50 text-indigo-600 dark:bg-indigo-950/60 dark:text-indigo-400">
@@ -100,7 +100,7 @@ export const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
         <>
           {/* Top KPI Cards Grid */}
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-3">
-            <Card className="p-4 border-slate-200/80 dark:border-neutral-800 dark:bg-neutral-900 shadow-none">
+            <Card className="p-4 border-slate-200/80 dark:border-transparent dark:bg-neutral-900 shadow-none">
               <span className="text-[11px] font-semibold text-slate-500 dark:text-neutral-400 uppercase tracking-wider">
                 Wszystkie oferty
               </span>
@@ -112,7 +112,7 @@ export const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
               </span>
             </Card>
 
-            <Card className="p-4 border-slate-200/80 dark:border-neutral-800 bg-amber-50/20 dark:bg-amber-950/10 shadow-none">
+            <Card className="p-4 border-slate-200/80 dark:border-transparent bg-amber-50/20 dark:bg-amber-950/10 shadow-none">
               <span className="text-[11px] font-semibold text-amber-700 dark:text-amber-400 uppercase tracking-wider flex items-center gap-1">
                 <Send className="h-3 w-3" />
                 Zaaplikowano
@@ -125,7 +125,7 @@ export const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
               </span>
             </Card>
 
-            <Card className="p-4 border-slate-200/80 dark:border-neutral-800 bg-purple-50/20 dark:bg-purple-950/10 shadow-none">
+            <Card className="p-4 border-slate-200/80 dark:border-transparent bg-purple-50/20 dark:bg-purple-950/10 shadow-none">
               <span className="text-[11px] font-semibold text-purple-700 dark:text-purple-400 uppercase tracking-wider flex items-center gap-1">
                 <Users className="h-3 w-3" />
                 Rozmowy
@@ -138,7 +138,7 @@ export const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
               </span>
             </Card>
 
-            <Card className="p-4 border-slate-200/80 dark:border-neutral-800 bg-emerald-50/20 dark:bg-emerald-950/10 shadow-none">
+            <Card className="p-4 border-slate-200/80 dark:border-transparent bg-emerald-50/20 dark:bg-emerald-950/10 shadow-none">
               <span className="text-[11px] font-semibold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider flex items-center gap-1">
                 <Award className="h-3 w-3" />
                 Oferty pracy
@@ -151,7 +151,7 @@ export const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
               </span>
             </Card>
 
-            <Card className="p-4 border-slate-200/80 dark:border-neutral-800 bg-indigo-50/20 dark:bg-indigo-950/10 shadow-none">
+            <Card className="p-4 border-slate-200/80 dark:border-transparent bg-indigo-50/20 dark:bg-indigo-950/10 shadow-none">
               <span className="text-[11px] font-semibold text-indigo-700 dark:text-indigo-400 uppercase tracking-wider flex items-center gap-1">
                 <TrendingUp className="h-3 w-3" />
                 Odpowiedzi
@@ -164,7 +164,7 @@ export const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
               </span>
             </Card>
 
-            <Card className="p-4 border-slate-200/80 dark:border-neutral-800 dark:bg-neutral-900 shadow-none">
+            <Card className="p-4 border-slate-200/80 dark:border-transparent dark:bg-neutral-900 shadow-none">
               <span className="text-[11px] font-semibold text-slate-500 dark:text-neutral-400 uppercase tracking-wider flex items-center gap-1">
                 <Clock className="h-3 w-3" />
                 Czas do kontaktu
@@ -177,7 +177,7 @@ export const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
               </span>
             </Card>
 
-            <Card className="p-4 border-slate-200/80 dark:border-neutral-800 bg-stone-50/20 dark:bg-stone-950/10 shadow-none">
+            <Card className="p-4 border-slate-200/80 dark:border-transparent bg-stone-50/20 dark:bg-stone-950/10 shadow-none">
               <span className="text-[11px] font-semibold text-stone-600 dark:text-stone-400 uppercase tracking-wider flex items-center gap-1">
                 <Archive className="h-3 w-3" />
                 Zarchiwizowane
@@ -278,7 +278,7 @@ export const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
           {/* Recruitment Funnel & Work Models Grid */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Funnel Card (2 cols) */}
-            <div className="lg:col-span-2 rounded-2xl border border-slate-200/80 bg-white p-5 sm:p-6 shadow-none dark:border-neutral-800 dark:bg-neutral-900 space-y-4">
+            <div className="lg:col-span-2 rounded-2xl border border-slate-200/80 bg-white p-5 sm:p-6 shadow-none dark:border-transparent dark:bg-neutral-900 space-y-4">
               <div>
                 <h3 className="font-bold text-sm text-slate-900 dark:text-neutral-100">
                   Lejek konwersji procesu rekrutacyjnego
@@ -317,7 +317,7 @@ export const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
             </div>
 
             {/* Work Model Distribution (1 col) */}
-            <div className="rounded-2xl border border-slate-200/80 bg-white p-5 sm:p-6 shadow-none dark:border-neutral-800 dark:bg-neutral-900 space-y-4">
+            <div className="rounded-2xl border border-slate-200/80 bg-white p-5 sm:p-6 shadow-none dark:border-transparent dark:bg-neutral-900 space-y-4">
               <div>
                 <h3 className="font-bold text-sm text-slate-900 dark:text-neutral-100">
                   Tryb pracy
@@ -351,7 +351,7 @@ export const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
           </div>
 
           {/* Portals Comparison Table */}
-          <div className="rounded-2xl border border-slate-200/80 bg-white shadow-none dark:border-neutral-800 dark:bg-neutral-900 overflow-hidden">
+          <div className="rounded-2xl border border-slate-200/80 bg-white shadow-none dark:border-transparent dark:bg-neutral-900 overflow-hidden">
             <div className="p-5 border-b border-slate-100 dark:border-neutral-800">
               <h3 className="font-bold text-sm text-slate-900 dark:text-neutral-100">
                 Skuteczność portali ogłoszeniowych

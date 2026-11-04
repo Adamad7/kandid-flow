@@ -68,7 +68,7 @@ export const UpcomingEventsWidget: React.FC<UpcomingEventsWidgetProps> = ({
   };
 
   return (
-    <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-none dark:border-neutral-800 dark:bg-neutral-900">
+    <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-none dark:border-transparent dark:bg-neutral-900">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2.5">
           <div className="p-2 rounded-xl bg-indigo-50 text-indigo-600 dark:bg-indigo-950/60 dark:text-indigo-400">
