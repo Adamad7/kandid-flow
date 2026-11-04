@@ -1,3 +1,5 @@
+import colors from "tailwindcss/colors";
+
 /** @type {import('tailwindcss').Config} */
 export default {
   darkMode: ["class"],
@@ -8,6 +10,10 @@ export default {
   theme: {
     extend: {
       colors: {
+        slate: {
+          ...colors.slate,
+          50: "#faf9f7",
+        },
         neutral: {
           850: "#1f1f1f",
         },

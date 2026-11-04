@@ -9,7 +9,7 @@ html {
 
 @layer base {
   :root {
-    --background: 210 40% 98%;
+    --background: 40 20% 98.5%;
     --foreground: 222.2 84% 4.9%;
     --card: 0 0% 100%;
     --card-foreground: 222.2 84% 4.9%;
@@ -17,16 +17,16 @@ html {
     --popover-foreground: 222.2 84% 4.9%;
     --primary: 238.7 83.5% 66.7%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 210 40% 96.1%;
+    --secondary: 35 15% 96%;
     --secondary-foreground: 222.2 47.4% 11.2%;
-    --muted: 210 40% 96.1%;
+    --muted: 35 15% 96%;
     --muted-foreground: 215.4 16.3% 46.9%;
     --accent: 238.7 83.5% 66.7%;
     --accent-foreground: 0 0% 100%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 100%;
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
+    --border: 35 10% 91%;
+    --input: 35 10% 91%;
     --ring: 238.7 83.5% 66.7%;
     --radius: 1rem;
   }
