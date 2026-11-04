@@ -78,7 +78,7 @@ export const TestPageThree: React.FC<TestPageThreeProps> = ({
               <button
                 type="button"
                 onClick={() => onSwitchPage("test-page-3")}
-                className="px-3.5 py-1 rounded-full font-bold bg-indigo-600 text-white shadow-sm shadow-indigo-500/20 cursor-pointer"
+                className="px-3.5 py-1 rounded-full font-bold bg-indigo-600 text-white shadow-none cursor-pointer"
               >
                 test-page-3
               </button>
@@ -86,7 +86,7 @@ export const TestPageThree: React.FC<TestPageThreeProps> = ({
           </div>
 
           {/* Style Banner Card - Flat Curves, No Heavy Shadows, Open & Breathable */}
-          <div className="rounded-2xl border border-slate-200/80 dark:border-neutral-800 bg-linear-to-r from-indigo-50/60 via-purple-50/30 to-white dark:from-neutral-900 dark:via-neutral-900 dark:to-neutral-950 p-6 sm:p-8">
+          <div className="rounded-2xl bg-linear-to-r from-indigo-50/60 via-purple-50/30 to-white dark:from-neutral-900 dark:via-neutral-900 dark:to-neutral-950 p-6 sm:p-8 shadow-none border-0">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-5">
               <div className="space-y-2">
                 <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-100 text-indigo-700 dark:bg-indigo-900/60 dark:text-indigo-300 text-xs font-semibold">
@@ -127,7 +127,7 @@ export const TestPageThree: React.FC<TestPageThreeProps> = ({
             </span>
           </div>
 
-          <div className="rounded-2xl border border-slate-200/80 dark:border-neutral-800 bg-white dark:bg-neutral-900 p-6 sm:p-8 space-y-6">
+          <div className="rounded-2xl bg-white dark:bg-neutral-900 p-6 sm:p-8 space-y-6 shadow-none border-0">
             {/* Solid Vivid Actions */}
             <div className="space-y-2">
               <div className="text-xs font-bold text-slate-500 dark:text-neutral-400 uppercase tracking-wider">
@@ -136,7 +136,7 @@ export const TestPageThree: React.FC<TestPageThreeProps> = ({
             <div className="flex flex-wrap items-center gap-3">
               <button
                 type="button"
-                className="px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs sm:text-sm shadow-md shadow-indigo-600/20 active:scale-[0.98] transition-all cursor-pointer flex items-center gap-2"
+                className="px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs sm:text-sm shadow-none active:scale-[0.98] transition-all cursor-pointer flex items-center gap-2"
               >
                 <Plus className="h-4 w-4" />
                 <span>Dodaj ofertę (Electric Indigo)</span>
@@ -168,10 +168,10 @@ export const TestPageThree: React.FC<TestPageThreeProps> = ({
 
               <button
                 type="button"
-                className="px-4 py-2.5 rounded-xl bg-rose-500 hover:bg-rose-400 text-white font-semibold text-xs sm:text-sm active:scale-[0.98] transition-all cursor-pointer flex items-center gap-2"
+                className="px-4 py-2.5 rounded-xl bg-red-600 hover:bg-red-500 text-white font-semibold text-xs sm:text-sm active:scale-[0.98] transition-all cursor-pointer flex items-center gap-2"
               >
                 <Trash2 className="h-4 w-4" />
-                <span>Usuń (Rose)</span>
+                <span>Usuń (Czerwony)</span>
               </button>
             </div>
           </div>
@@ -281,7 +281,7 @@ export const TestPageThree: React.FC<TestPageThreeProps> = ({
           </span>
         </div>
 
-        <div className="rounded-2xl border border-slate-200/80 dark:border-neutral-800 bg-white dark:bg-neutral-900 p-6 sm:p-8">
+        <div className="rounded-2xl bg-white dark:bg-neutral-900 p-6 sm:p-8 shadow-none border-0">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             {/* Toggles and Checkboxes */}
             <div className="space-y-5">
@@ -415,38 +415,38 @@ export const TestPageThree: React.FC<TestPageThreeProps> = ({
           </span>
         </div>
 
-        <div className="rounded-2xl border border-slate-200/80 dark:border-neutral-800 bg-white dark:bg-neutral-900 p-6 sm:p-8 space-y-6">
+        <div className="rounded-2xl bg-white dark:bg-neutral-900 p-6 sm:p-8 space-y-6 shadow-none border-0">
           <div className="space-y-2">
             <div className="text-xs font-bold text-slate-500 dark:text-neutral-400 uppercase tracking-wider">
               Statusy pipeline rekrutacyjnego (Vibrant Pill Badges)
             </div>
             <div className="flex flex-wrap items-center gap-2.5">
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-700 dark:bg-neutral-800 dark:text-neutral-300 border border-slate-200 dark:border-neutral-700">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-700 dark:bg-neutral-800 dark:text-neutral-300 border-2 border-slate-300 dark:border-neutral-600 shadow-none">
                 <span className="h-1.5 w-1.5 rounded-full bg-slate-400"></span>
                 {STATUS_LABELS.inbox}
               </span>
 
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-indigo-50 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-indigo-50 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300 border-2 border-indigo-400 dark:border-indigo-600 shadow-none">
                 <span className="h-1.5 w-1.5 rounded-full bg-indigo-600"></span>
                 {STATUS_LABELS.ready}
               </span>
 
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300 border border-amber-200 dark:border-amber-800">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300 border-2 border-amber-400 dark:border-amber-600 shadow-none">
                 <span className="h-1.5 w-1.5 rounded-full bg-amber-500"></span>
                 {STATUS_LABELS.applied}
               </span>
 
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-purple-50 text-purple-700 dark:bg-purple-950/60 dark:text-purple-300 border border-purple-200 dark:border-purple-800">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-purple-50 text-purple-700 dark:bg-purple-950/60 dark:text-purple-300 border-2 border-purple-400 dark:border-purple-600 shadow-none">
                 <span className="h-1.5 w-1.5 rounded-full bg-purple-600"></span>
                 {STATUS_LABELS.interview}
               </span>
 
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border-2 border-emerald-400 dark:border-emerald-600 shadow-none">
                 <span className="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
                 {STATUS_LABELS.offer}
               </span>
 
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-rose-50 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300 border border-rose-200 dark:border-rose-800">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-rose-50 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300 border-2 border-red-400 dark:border-red-600 shadow-none">
                 <span className="h-1.5 w-1.5 rounded-full bg-rose-500"></span>
                 {STATUS_LABELS.rejected}
               </span>
@@ -500,10 +500,10 @@ export const TestPageThree: React.FC<TestPageThreeProps> = ({
               <div
                 key={job.id}
                 onClick={() => setSelectedRowId(job.id)}
-                className={`rounded-2xl border transition-all p-4 sm:p-5 cursor-pointer ${
+                className={`rounded-2xl transition-all p-4 sm:p-5 cursor-pointer shadow-none border-0 ${
                   isSelected
-                    ? "border-2 border-indigo-600 bg-indigo-50/20 dark:border-indigo-500 dark:bg-neutral-900 shadow-md shadow-indigo-500/10"
-                    : "border border-slate-200/80 hover:border-indigo-300 dark:border-neutral-800 dark:hover:border-neutral-700 bg-white dark:bg-neutral-900"
+                    ? "ring-2 ring-indigo-600 dark:ring-indigo-500 bg-indigo-50/20 dark:bg-neutral-900"
+                    : "bg-white dark:bg-neutral-900 hover:bg-slate-50/80 dark:hover:bg-neutral-850"
                 }`}
               >
                 <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
@@ -539,7 +539,7 @@ export const TestPageThree: React.FC<TestPageThreeProps> = ({
                       {job.salary_currency}
                     </div>
 
-                    <span className="px-3 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-700 dark:bg-neutral-800 dark:text-neutral-300">
+                    <span className="px-3 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-700 dark:bg-neutral-800 dark:text-neutral-300 border-2 border-slate-300 dark:border-neutral-600 shadow-none">
                       {STATUS_LABELS[job.status]}
                     </span>
                   </div>
@@ -572,7 +572,7 @@ export const TestPageThree: React.FC<TestPageThreeProps> = ({
           </span>
         </div>
 
-        <div className="rounded-2xl border border-slate-200/80 dark:border-neutral-800 bg-white dark:bg-neutral-900 p-6 sm:p-8 space-y-6">
+        <div className="rounded-2xl bg-white dark:bg-neutral-900 p-6 sm:p-8 space-y-6 shadow-none border-0">
           {/* Header Row */}
           <div className="flex flex-col md:flex-row md:items-start justify-between gap-4 pb-5 border-b border-slate-100 dark:border-neutral-800">
             <div className="space-y-2">
@@ -580,7 +580,7 @@ export const TestPageThree: React.FC<TestPageThreeProps> = ({
                 <span className="px-2.5 py-0.5 rounded-full bg-slate-100 dark:bg-neutral-800 text-slate-700 dark:text-neutral-300 text-xs font-bold uppercase tracking-wider">
                   {selectedJob.source_portal}
                 </span>
-                <span className="px-3 py-0.5 rounded-full bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 text-xs font-semibold">
+                <span className="px-3 py-0.5 rounded-full bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 text-xs font-semibold border-2 border-indigo-400 dark:border-indigo-600 shadow-none">
                   {STATUS_LABELS[selectedJob.status]}
                 </span>
               </div>
@@ -625,11 +625,11 @@ export const TestPageThree: React.FC<TestPageThreeProps> = ({
             <div className="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-neutral-400">
               Kluczowe wymagania (Must-have):
             </div>
-            <ul className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs text-slate-700 dark:text-neutral-300">
+            <ul className="grid grid-cols-1 md:grid-cols-2 gap-3 text-[0.8rem] text-slate-700 dark:text-neutral-300">
               {selectedJob.structured_data?.must_have.map((req, idx) => (
                 <li
                   key={idx}
-                  className="flex items-start gap-2.5 py-1"
+                  className="flex items-start gap-3 py-1"
                 >
                   <Check className="h-4 w-4 text-emerald-500 shrink-0 mt-0.5" />
                   <span className="leading-relaxed">{req}</span>
@@ -658,7 +658,7 @@ export const TestPageThree: React.FC<TestPageThreeProps> = ({
 
             <button
               type="button"
-              className="px-5 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-white font-bold text-xs sm:text-sm shadow-sm shadow-emerald-500/20 active:scale-[0.98] transition-all cursor-pointer flex items-center gap-2"
+              className="px-5 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-white font-bold text-xs sm:text-sm shadow-none active:scale-[0.98] transition-all cursor-pointer flex items-center gap-2"
             >
               <FileText className="h-4 w-4" />
               <span>Generuj dedykowane CV</span>
