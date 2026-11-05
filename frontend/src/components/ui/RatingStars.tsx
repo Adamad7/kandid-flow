@@ -28,35 +28,35 @@ export const RATING_CONFIG: Record<
   1: {
     label: "Ranga 1: Mało ważna",
     description: "Niski priorytet w procesie poszukiwania",
-    starClass: "text-yellow-500 fill-yellow-500",
+    starClass: "text-yellow-400 fill-yellow-400 dark:text-yellow-400 dark:fill-yellow-400",
   },
   2: {
     label: "Ranga 2: Umiarkowanie ważna",
     description: "Średni priorytet",
-    starClass: "text-amber-500 fill-amber-500",
+    starClass: "text-amber-500 fill-amber-500 dark:text-amber-400 dark:fill-amber-400",
   },
   3: {
     label: "Ranga 3: Ważna",
     description: "Ważna oferta, warta zaangażowania",
-    starClass: "text-amber-600 fill-amber-600 dark:text-amber-500 dark:fill-amber-500",
+    starClass: "text-orange-500 fill-orange-500 dark:text-orange-400 dark:fill-orange-400",
   },
   4: {
     label: "Ranga 4: Bardzo ważna",
     description: "Wysoki priorytet w kolejce aplikacji",
-    starClass: "text-amber-700 fill-amber-700 dark:text-amber-400 dark:fill-amber-400",
+    starClass: "text-orange-600 fill-orange-600 dark:text-orange-500 dark:fill-orange-500",
   },
   5: {
     label: "Ranga 5: Priorytetowa",
     description: "Kluczowa oferta - najwyższy priorytet",
-    starClass: "text-amber-900 fill-amber-900 dark:text-amber-300 dark:fill-amber-300",
+    starClass: "text-red-600 fill-red-600 dark:text-red-500 dark:fill-red-500",
   },
 };
 
 const SIZE_CLASSES = {
-  xs: "h-3 w-3",
-  sm: "h-3.5 w-3.5",
-  md: "h-4 w-4",
-  lg: "h-5 w-5",
+  xs: "h-3.5 w-3.5",
+  sm: "h-4 w-4",
+  md: "h-5 w-5",
+  lg: "h-6 w-6",
 };
 
 export const RatingStars: React.FC<RatingStarsProps> = ({

@@ -978,7 +978,7 @@ export const JobListView: React.FC<JobListViewProps> = ({
         <div className="overflow-x-auto min-w-full">
           <div className="md:min-w-[1080px]">
             {/* Table / List Header */}
-            <div className="bg-slate-50/80 border-b border-slate-200/80 px-6 py-3.5 hidden md:grid md:grid-cols-[40px_minmax(50px,0.4fr)_minmax(160px,2fr)_minmax(85px,0.9fr)_minmax(95px,1fr)_minmax(100px,1.1fr)_minmax(110px,1.2fr)_minmax(85px,0.9fr)_minmax(100px,1.1fr)_minmax(120px,1.3fr)] gap-4 text-xs font-semibold text-slate-600 select-none dark:bg-neutral-800/80 dark:border-neutral-800 dark:text-neutral-300">
+            <div className="bg-slate-50/80 border-b border-slate-200/80 px-6 py-3.5 hidden md:grid md:grid-cols-[40px_minmax(50px,0.4fr)_minmax(160px,2fr)_minmax(95px,0.95fr)_minmax(95px,1fr)_minmax(100px,1.1fr)_minmax(110px,1.2fr)_minmax(85px,0.9fr)_minmax(100px,1.1fr)_minmax(120px,1.3fr)] gap-4 text-xs font-semibold text-slate-600 select-none dark:bg-neutral-800/80 dark:border-neutral-800 dark:text-neutral-300">
               {/* Checkbox (zaznacz wszystkie) */}
               <div className="flex items-center justify-center">
                 <input
@@ -1112,7 +1112,7 @@ export const JobListView: React.FC<JobListViewProps> = ({
                       key={job.id}
                       onClick={() => onSelectJob(job)}
                       className={cn(
-                        "group px-6 py-4 hover:bg-slate-50/80 dark:hover:bg-neutral-800/35 transition-colors cursor-pointer grid grid-cols-1 md:grid-cols-[40px_minmax(50px,0.4fr)_minmax(160px,2fr)_minmax(85px,0.9fr)_minmax(95px,1fr)_minmax(100px,1.1fr)_minmax(110px,1.2fr)_minmax(85px,0.9fr)_minmax(100px,1.1fr)_minmax(120px,1.3fr)] gap-3 md:gap-4 items-center",
+                        "group px-6 py-4 hover:bg-slate-50/80 dark:hover:bg-neutral-800/35 transition-colors cursor-pointer grid grid-cols-1 md:grid-cols-[40px_minmax(50px,0.4fr)_minmax(160px,2fr)_minmax(95px,0.95fr)_minmax(95px,1fr)_minmax(100px,1.1fr)_minmax(110px,1.2fr)_minmax(85px,0.9fr)_minmax(100px,1.1fr)_minmax(120px,1.3fr)] gap-3 md:gap-4 items-center",
                         isSelected && "ring-2 ring-indigo-600 dark:ring-indigo-500 bg-indigo-50/20 dark:bg-neutral-900"
                       )}
                     >
