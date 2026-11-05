@@ -55,7 +55,8 @@ export type SortField =
   | "created_at"
   | "work_model"
   | "salary"
-  | "deadline";
+  | "deadline"
+  | "rating";
 export type SortDirection = "asc" | "desc";
 
 const GENERIC_DETAILS_REGEX =
@@ -116,6 +117,7 @@ export const JobListView: React.FC<JobListViewProps> = ({
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [locationFilter, setLocationFilter] = useState<string>("all");
   const [tagFilter, setTagFilter] = useState<string>("all");
+  const [ratingFilter, setRatingFilter] = useState<string>("all");
   const [availableTags, setAvailableTags] = useState<string[]>([]);
   const [showFilters, setShowFilters] = useState(false);
 
@@ -417,7 +419,7 @@ export const JobListView: React.FC<JobListViewProps> = ({
       setSortDirection((prev) => (prev === "asc" ? "desc" : "asc"));
     } else {
       setSortField(field);
-      setSortDirection("asc");
+      setSortDirection(field === "rating" ? "desc" : "asc");
     }
   };
 
@@ -496,6 +498,21 @@ export const JobListView: React.FC<JobListViewProps> = ({
           return false;
         }
 
+        // Rating filter
+        if (ratingFilter !== "all") {
+          const jobRating = job.rating || 1;
+          if (ratingFilter === "4+") {
+            if (jobRating < 4) return false;
+          } else if (ratingFilter === "3+") {
+            if (jobRating < 3) return false;
+          } else {
+            const targetRating = parseInt(ratingFilter, 10);
+            if (!isNaN(targetRating) && jobRating !== targetRating) {
+              return false;
+            }
+          }
+        }
+
         return true;
       })
       .sort((a, b) => {
@@ -506,6 +523,25 @@ export const JobListView: React.FC<JobListViewProps> = ({
             const titleA = a.role_title || "";
             const titleB = b.role_title || "";
             result = titleA.localeCompare(titleB, "pl", { sensitivity: "base" });
+            break;
+          }
+
+          case "rating": {
+            const ratingA = a.rating || 1;
+            const ratingB = b.rating || 1;
+            if (ratingA !== ratingB) {
+              result = ratingA - ratingB;
+            } else {
+              const diffA = getDeadlineTimeDiff(a);
+              const diffB = getDeadlineTimeDiff(b);
+              let deadlineRes = 0;
+              if (diffA === Infinity && diffB === Infinity) deadlineRes = 0;
+              else if (diffA === Infinity) deadlineRes = 1;
+              else if (diffB === Infinity) deadlineRes = -1;
+              else deadlineRes = diffA - diffB;
+
+              result = sortDirection === "desc" ? -deadlineRes : deadlineRes;
+            }
             break;
           }
 
@@ -579,7 +615,7 @@ export const JobListView: React.FC<JobListViewProps> = ({
 
         return sortDirection === "asc" ? result : -result;
       });
-  }, [jobs, searchTerm, workModelFilter, statusFilter, locationFilter, tagFilter, sortField, sortDirection]);
+  }, [jobs, searchTerm, workModelFilter, statusFilter, locationFilter, tagFilter, ratingFilter, sortField, sortDirection]);
 
   const visibleJobIds = useMemo(
     () => filteredAndSortedJobs.map((j) => j.id),
@@ -679,7 +715,7 @@ export const JobListView: React.FC<JobListViewProps> = ({
             >
               <Filter className="h-3.5 w-3.5 mr-1.5" />
               Filtry
-              {(workModelFilter !== "all" || statusFilter !== "all" || locationFilter !== "all" || tagFilter !== "all") && (
+              {(workModelFilter !== "all" || statusFilter !== "all" || locationFilter !== "all" || tagFilter !== "all" || ratingFilter !== "all") && (
                 <span className="ml-1.5 rounded-full bg-indigo-100 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300 px-1.5 py-0.2 text-[10px] font-bold">
                   !
                 </span>
@@ -701,7 +737,7 @@ export const JobListView: React.FC<JobListViewProps> = ({
 
         {/* Collapsible Filters */}
         {showFilters && (
-          <div className="mt-3 pt-3 border-t border-slate-100 dark:border-neutral-800/80 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+          <div className="mt-3 pt-3 border-t border-slate-100 dark:border-neutral-800/80 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
             <div>
               <label className="block text-xs font-semibold text-slate-700 dark:text-neutral-300 mb-1">
                 Tryb pracy:
@@ -773,6 +809,26 @@ export const JobListView: React.FC<JobListViewProps> = ({
 
             <div>
               <label className="block text-xs font-semibold text-slate-700 dark:text-neutral-300 mb-1">
+                Ranga oferty:
+              </label>
+              <select
+                value={ratingFilter}
+                onChange={(e) => setRatingFilter(e.target.value)}
+                className="w-full text-xs font-medium rounded-xl border border-slate-200 dark:border-transparent bg-slate-50/60 dark:bg-neutral-950 px-2.5 py-2 text-slate-800 dark:text-neutral-200 outline-none focus:outline-none focus:bg-white dark:focus:bg-neutral-950 focus:border-indigo-500 dark:focus:border-indigo-500/50 focus:ring-2 focus:ring-indigo-500/20 dark:focus:ring-indigo-500/40 transition-colors cursor-pointer"
+              >
+                <option value="all">Wszystkie rangi</option>
+                <option value="5">★★★★★ (5 gwiazdek)</option>
+                <option value="4">★★★★☆ (4 gwiazdki)</option>
+                <option value="3">★★★☆☆ (3 gwiazdki)</option>
+                <option value="2">★★☆☆☆ (2 gwiazdki)</option>
+                <option value="1">★☆☆☆☆ (1 gwiazdka)</option>
+                <option value="4+">★★★★☆ i więcej (4+)</option>
+                <option value="3+">★★★☆☆ i więcej (3+)</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 dark:text-neutral-300 mb-1">
                 Tag:
               </label>
               <select
@@ -799,6 +855,7 @@ export const JobListView: React.FC<JobListViewProps> = ({
                   setStatusFilter("all");
                   setLocationFilter("all");
                   setTagFilter("all");
+                  setRatingFilter("all");
                 }}
                 className="text-xs w-full rounded-xl"
               >
@@ -921,7 +978,7 @@ export const JobListView: React.FC<JobListViewProps> = ({
         <div className="overflow-x-auto min-w-full">
           <div className="md:min-w-[1080px]">
             {/* Table / List Header */}
-            <div className="bg-slate-50/80 border-b border-slate-200/80 px-6 py-3.5 hidden md:grid md:grid-cols-[40px_minmax(50px,0.4fr)_minmax(180px,2.2fr)_minmax(105px,1.2fr)_minmax(110px,1.3fr)_minmax(115px,1.3fr)_minmax(90px,1fr)_minmax(110px,1.2fr)_minmax(125px,1.4fr)] gap-4 text-xs font-semibold text-slate-600 select-none dark:bg-neutral-800/80 dark:border-neutral-800 dark:text-neutral-300">
+            <div className="bg-slate-50/80 border-b border-slate-200/80 px-6 py-3.5 hidden md:grid md:grid-cols-[40px_minmax(50px,0.4fr)_minmax(160px,2fr)_minmax(85px,0.9fr)_minmax(95px,1fr)_minmax(100px,1.1fr)_minmax(110px,1.2fr)_minmax(85px,0.9fr)_minmax(100px,1.1fr)_minmax(120px,1.3fr)] gap-4 text-xs font-semibold text-slate-600 select-none dark:bg-neutral-800/80 dark:border-neutral-800 dark:text-neutral-300">
               {/* Checkbox (zaznacz wszystkie) */}
               <div className="flex items-center justify-center">
                 <input
@@ -951,6 +1008,15 @@ export const JobListView: React.FC<JobListViewProps> = ({
               >
                 <span>Stanowisko</span>
                 {renderSortIndicator("role_title")}
+              </div>
+
+              {/* Ranga (Sortable) */}
+              <div
+                onClick={() => handleToggleSort("rating")}
+                className="flex items-center gap-1.5 cursor-pointer hover:text-slate-900 dark:hover:text-white group"
+              >
+                <span>Ranga</span>
+                {renderSortIndicator("rating")}
               </div>
 
               {/* Firma (NON-SORTABLE by user requirement: "poza nazwą firmy") */}
@@ -1046,7 +1112,7 @@ export const JobListView: React.FC<JobListViewProps> = ({
                       key={job.id}
                       onClick={() => onSelectJob(job)}
                       className={cn(
-                        "group px-6 py-4 hover:bg-slate-50/80 dark:hover:bg-neutral-800/35 transition-colors cursor-pointer grid grid-cols-1 md:grid-cols-[40px_minmax(50px,0.4fr)_minmax(180px,2.2fr)_minmax(105px,1.2fr)_minmax(110px,1.3fr)_minmax(115px,1.3fr)_minmax(90px,1fr)_minmax(110px,1.2fr)_minmax(125px,1.4fr)] gap-3 md:gap-4 items-center",
+                        "group px-6 py-4 hover:bg-slate-50/80 dark:hover:bg-neutral-800/35 transition-colors cursor-pointer grid grid-cols-1 md:grid-cols-[40px_minmax(50px,0.4fr)_minmax(160px,2fr)_minmax(85px,0.9fr)_minmax(95px,1fr)_minmax(100px,1.1fr)_minmax(110px,1.2fr)_minmax(85px,0.9fr)_minmax(100px,1.1fr)_minmax(120px,1.3fr)] gap-3 md:gap-4 items-center",
                         isSelected && "ring-2 ring-indigo-600 dark:ring-indigo-500 bg-indigo-50/20 dark:bg-neutral-900"
                       )}
                     >
@@ -1093,19 +1159,6 @@ export const JobListView: React.FC<JobListViewProps> = ({
                             {job.role_title || "Nieokreślone stanowisko"}
                           </span>
 
-                          <div
-                            onClick={(e) => e.stopPropagation()}
-                            className="inline-flex items-center"
-                            title="Ranga oferty (kliknij, aby zmienić)"
-                          >
-                            <RatingStars
-                              rating={job.rating || 1}
-                              interactive
-                              size="xs"
-                              onChange={(newRating) => handleRatingChange(job, newRating)}
-                            />
-                          </div>
-
                           {job.source_portal && (
                             <span className="shrink-0 text-[10px] py-0.5 px-2.5 rounded-full font-bold uppercase tracking-wider bg-slate-100 dark:bg-neutral-800 text-slate-600 dark:text-neutral-300 border border-slate-200/60 dark:border-neutral-700/60">
                               {PORTAL_LABELS[job.source_portal] || job.source_portal}
@@ -1127,6 +1180,20 @@ export const JobListView: React.FC<JobListViewProps> = ({
                           </div>
                         )}
 
+                        {/* Mobile-only rating view */}
+                        <div
+                          className="md:hidden flex items-center gap-2 mt-1.5 text-xs text-slate-500 dark:text-neutral-400 font-medium"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <span className="text-slate-500 dark:text-neutral-400">Ranga:</span>
+                          <RatingStars
+                            rating={job.rating || 1}
+                            interactive
+                            size="xs"
+                            onChange={(newRating) => handleRatingChange(job, newRating)}
+                          />
+                        </div>
+
                         {/* Mobile-only company view */}
                         <div className="md:hidden flex items-start gap-1.5 mt-1 text-xs text-slate-500 dark:text-neutral-400 font-medium">
                           <Building className="h-3.5 w-3.5 text-indigo-500 shrink-0 mt-0.5" />
@@ -1138,6 +1205,20 @@ export const JobListView: React.FC<JobListViewProps> = ({
                           <MapPin className="h-3.5 w-3.5 text-indigo-500 shrink-0 mt-0.5" />
                           <span className="break-words">{locationDisplay}</span>
                         </div>
+                      </div>
+
+                      {/* Ranga */}
+                      <div
+                        className="hidden md:flex items-center"
+                        onClick={(e) => e.stopPropagation()}
+                        title="Ranga oferty (kliknij, aby zmienić)"
+                      >
+                        <RatingStars
+                          rating={job.rating || 1}
+                          interactive
+                          size="xs"
+                          onChange={(newRating) => handleRatingChange(job, newRating)}
+                        />
                       </div>
 
                       {/* Firma */}
