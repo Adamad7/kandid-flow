@@ -357,7 +357,9 @@ class LLMClient:
 
                     target_api_model = model or effective_api_model
                     if "gemini-2.5-flash" in target_api_model:
-                        target_api_model = target_api_model.replace("gemini-2.5-flash", "gemini-3.8-flash")
+                        target_api_model = target_api_model.replace(
+                            "gemini-2.5-flash", "gemini-3.8-flash"
+                        )
                     litellm_model = (
                         target_api_model
                         if target_api_model.startswith("gemini/")

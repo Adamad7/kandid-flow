@@ -89,10 +89,10 @@ def controlled_ai_mock(
 ):
     """Context manager controlling whether AI test invocations execute real models or mocks.
 
-    - When get_ai_test_provider() == 'mock' or force_mock=True (or mock_side_effect is an Exception):
+    - When get_ai_test_provider() == 'mock' or force_mock=True:
         Applies standard unittest.mock.patch returning mock_return / mock_side_effect.
     - When get_ai_test_provider() == 'local':
-        Routes execution to local Ollama (wrapping call with AsyncMock so .called and .call_args work).
+        Routes execution to local Ollama (wrapping call with AsyncMock).
     - When get_ai_test_provider() == 'cloud':
         Routes execution to Cloud API (Gemini/OpenAI) using configured API keys.
     """

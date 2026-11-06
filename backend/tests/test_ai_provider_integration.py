@@ -1,13 +1,10 @@
 """Integration tests validating configurable AI model execution (local Ollama vs cloud API)."""
 
 import uuid
-from typing import Any
 
 import httpx
 import pytest
-from sqlalchemy import select
 
-from app.config import settings
 from app.models.job import JobOffer
 from app.services.job_parser import reparse_job_by_id
 from app.services.llm_client import llm_client
@@ -31,8 +28,8 @@ async def test_llm_client_generates_json_with_active_provider() -> None:
         pytest.skip("Running in mock mode; skipping live model invocation")
 
     system_prompt = (
-        "You are an AI data extractor. You must respond strictly in JSON format "
-        "matching: {\"status\": \"ok\", \"extracted_name\": \"<name>\", \"provider_tested\": \"<provider>\"}."
+        "You are an AI data extractor. Respond in JSON matching: "
+        '{"status": "ok", "extracted_name": "<name>", "provider_tested": "<provider>"}.'
     )
     user_prompt = f"Extract name 'Antigravity' and provider '{active_provider}'."
 
