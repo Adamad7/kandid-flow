@@ -1,6 +1,11 @@
 """Pytest fixtures and configuration."""
 
+import contextlib
+import importlib
+import os
 from collections.abc import AsyncGenerator
+from typing import Any
+from unittest.mock import AsyncMock, patch
 
 import httpx
 import pytest
@@ -38,6 +43,96 @@ async def override_get_db_session() -> AsyncGenerator[AsyncSession, None]:
 
 
 app.dependency_overrides[get_db_session] = override_get_db_session
+
+
+def get_ai_test_provider() -> str:
+    """Return effective test AI provider ('local', 'cloud', or 'mock').
+
+    Precedence:
+    1. TEST_AI_PROVIDER or AI_TEST_PROVIDER in environment variables
+    2. settings.TEST_AI_PROVIDER from application settings / .env
+    3. Default to 'local'
+    """
+    env_val = os.getenv("TEST_AI_PROVIDER") or os.getenv("AI_TEST_PROVIDER")
+    if env_val:
+        return env_val.lower().strip()
+    return getattr(settings, "TEST_AI_PROVIDER", "local").lower().strip()
+
+
+@pytest.fixture
+def ai_test_provider() -> str:
+    """Fixture providing the active test AI execution provider ('local', 'cloud', or 'mock')."""
+    return get_ai_test_provider()
+
+
+def _resolve_callable(target: str) -> Any:
+    """Dynamically resolve dotted target path to object."""
+    parts = target.split(".")
+    for i in range(len(parts), 0, -1):
+        try:
+            mod = importlib.import_module(".".join(parts[:i]))
+            obj = mod
+            for r in parts[i:]:
+                obj = getattr(obj, r)
+            return obj
+        except (ImportError, AttributeError):
+            continue
+    raise ValueError(f"Cannot resolve target {target}")
+
+
+@contextlib.contextmanager
+def controlled_ai_mock(
+    target: str,
+    mock_return: Any = None,
+    mock_side_effect: Any = None,
+    force_mock: bool = False,
+):
+    """Context manager controlling whether AI test invocations execute real models or mocks.
+
+    - When get_ai_test_provider() == 'mock' or force_mock=True (or mock_side_effect is an Exception):
+        Applies standard unittest.mock.patch returning mock_return / mock_side_effect.
+    - When get_ai_test_provider() == 'local':
+        Routes execution to local Ollama (wrapping call with AsyncMock so .called and .call_args work).
+    - When get_ai_test_provider() == 'cloud':
+        Routes execution to Cloud API (Gemini/OpenAI) using configured API keys.
+    """
+    mode = get_ai_test_provider()
+    is_exception_test = False
+    if mock_side_effect is not None:
+        if isinstance(mock_side_effect, BaseException) or (
+            isinstance(mock_side_effect, type) and issubclass(mock_side_effect, BaseException)
+        ):
+            is_exception_test = True
+
+    if force_mock or is_exception_test or mode == "mock":
+        with patch(target, new_callable=AsyncMock) as mocked:
+            if mock_side_effect is not None:
+                mocked.side_effect = mock_side_effect
+            else:
+                mocked.return_value = mock_return
+            yield mocked
+    else:
+        original_func = _resolve_callable(target)
+
+        async def real_executor(*args: Any, **kwargs: Any) -> Any:
+            if mode == "local":
+                kwargs["provider"] = "local"
+                if not kwargs.get("model"):
+                    kwargs["model"] = settings.OLLAMA_MODEL
+            elif mode == "cloud":
+                kwargs["provider"] = settings.API_PROVIDER or "gemini"
+                curr_model = kwargs.get("model")
+                if not curr_model or "gemini-2.5-flash" in str(curr_model):
+                    kwargs["model"] = settings.API_MODEL or "gemini-3.8-flash"
+                if kwargs["provider"] == "gemini" and not kwargs.get("api_key"):
+                    kwargs["api_key"] = settings.GEMINI_API_KEY
+                elif kwargs["provider"] == "openai" and not kwargs.get("api_key"):
+                    kwargs["api_key"] = settings.OPENAI_API_KEY
+            return await original_func(*args, **kwargs)
+
+        with patch(target, new_callable=AsyncMock) as mocked:
+            mocked.side_effect = real_executor
+            yield mocked
 
 
 @pytest.fixture(scope="session", autouse=True)

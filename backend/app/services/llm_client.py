@@ -211,9 +211,15 @@ class LLMClient:
 
         custom_key = api_key.strip() if (api_key and api_key.strip()) else None
 
-        # Resolve provider for "local" or "api"
+        # Resolve provider for "local", "api", or test environment routing
         effective_provider = provider
-        if provider == "api":
+        test_ai_provider = getattr(settings, "TEST_AI_PROVIDER", "local").lower().strip()
+        if test_ai_provider == "local":
+            effective_provider = "local"
+        elif test_ai_provider == "cloud":
+            effective_provider = effective_api_provider or "gemini"
+
+        if effective_provider == "api":
             if custom_key:
                 if custom_key.startswith("AIza"):
                     effective_provider = "gemini"
@@ -350,6 +356,8 @@ class LLMClient:
                     import litellm
 
                     target_api_model = model or effective_api_model
+                    if "gemini-2.5-flash" in target_api_model:
+                        target_api_model = target_api_model.replace("gemini-2.5-flash", "gemini-3.8-flash")
                     litellm_model = (
                         target_api_model
                         if target_api_model.startswith("gemini/")

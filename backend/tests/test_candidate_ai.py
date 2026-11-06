@@ -5,6 +5,8 @@ from unittest.mock import AsyncMock, patch
 import httpx
 import pytest
 
+from tests.conftest import controlled_ai_mock
+
 
 @pytest.mark.asyncio
 async def test_reset_candidate_profile_to_default(async_client: httpx.AsyncClient) -> None:
@@ -151,14 +153,37 @@ async def test_candidate_ai_fill_replace_mode(async_client: httpx.AsyncClient) -
         ],
     }
 
-    target_mock = "app.services.candidate_parser.llm_client.generate_json"
-    with patch(target_mock, new_callable=AsyncMock) as mock_gen:
-        mock_gen.return_value = mock_llm_output
+    anna_cv_text = (
+        "Anna Nowak\n"
+        "Email: anna.nowak@example.com\n"
+        "Telefon: +48 600 111 222\n"
+        "Lokalizacja: Kraków, Polska\n"
+        "GitHub: github.com/annanowak\n"
+        "LinkedIn: linkedin.com/in/annanowak\n"
+        "Portfolio: https://annanowak.dev\n\n"
+        "Podsumowanie:\n"
+        "Senior Python Backend Engineer z 7-letnim stażem.\n\n"
+        "Doświadczenie zawodowe:\n"
+        "Senior Backend Developer w Kraków Tech Innovations, Kraków (2021-01 - obecnie)\n"
+        "- Zaprojektowanie architektury mikroserwisów.\n\n"
+        "Umiejętności:\n"
+        "- Backend: Python, FastAPI, PostgreSQL\n\n"
+        "Projekty:\n"
+        "- DistributedTaskQueue (Creator): Async distributed task queue in Python (Python, Redis, Asyncio)\n\n"
+        "Edukacja:\n"
+        "AGH w Krakowie, Magister Inżynier, Informatyka Stosowana (2015-10 - 2020-06)\n\n"
+        "Certyfikaty:\n"
+        "- AWS Certified Solutions Architect, Amazon Web Services (2023-05)\n\n"
+        "Klauzula RODO:\n"
+        "Wyrażam zgodę na przetwarzanie danych osobowych."
+    )
 
+    target_mock = "app.services.candidate_parser.llm_client.generate_json"
+    with controlled_ai_mock(target_mock, mock_return=mock_llm_output) as mock_gen:
         response = await async_client.post(
             "/api/v1/candidate/ai-fill",
             json={
-                "text": "CV: Anna Nowak, email: anna.nowak@example.com, Kraków. Python i FastAPI.",
+                "text": anna_cv_text,
                 "llm_provider": "default",
                 "mode": "replace",
                 "enable_thinking": False,
@@ -232,17 +257,21 @@ async def test_candidate_ai_fill_merge_mode(async_client: httpx.AsyncClient) -> 
         ],
     }
 
-    target_mock = "app.services.candidate_parser.llm_client.generate_json"
-    with patch(target_mock, new_callable=AsyncMock) as mock_gen:
-        mock_gen.return_value = mock_llm_output
+    merge_cv_text = (
+        "Lokalizacja: Warszawa / Zdalnie\n"
+        "Nowe umiejętności: Rust, Vault (Security & IAM)\n"
+        "Nowe doświadczenie: DevOps Consultant w NextGen Cloud Sp. z o.o., Warszawa (2024-01 - obecnie)"
+    )
 
+    target_mock = "app.services.candidate_parser.llm_client.generate_json"
+    with controlled_ai_mock(target_mock, mock_return=mock_llm_output) as mock_gen:
         response = await async_client.post(
             "/api/v1/candidate/ai-fill",
             json={
-                "text": "Kurs Rust i Vault oraz nowa rola DevOps Consultant w NextGen Cloud.",
-                "llm_provider": "gemini",
+                "text": merge_cv_text,
+                "llm_provider": "default",
                 "mode": "merge",
-                "enable_thinking": True,
+                "enable_thinking": False,
             },
         )
 
@@ -330,8 +359,7 @@ async def test_candidate_ai_fill_guarantees_all_7_sections(
         ],
     }
 
-    with patch(target_mock, new_callable=AsyncMock) as mock_gen:
-        mock_gen.return_value = sparse_output
+    with controlled_ai_mock(target_mock, mock_return=sparse_output, force_mock=True) as mock_gen:
 
         res_replace = await async_client.post(
             "/api/v1/candidate/ai-fill",
@@ -377,8 +405,7 @@ async def test_candidate_ai_fill_guarantees_all_7_sections(
         ],
     }
 
-    with patch(target_mock, new_callable=AsyncMock) as mock_gen:
-        mock_gen.return_value = merge_output
+    with controlled_ai_mock(target_mock, mock_return=merge_output, force_mock=True) as mock_gen:
 
         res_merge = await async_client.post(
             "/api/v1/candidate/ai-fill",
@@ -497,8 +524,7 @@ async def test_candidate_ai_fill_narrative_bio_extraction(
     }
 
     target_mock = "app.services.candidate_parser.llm_client.generate_json"
-    with patch(target_mock, new_callable=AsyncMock) as mock_gen:
-        mock_gen.return_value = narrative_llm_output
+    with controlled_ai_mock(target_mock, mock_return=narrative_llm_output) as mock_gen:
 
         response = await async_client.post(
             "/api/v1/candidate/ai-fill",
@@ -580,8 +606,7 @@ async def test_candidate_ai_fill_flexible_top_level_sections(
     }
 
     target_mock = "app.services.candidate_parser.llm_client.generate_json"
-    with patch(target_mock, new_callable=AsyncMock) as mock_gen:
-        mock_gen.return_value = llm_dict_output
+    with controlled_ai_mock(target_mock, mock_return=llm_dict_output, force_mock=True) as mock_gen:
 
         response = await async_client.post(
             "/api/v1/candidate/ai-fill",
@@ -686,8 +711,7 @@ async def test_candidate_ai_fill_and_merge_new_sections(async_client: httpx.Asyn
     }
 
     target_mock = "app.services.candidate_parser.llm_client.generate_json"
-    with patch(target_mock, new_callable=AsyncMock) as mock_gen:
-        mock_gen.return_value = new_sections_output
+    with controlled_ai_mock(target_mock, mock_return=new_sections_output) as mock_gen:
 
         response = await async_client.post(
             "/api/v1/candidate/ai-fill",

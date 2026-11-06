@@ -2,6 +2,7 @@
 
 import os
 
+from pydantic import AliasChoices, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -23,9 +24,15 @@ class Settings(BaseSettings):
     OLLAMA_BASE_URL: str = "http://host.docker.internal:11434"
     OLLAMA_MODEL: str = "qwen2.5:14b"
     API_PROVIDER: str = "gemini"
-    API_MODEL: str = "gemini-2.5-flash"
+    API_MODEL: str = "gemini-3.8-flash"
     GEMINI_API_KEY: str | None = None
     OPENAI_API_KEY: str | None = None
+
+    # AI Testing Configuration (options: "local", "cloud", "mock")
+    TEST_AI_PROVIDER: str = Field(
+        default="local",
+        validation_alias=AliasChoices("TEST_AI_PROVIDER", "AI_TEST_PROVIDER"),
+    )
 
     model_config = SettingsConfigDict(
         env_file=os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), ".env"),
