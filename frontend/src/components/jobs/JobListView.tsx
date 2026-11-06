@@ -21,6 +21,10 @@ import {
   Archive,
   ArchiveRestore,
   XCircle,
+  Send,
+  Users,
+  Award,
+  Inbox,
 } from "lucide-react";
 import { api } from "../../lib/api";
 import type {
@@ -30,16 +34,13 @@ import type {
 import { FollowUpModal } from "../modals/FollowUpModal";
 import {
   PORTAL_LABELS,
-  STATUS_COLORS,
-  STATUS_LABELS,
   WORK_MODEL_LABELS,
 } from "../../lib/constants";
 import {
-  DEADLINE_BADGE_CLASSES,
-  formatDeadline,
   formatRelativeCreatedDate,
   formatSalary,
   getSalaryPeriodLabel,
+  getUnifiedJobStatus,
   normalizeJobOfferUrl,
 } from "../../lib/formatters";
 import { cn } from "../../lib/utils";
@@ -562,9 +563,9 @@ export const JobListView: React.FC<JobListViewProps> = ({
           }
 
           case "status": {
-            const labelA = STATUS_LABELS[a.status] || a.status;
-            const labelB = STATUS_LABELS[b.status] || b.status;
-            result = labelA.localeCompare(labelB, "pl", { sensitivity: "base" });
+            const infoA = getUnifiedJobStatus(a);
+            const infoB = getUnifiedJobStatus(b);
+            result = infoA.label.localeCompare(infoB.label, "pl", { sensitivity: "base" });
             break;
           }
 
@@ -978,7 +979,7 @@ export const JobListView: React.FC<JobListViewProps> = ({
         <div className="overflow-x-auto min-w-full">
           <div className="md:min-w-[1080px]">
             {/* Table / List Header */}
-            <div className="bg-slate-50/80 border-b border-slate-200/80 px-6 py-3.5 hidden md:grid md:grid-cols-[40px_minmax(50px,0.4fr)_minmax(160px,2fr)_minmax(95px,0.95fr)_minmax(95px,1fr)_minmax(100px,1.1fr)_minmax(110px,1.2fr)_minmax(85px,0.9fr)_minmax(100px,1.1fr)_minmax(120px,1.3fr)] gap-4 text-xs font-semibold text-slate-600 select-none dark:bg-neutral-800/80 dark:border-neutral-800 dark:text-neutral-300">
+            <div className="bg-slate-50/80 border-b border-slate-200/80 px-6 py-3.5 hidden md:grid md:grid-cols-[40px_minmax(50px,0.4fr)_minmax(160px,2fr)_minmax(95px,0.95fr)_minmax(95px,1fr)_minmax(100px,1.1fr)_minmax(85px,0.9fr)_minmax(100px,1.1fr)_minmax(160px,1.6fr)] gap-4 text-xs font-semibold text-slate-600 select-none dark:bg-neutral-800/80 dark:border-neutral-800 dark:text-neutral-300">
               {/* Checkbox (zaznacz wszystkie) */}
               <div className="flex items-center justify-center">
                 <input
@@ -1033,15 +1034,6 @@ export const JobListView: React.FC<JobListViewProps> = ({
                 {renderSortIndicator("location")}
               </div>
 
-              {/* Status (Sortable) */}
-              <div
-                onClick={() => handleToggleSort("status")}
-                className="flex items-center gap-1.5 cursor-pointer hover:text-slate-900 dark:hover:text-white group"
-              >
-                <span>Status</span>
-                {renderSortIndicator("status")}
-              </div>
-
               {/* Tryb pracy (Sortable) */}
               <div
                 onClick={() => handleToggleSort("work_model")}
@@ -1060,13 +1052,13 @@ export const JobListView: React.FC<JobListViewProps> = ({
                 {renderSortIndicator("salary")}
               </div>
 
-              {/* Koniec aplikacji (Sortable) */}
+              {/* Status (Sortable, ujednolicona rubryka po prawej stronie) */}
               <div
-                onClick={() => handleToggleSort("deadline")}
+                onClick={() => handleToggleSort("status")}
                 className="flex items-center gap-1.5 cursor-pointer hover:text-slate-900 dark:hover:text-white group"
               >
-                <span>Koniec aplikacji</span>
-                {renderSortIndicator("deadline")}
+                <span>Status</span>
+                {renderSortIndicator("status")}
               </div>
             </div>
 
@@ -1097,7 +1089,6 @@ export const JobListView: React.FC<JobListViewProps> = ({
                     job.salary_max,
                     job.salary_currency
                   );
-                  const deadlineInfo = formatDeadline(job.application_deadline);
                   const createdDateInfo = formatRelativeCreatedDate(job.created_at);
                   const locationDisplay =
                     job.locations && job.locations.length > 0
@@ -1112,7 +1103,7 @@ export const JobListView: React.FC<JobListViewProps> = ({
                       key={job.id}
                       onClick={() => onSelectJob(job)}
                       className={cn(
-                        "group px-6 py-4 hover:bg-slate-50/80 dark:hover:bg-neutral-800/35 transition-colors cursor-pointer grid grid-cols-1 md:grid-cols-[40px_minmax(50px,0.4fr)_minmax(160px,2fr)_minmax(95px,0.95fr)_minmax(95px,1fr)_minmax(100px,1.1fr)_minmax(110px,1.2fr)_minmax(85px,0.9fr)_minmax(100px,1.1fr)_minmax(120px,1.3fr)] gap-3 md:gap-4 items-center",
+                        "group px-6 py-4 hover:bg-slate-50/80 dark:hover:bg-neutral-800/35 transition-colors cursor-pointer grid grid-cols-1 md:grid-cols-[40px_minmax(50px,0.4fr)_minmax(160px,2fr)_minmax(95px,0.95fr)_minmax(95px,1fr)_minmax(100px,1.1fr)_minmax(85px,0.9fr)_minmax(100px,1.1fr)_minmax(160px,1.6fr)] gap-3 md:gap-4 items-center",
                         isSelected && "ring-2 ring-indigo-600 dark:ring-indigo-500 bg-indigo-50/20 dark:bg-neutral-900"
                       )}
                     >
@@ -1240,58 +1231,6 @@ export const JobListView: React.FC<JobListViewProps> = ({
                         </span>
                       </div>
 
-                      {/* Status */}
-                      <div className="flex flex-col items-start gap-1">
-                        {isReparsing ? (
-                          <span className="flex items-center gap-1.5 text-[11px] text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-950/60 px-3 py-0.5 rounded-full border-2 border-indigo-400 dark:border-indigo-600 shadow-none font-semibold">
-                            <RefreshCw className="h-3 w-3 animate-spin" />
-                            Parsowanie...
-                          </span>
-                        ) : (
-                          <span
-                            className={cn(
-                              "inline-flex items-center gap-1.5 text-[11px] font-semibold px-3 py-0.5 rounded-full border-2 shadow-none",
-                              STATUS_COLORS[job.status]?.bg || "bg-slate-100 dark:bg-neutral-800",
-                              STATUS_COLORS[job.status]?.text || "text-slate-700 dark:text-neutral-300",
-                              STATUS_COLORS[job.status]?.border || "border-2 border-slate-300 dark:border-neutral-600"
-                            )}
-                          >
-                            <span
-                              className={cn(
-                                "h-1.5 w-1.5 rounded-full shrink-0",
-                                STATUS_COLORS[job.status]?.dot || "bg-indigo-600"
-                              )}
-                            />
-                            {STATUS_LABELS[job.status] || job.status}
-                          </span>
-                        )}
-
-                        {job.status === "applied" && job.applied_at && (() => {
-                          const days = Math.floor(
-                            (Date.now() - new Date(job.applied_at).getTime()) / (1000 * 60 * 60 * 24)
-                          );
-                          const isGhosting = days >= 14;
-                          return (
-                            <span
-                              className={cn(
-                                "inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full border-2 shadow-none",
-                                isGhosting
-                                  ? "text-amber-700 bg-amber-50 dark:text-amber-300 dark:bg-amber-950/60 border-amber-400 dark:border-amber-600"
-                                  : "text-slate-500 bg-slate-50 dark:text-neutral-400 dark:bg-neutral-800/60 border-slate-200 dark:border-neutral-700"
-                              )}
-                              title={
-                                isGhosting
-                                  ? `Brak odpowiedzi od ${days} dni. Zalecane wysłanie wiadomości follow-up!`
-                                  : `Aplikacja wysłana: ${new Date(job.applied_at).toLocaleDateString("pl-PL")}`
-                              }
-                            >
-                              {isGhosting && <AlertTriangle className="h-3 w-3 text-amber-500 shrink-0" />}
-                              <span>{days === 0 ? "Dzisiaj" : `${days} d. temu`}</span>
-                            </span>
-                          );
-                        })()}
-                      </div>
-
                       {/* Tryb pracy */}
                       <div className="flex items-center">
                         {job.work_model ? (
@@ -1363,23 +1302,32 @@ export const JobListView: React.FC<JobListViewProps> = ({
                         )}
                       </div>
 
-                      {/* Czas pozostały do końca zbierania aplikacji & Akcje */}
+                      {/* Ujednolicony Status & Akcje */}
                       <div className="flex items-center justify-between gap-2">
                         <div>
-                          {deadlineInfo ? (
-                            <Badge
-                              className={cn(
-                                "text-xs",
-                                DEADLINE_BADGE_CLASSES[deadlineInfo.deadlineColor]
-                              )}
-                              title={deadlineInfo.detailText}
-                            >
-                              <Clock className="h-3 w-3 mr-1 shrink-0" />
-                              <span>{deadlineInfo.text}</span>
-                            </Badge>
-                          ) : (
-                            <span className="text-xs text-slate-400 dark:text-neutral-500 italic">Brak terminu</span>
-                          )}
+                          {(() => {
+                            const statusInfo = getUnifiedJobStatus(job, isReparsing);
+                            return (
+                              <span
+                                className={cn(
+                                  "inline-flex items-center gap-1.5 text-[11px] font-semibold px-2.5 py-0.5 rounded-full border-2 shadow-none",
+                                  statusInfo.badgeClass
+                                )}
+                                title={statusInfo.detailText}
+                              >
+                                {statusInfo.iconType === "clock" && <Clock className="h-3 w-3 shrink-0" />}
+                                {statusInfo.iconType === "send" && <Send className="h-3 w-3 shrink-0" />}
+                                {statusInfo.iconType === "users" && <Users className="h-3 w-3 shrink-0" />}
+                                {statusInfo.iconType === "award" && <Award className="h-3 w-3 shrink-0" />}
+                                {statusInfo.iconType === "x-circle" && <XCircle className="h-3 w-3 shrink-0" />}
+                                {statusInfo.iconType === "archive" && <Archive className="h-3 w-3 shrink-0" />}
+                                {statusInfo.iconType === "inbox" && <Inbox className="h-3 w-3 shrink-0" />}
+                                {statusInfo.iconType === "alert" && <AlertTriangle className="h-3 w-3 shrink-0" />}
+                                {statusInfo.iconType === "refresh" && <RefreshCw className="h-3 w-3 animate-spin shrink-0" />}
+                                <span>{statusInfo.label}</span>
+                              </span>
+                            );
+                          })()}
                         </div>
 
                         {/* Actions Menu Trigger & Quick Actions */}

@@ -36,6 +36,40 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/jobs", tags=["Jobs"])
 
 
+async def _get_next_interviews_batch(job_ids: list[UUID], db: AsyncSession) -> dict[UUID, datetime]:
+    """Batch fetch the earliest upcoming uncompleted recruitment event per job offer."""
+    if not job_ids:
+        return {}
+    now = datetime.now(UTC)
+    stmt = (
+        select(
+            RecruitmentEvent.job_offer_id,
+            func.min(RecruitmentEvent.scheduled_at).label("next_interview_at"),
+        )
+        .where(
+            RecruitmentEvent.job_offer_id.in_(job_ids),
+            RecruitmentEvent.is_completed.is_(False),
+            RecruitmentEvent.scheduled_at >= now,
+        )
+        .group_by(RecruitmentEvent.job_offer_id)
+    )
+    result = await db.execute(stmt)
+    return {row.job_offer_id: row.next_interview_at for row in result.all()}
+
+
+async def _get_next_interview_for_job(job_id: UUID, db: AsyncSession) -> datetime | None:
+    """Fetch the earliest upcoming uncompleted recruitment event for a single job offer."""
+    interviews = await _get_next_interviews_batch([job_id], db)
+    return interviews.get(job_id)
+
+
+def _to_job_offer_read(job: JobOffer, next_interview_at: datetime | None) -> JobOfferRead:
+    """Convert a JobOffer ORM instance to JobOfferRead with next_interview_at populated."""
+    item = JobOfferRead.model_validate(job)
+    item.next_interview_at = next_interview_at
+    return item
+
+
 @router.get(
     "",
     response_model=list[JobOfferRead],
@@ -91,7 +125,9 @@ async def list_jobs(
     stmt = stmt.offset(offset).limit(limit)
     result = await db.execute(stmt)
     records = result.scalars().all()
-    return [JobOfferRead.model_validate(rec) for rec in records]
+    job_ids = [rec.id for rec in records]
+    next_interviews = await _get_next_interviews_batch(job_ids, db)
+    return [_to_job_offer_read(rec, next_interviews.get(rec.id)) for rec in records]
 
 
 @router.get(
@@ -215,7 +251,8 @@ async def get_job_by_id(
             detail=f"Job offer with ID '{job_id}' not found",
         )
 
-    return JobOfferRead.model_validate(job)
+    next_interview = await _get_next_interview_for_job(job.id, db)
+    return _to_job_offer_read(job, next_interview)
 
 
 @router.patch(
@@ -314,7 +351,8 @@ async def update_job_by_id(
             message="Zaktualizowano dane oferty",
         ),
     )
-    return JobOfferRead.model_validate(job)
+    next_interview = await _get_next_interview_for_job(job.id, db)
+    return _to_job_offer_read(job, next_interview)
 
 
 @router.post(
@@ -375,7 +413,8 @@ async def reparse_job(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=str(err),
         ) from err
-    return JobOfferRead.model_validate(job)
+    next_interview = await _get_next_interview_for_job(job.id, db)
+    return _to_job_offer_read(job, next_interview)
 
 
 @router.delete(

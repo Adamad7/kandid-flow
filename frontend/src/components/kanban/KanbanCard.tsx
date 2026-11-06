@@ -18,6 +18,7 @@ import {
   Archive,
   HelpCircle,
   XCircle,
+  Inbox,
 } from "lucide-react";
 import type { JobOfferRead, JobStatusType } from "../../types";
 import {
@@ -25,13 +26,11 @@ import {
   WORK_MODEL_LABELS,
 } from "../../lib/constants";
 import {
-  DEADLINE_BADGE_CLASSES,
-  formatDeadline,
   formatSalary,
   getSalaryPeriodLabel,
+  getUnifiedJobStatus,
 } from "../../lib/formatters";
 import { cn } from "../../lib/utils";
-import { Badge } from "../ui/Badge";
 import { Button } from "../ui/Button";
 import { RatingStars } from "../ui/RatingStars";
 
@@ -66,7 +65,6 @@ export const KanbanCard: React.FC<KanbanCardProps> = ({
     job.salary_max,
     job.salary_currency
   );
-  const deadlineInfo = formatDeadline(job.application_deadline);
   const isParsing = job.status === "parsing" || isReparsing;
   const isFailed = job.status === "failed_parsing";
 
@@ -316,35 +314,48 @@ export const KanbanCard: React.FC<KanbanCardProps> = ({
         )}
       </div>
 
-      {/* Applied Date Banner */}
-      {job.status === "applied" && job.applied_at && (() => {
-        const days = Math.floor(
-          (Date.now() - new Date(job.applied_at).getTime()) / (1000 * 60 * 60 * 24)
+      {/* Unified Status Badge */}
+      {(() => {
+        const statusInfo = getUnifiedJobStatus(job, isParsing);
+        const isClickable = job.status === "applied" && Boolean(onOpenApplicationDetails);
+        const badgeContent = (
+          <span
+            className={cn(
+              "inline-flex items-center gap-1.5 text-[11px] font-semibold px-2.5 py-0.5 rounded-full border-2 shadow-none transition-colors",
+              statusInfo.badgeClass,
+              isClickable && "cursor-pointer hover:opacity-80"
+            )}
+            title={statusInfo.detailText}
+          >
+            {statusInfo.iconType === "clock" && <Clock className="h-3 w-3 shrink-0" />}
+            {statusInfo.iconType === "send" && <Send className="h-3 w-3 shrink-0" />}
+            {statusInfo.iconType === "users" && <Users className="h-3 w-3 shrink-0" />}
+            {statusInfo.iconType === "award" && <Award className="h-3 w-3 shrink-0" />}
+            {statusInfo.iconType === "x-circle" && <XCircle className="h-3 w-3 shrink-0" />}
+            {statusInfo.iconType === "archive" && <Archive className="h-3 w-3 shrink-0" />}
+            {statusInfo.iconType === "inbox" && <Inbox className="h-3 w-3 shrink-0" />}
+            {statusInfo.iconType === "alert" && <AlertTriangle className="h-3 w-3 shrink-0" />}
+            {statusInfo.iconType === "refresh" && <RefreshCw className="h-3 w-3 animate-spin shrink-0" />}
+            <span>{statusInfo.label}</span>
+          </span>
         );
-        const isGhosting = days >= 14;
+
         return (
           <div className="mb-2.5">
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                if (onOpenApplicationDetails) onOpenApplicationDetails(job);
-              }}
-              className={cn(
-                "inline-flex items-center gap-1.5 text-[11px] font-semibold px-2.5 py-0.5 rounded-full border-2 cursor-pointer transition-colors shadow-none",
-                isGhosting
-                  ? "text-amber-700 bg-amber-50 border-amber-400 dark:text-amber-300 dark:bg-amber-950/60 dark:border-amber-600 font-bold"
-                  : "text-slate-600 bg-slate-50 border-slate-200 hover:text-indigo-600 dark:text-neutral-300 dark:bg-neutral-800/60 dark:border-neutral-700 dark:hover:text-indigo-400"
-              )}
-              title={
-                isGhosting
-                  ? `Brak odpowiedzi od ${days} dni. Kliknij, aby edytować szczegóły aplikacji.`
-                  : `Aplikacja wysłana: ${new Date(job.applied_at).toLocaleDateString("pl-PL")}. Kliknij, aby edytować.`
-              }
-            >
-              {isGhosting && <AlertTriangle className="h-3 w-3 text-amber-500 shrink-0" />}
-              <span>{days === 0 ? "Zaaplikowano dzisiaj" : `Zaaplikowano ${days} d. temu`}</span>
-            </button>
+            {isClickable ? (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onOpenApplicationDetails?.(job);
+                }}
+                className="inline-flex text-left"
+              >
+                {badgeContent}
+              </button>
+            ) : (
+              badgeContent
+            )}
           </div>
         );
       })()}
@@ -374,22 +385,6 @@ export const KanbanCard: React.FC<KanbanCardProps> = ({
           </div>
         )}
       </div>
-
-      {/* Deadline Info */}
-      {deadlineInfo && (
-        <div className="mb-3">
-          <Badge
-            className={cn(
-              "text-[11px]",
-              DEADLINE_BADGE_CLASSES[deadlineInfo.deadlineColor]
-            )}
-            title={deadlineInfo.detailText}
-          >
-            <Clock className="h-3 w-3 mr-1" />
-            {deadlineInfo.text}
-          </Badge>
-        </div>
-      )}
 
       {/* Status Warning / Parsing Indicator */}
       {isParsing && (

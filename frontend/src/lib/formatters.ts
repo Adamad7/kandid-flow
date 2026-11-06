@@ -1,3 +1,6 @@
+import type { JobOfferRead } from "../types";
+import { STATUS_COLORS } from "./constants";
+
 export function formatSalary(
   min?: number | null,
   max?: number | null,
@@ -209,5 +212,252 @@ export function normalizeJobOfferUrl(url?: string | null): string {
   } catch {
     return url;
   }
+}
+
+/**
+ * Formats time elapsed since job application submission according to calendar day boundaries (doby).
+ * - On the same calendar day: "Zaaplikowano Xh temu" (or "< 1h temu")
+ * - On subsequent calendar days: "Zaaplikowano Xd temu" (where 1d is the very next calendar day)
+ */
+export function formatAppliedTimeAgo(
+  appliedAtStr?: string | null
+): { text: string; fullDate: string; hours?: number; days?: number } | null {
+  if (!appliedAtStr) return null;
+  const d = new Date(appliedAtStr);
+  if (isNaN(d.getTime())) return null;
+
+  const fullDate = formatDateTime(appliedAtStr);
+  const now = new Date();
+
+  // Check if same calendar day in local time
+  const isSameCalendarDay =
+    now.getFullYear() === d.getFullYear() &&
+    now.getMonth() === d.getMonth() &&
+    now.getDate() === d.getDate();
+
+  if (isSameCalendarDay) {
+    const diffMs = Math.max(0, now.getTime() - d.getTime());
+    const hours = Math.floor(diffMs / (1000 * 60 * 60));
+    if (hours < 1) {
+      return { text: "Zaaplikowano < 1h temu", fullDate, hours: 0, days: 0 };
+    }
+    return { text: `Zaaplikowano ${hours}h temu`, fullDate, hours, days: 0 };
+  }
+
+  // Calculate calendar days difference (doby)
+  const nowDateOnly = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const appliedDateOnly = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  const oneDayMs = 24 * 60 * 60 * 1000;
+  const rawDays = Math.round((nowDateOnly.getTime() - appliedDateOnly.getTime()) / oneDayMs);
+  const days = Math.max(1, rawDays);
+
+  return { text: `Zaaplikowano ${days}d temu`, fullDate, days };
+}
+
+/**
+ * Formats countdown to next recruitment interview stage according to calendar day boundaries (doby).
+ * - On the same calendar day: "Rozmowy za Xh" (or "Rozmowy dzisiaj")
+ * - On future calendar days: "Rozmowy za Xd"
+ * - In the past / no event: "Rozmowy rekrutacyjne"
+ */
+export function formatInterviewCountdown(
+  interviewAtStr?: string | null
+): { text: string; fullDate: string; days?: number; hours?: number } | null {
+  if (!interviewAtStr) return null;
+  const d = new Date(interviewAtStr);
+  if (isNaN(d.getTime())) return null;
+
+  const fullDate = formatDateTime(interviewAtStr);
+  const now = new Date();
+
+  const isSameCalendarDay =
+    now.getFullYear() === d.getFullYear() &&
+    now.getMonth() === d.getMonth() &&
+    now.getDate() === d.getDate();
+
+  if (isSameCalendarDay) {
+    const diffMs = d.getTime() - now.getTime();
+    const hours = Math.floor(diffMs / (1000 * 60 * 60));
+    if (hours > 0) {
+      return { text: `Rozmowy za ${hours}h`, fullDate, hours, days: 0 };
+    }
+    return { text: "Rozmowy dzisiaj", fullDate, hours: 0, days: 0 };
+  }
+
+  const nowDateOnly = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const interviewDateOnly = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  const oneDayMs = 24 * 60 * 60 * 1000;
+  const diffDays = Math.round((interviewDateOnly.getTime() - nowDateOnly.getTime()) / oneDayMs);
+
+  if (diffDays > 0) {
+    return { text: `Rozmowy za ${diffDays}d`, fullDate, days: diffDays };
+  }
+
+  return { text: "Rozmowy rekrutacyjne", fullDate, days: 0 };
+}
+
+export interface UnifiedJobStatusInfo {
+  label: string;
+  detailText?: string;
+  badgeClass: string;
+  dotClass?: string;
+  iconType: "clock" | "send" | "users" | "award" | "x-circle" | "archive" | "inbox" | "refresh" | "alert";
+  isUrgent?: boolean;
+}
+
+export function getUnifiedJobStatus(
+  job: JobOfferRead,
+  isReparsing: boolean = false
+): UnifiedJobStatusInfo {
+  if (isReparsing || job.status === "parsing") {
+    return {
+      label: "Parsowanie...",
+      detailText: "Parsowanie AI oferty pracy jest w toku",
+      badgeClass:
+        "bg-indigo-50 text-indigo-700 border-2 border-indigo-400 dark:bg-indigo-950/60 dark:text-indigo-300 dark:border-indigo-600",
+      dotClass: "bg-indigo-500",
+      iconType: "refresh",
+    };
+  }
+
+  if (job.status === "failed_parsing") {
+    return {
+      label: "Błąd parsowania",
+      detailText: job.error_message || "Wystąpił błąd podczas parsowania oferty",
+      badgeClass: cnClass(
+        STATUS_COLORS.failed_parsing.bg,
+        STATUS_COLORS.failed_parsing.text,
+        STATUS_COLORS.failed_parsing.border
+      ),
+      dotClass: STATUS_COLORS.failed_parsing.dot,
+      iconType: "alert",
+    };
+  }
+
+  if (job.status === "inbox") {
+    return {
+      label: "Oczekuje na parsowanie",
+      detailText: "Oferta znajduje się w kolejce do sparsowania",
+      badgeClass: cnClass(
+        STATUS_COLORS.inbox.bg,
+        STATUS_COLORS.inbox.text,
+        STATUS_COLORS.inbox.border
+      ),
+      dotClass: STATUS_COLORS.inbox.dot,
+      iconType: "inbox",
+    };
+  }
+
+  if (job.status === "ready") {
+    const deadlineInfo = formatDeadline(job.application_deadline);
+    if (deadlineInfo) {
+      const dot =
+        deadlineInfo.deadlineColor === "red"
+          ? "bg-rose-500"
+          : deadlineInfo.deadlineColor === "orange"
+          ? "bg-orange-500"
+          : deadlineInfo.deadlineColor === "yellow"
+          ? "bg-yellow-500"
+          : "bg-indigo-600";
+      return {
+        label: deadlineInfo.text,
+        detailText: deadlineInfo.detailText,
+        badgeClass: DEADLINE_BADGE_CLASSES[deadlineInfo.deadlineColor],
+        dotClass: dot,
+        iconType: "clock",
+        isUrgent: deadlineInfo.isUrgent,
+      };
+    }
+    return {
+      label: "Gotowe do aplikacji",
+      detailText: "Oferta sparsowana, brak wyznaczonego terminu końca aplikacji",
+      badgeClass: cnClass(
+        STATUS_COLORS.ready.bg,
+        STATUS_COLORS.ready.text,
+        STATUS_COLORS.ready.border
+      ),
+      dotClass: STATUS_COLORS.ready.dot,
+      iconType: "clock",
+    };
+  }
+
+  if (job.status === "applied") {
+    const appliedInfo = formatAppliedTimeAgo(job.applied_at);
+    return {
+      label: appliedInfo ? appliedInfo.text : "Zaaplikowano",
+      detailText: appliedInfo
+        ? `Aplikacja wysłana: ${appliedInfo.fullDate}`
+        : "Aplikacja została wysłana",
+      badgeClass: cnClass(
+        STATUS_COLORS.applied.bg,
+        STATUS_COLORS.applied.text,
+        STATUS_COLORS.applied.border
+      ),
+      dotClass: STATUS_COLORS.applied.dot,
+      iconType: "send",
+    };
+  }
+
+  if (job.status === "interview") {
+    const interviewInfo = formatInterviewCountdown(job.next_interview_at);
+    return {
+      label: interviewInfo ? interviewInfo.text : "Rozmowy rekrutacyjne",
+      detailText: interviewInfo?.fullDate
+        ? `Najbliższy etap: ${interviewInfo.fullDate}`
+        : "Etap rozmów rekrutacyjnych",
+      badgeClass: cnClass(
+        STATUS_COLORS.interview.bg,
+        STATUS_COLORS.interview.text,
+        STATUS_COLORS.interview.border
+      ),
+      dotClass: STATUS_COLORS.interview.dot,
+      iconType: "users",
+    };
+  }
+
+  if (job.status === "offer") {
+    return {
+      label: "Oferta pracy",
+      detailText: "Otrzymano ofertę pracy",
+      badgeClass: cnClass(
+        STATUS_COLORS.offer.bg,
+        STATUS_COLORS.offer.text,
+        STATUS_COLORS.offer.border
+      ),
+      dotClass: STATUS_COLORS.offer.dot,
+      iconType: "award",
+    };
+  }
+
+  if (job.status === "rejected") {
+    return {
+      label: "Odrzucone",
+      detailText: "Aplikacja odrzucona",
+      badgeClass: cnClass(
+        STATUS_COLORS.rejected.bg,
+        STATUS_COLORS.rejected.text,
+        STATUS_COLORS.rejected.border
+      ),
+      dotClass: STATUS_COLORS.rejected.dot,
+      iconType: "x-circle",
+    };
+  }
+
+  // archived
+  return {
+    label: "Zarchiwizowane",
+    detailText: "Oferta zarchiwizowana",
+    badgeClass: cnClass(
+      STATUS_COLORS.archived.bg,
+      STATUS_COLORS.archived.text,
+      STATUS_COLORS.archived.border
+    ),
+    dotClass: STATUS_COLORS.archived.dot,
+    iconType: "archive",
+  };
+}
+
+function cnClass(...classes: (string | undefined | null | false)[]): string {
+  return classes.filter(Boolean).join(" ");
 }
 

@@ -54,8 +54,8 @@ const COLUMNS: ColumnDef[] = [
     id: "applied_col",
     title: "Zaaplikowano",
     statuses: ["applied"],
-    icon: <Send className="h-4 w-4 text-amber-500 dark:text-amber-400" />,
-    headerColor: "bg-amber-50 text-amber-700 border-2 border-amber-400 dark:bg-amber-950/60 dark:text-amber-300 dark:border-amber-600",
+    icon: <Send className="h-4 w-4 text-sky-600 dark:text-sky-400" />,
+    headerColor: "bg-sky-50 text-sky-700 border-2 border-sky-400 dark:bg-sky-950/60 dark:text-sky-300 dark:border-sky-600",
   },
   {
     id: "interview_col",

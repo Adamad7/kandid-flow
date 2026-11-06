@@ -432,3 +432,95 @@ async def test_job_offer_rating_lifecycle(async_client: httpx.AsyncClient):
         assert patch_bad_high.status_code == 422
     finally:
         await async_client.delete(f"/api/v1/jobs/{job_id}")
+
+
+@pytest.mark.asyncio
+async def test_job_next_interview_at_population(async_client: httpx.AsyncClient):
+    """Verify next_interview_at is properly computed and returned for jobs."""
+    from datetime import UTC, datetime, timedelta
+
+    headers = {"Authorization": f"Bearer {settings.EXTENSION_API_TOKEN}"}
+    test_id = uuid.uuid4()
+    test_url = f"https://justjoin.it/offers/interview-test-{test_id}"
+    payload = {
+        "source_url": test_url,
+        "source_portal": "justjoin",
+        "title": "Interview Test Engineer",
+        "company": "InterviewCorp",
+        "description_text": "Role for testing next_interview_at population.",
+    }
+
+    create_res = await async_client.post("/api/v1/inbox", headers=headers, json=payload)
+    assert create_res.status_code == 201
+    job_id = create_res.json()["id"]
+
+    try:
+        # Initially, no events -> next_interview_at should be None
+        get_res = await async_client.get(f"/api/v1/jobs/{job_id}")
+        assert get_res.status_code == 200
+        assert get_res.json()["next_interview_at"] is None
+
+        # Add a completed event in future
+        now = datetime.now(UTC)
+        ev_comp_payload = {
+            "job_offer_id": job_id,
+            "event_type": "hr_screening",
+            "title": "Initial screening",
+            "scheduled_at": (now + timedelta(days=1)).isoformat(),
+            "is_completed": True,
+        }
+        ev1_res = await async_client.post("/api/v1/events", json=ev_comp_payload)
+        assert ev1_res.status_code == 201
+
+        # Still None because it is completed
+        get_res = await async_client.get(f"/api/v1/jobs/{job_id}")
+        assert get_res.json()["next_interview_at"] is None
+
+        # Add upcoming uncompleted event in 3 days
+        future_dt_3d = now + timedelta(days=3)
+        ev_later_payload = {
+            "job_offer_id": job_id,
+            "event_type": "technical_interview",
+            "title": "Technical stage",
+            "scheduled_at": future_dt_3d.isoformat(),
+            "is_completed": False,
+        }
+        ev2_res = await async_client.post("/api/v1/events", json=ev_later_payload)
+        assert ev2_res.status_code == 201
+
+        # Add earlier uncompleted event in 2 days
+        future_dt_2d = now + timedelta(days=2)
+        ev_earlier_payload = {
+            "job_offer_id": job_id,
+            "event_type": "manager_interview",
+            "title": "Manager interview",
+            "scheduled_at": future_dt_2d.isoformat(),
+            "is_completed": False,
+        }
+        ev3_res = await async_client.post("/api/v1/events", json=ev_earlier_payload)
+        assert ev3_res.status_code == 201
+
+        # get_job_by_id should return the earliest event (in 2 days)
+        get_res = await async_client.get(f"/api/v1/jobs/{job_id}")
+        assert get_res.status_code == 200
+        next_dt_iso = get_res.json()["next_interview_at"]
+        assert next_dt_iso is not None
+        next_dt = datetime.fromisoformat(next_dt_iso)
+        assert abs((next_dt - future_dt_2d).total_seconds()) < 5
+
+        # list_jobs should also contain next_interview_at
+        list_res = await async_client.get("/api/v1/jobs")
+        assert list_res.status_code == 200
+        job_item = next((j for j in list_res.json() if j["id"] == job_id), None)
+        assert job_item is not None
+        assert job_item["next_interview_at"] is not None
+        list_dt = datetime.fromisoformat(job_item["next_interview_at"])
+        assert abs((list_dt - future_dt_2d).total_seconds()) < 5
+
+        # update_job_by_id should also return next_interview_at
+        patch_res = await async_client.patch(f"/api/v1/jobs/{job_id}", json={"status": "interview"})
+        assert patch_res.status_code == 200
+        assert patch_res.json()["next_interview_at"] is not None
+
+    finally:
+        await async_client.delete(f"/api/v1/jobs/{job_id}")

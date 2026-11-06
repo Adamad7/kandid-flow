@@ -116,7 +116,9 @@ def test_repair_truncated_json_with_markdown_fences():
 async def test_candidate_parser_passes_context_window(async_client):
     """Verify that /api/v1/candidate/ai-fill forwards context_window to generate_json."""
     from typing import Any
+
     from sqlalchemy import select
+
     from app.database import async_session_factory
     from app.models.candidate import CandidateProfile
 
@@ -158,7 +160,8 @@ async def test_candidate_parser_passes_context_window(async_client):
     finally:
         if backup_cand:
             async with async_session_factory() as session:
-                cand = (await session.execute(select(CandidateProfile).limit(1))).scalar_one_or_none()
+                cand_res = await session.execute(select(CandidateProfile).limit(1))
+                cand = cand_res.scalar_one_or_none()
                 if cand:
                     cand.full_name = backup_cand["full_name"]
                     cand.contact_info = backup_cand["contact_info"]

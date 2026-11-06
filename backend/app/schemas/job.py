@@ -185,6 +185,10 @@ class JobOfferRead(JobOfferBase):
     )
     created_at: datetime = Field(..., description="Creation timestamp")
     updated_at: datetime = Field(..., description="Last update timestamp")
+    next_interview_at: datetime | None = Field(
+        default=None,
+        description="Scheduled timestamp of the next upcoming recruitment interview event",
+    )
 
     model_config = ConfigDict(from_attributes=True)
 

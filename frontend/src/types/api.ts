@@ -348,6 +348,7 @@ export interface JobOfferBase {
   location_raw?: string | null;
   application_deadline?: string | null; // YYYY-MM-DD
   applied_at?: string | null; // ISO 8601
+  next_interview_at?: string | null; // ISO 8601
   salary_min?: number | null;
   salary_max?: number | null;
   salary_currency?: string | null;

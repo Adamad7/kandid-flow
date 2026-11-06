@@ -6,7 +6,7 @@ import type {
 } from "../types";
 
 export const STATUS_LABELS: Record<JobStatusType, string> = {
-  inbox: "Do przetworzenia",
+  inbox: "Oczekuje na parsowanie",
   parsing: "Parsowanie AI...",
   failed_parsing: "Błąd parsowania",
   ready: "Gotowe do aplikacji",
@@ -46,10 +46,10 @@ export const STATUS_COLORS: Record<
     dot: "bg-indigo-600",
   },
   applied: {
-    bg: "bg-amber-50 dark:bg-amber-950/60",
-    text: "text-amber-700 dark:text-amber-300",
-    border: "border-2 border-amber-400 dark:border-amber-600",
-    dot: "bg-amber-500",
+    bg: "bg-sky-50 dark:bg-sky-950/60",
+    text: "text-sky-700 dark:text-sky-300",
+    border: "border-2 border-sky-300 dark:border-sky-600",
+    dot: "bg-sky-500",
   },
   interview: {
     bg: "bg-purple-50 dark:bg-purple-950/60",
