@@ -1,8 +1,9 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   Sparkles,
   User,
   AlertCircle,
+  AlertTriangle,
   Brain,
   Zap,
   Cpu,
@@ -117,6 +118,78 @@ const STANDARD_SECTIONS: SectionDefinition[] = [
   },
 ];
 
+/**
+ * Check if a specific section has data in the given baseline sections array.
+ */
+function isSectionEmptyInBaseline(
+  secId: string,
+  baselineSections: any[] | undefined
+): boolean {
+  if (!baselineSections || !Array.isArray(baselineSections)) {
+    return true;
+  }
+  const block = baselineSections.find(
+    (s: any) => (s?.id && s.id === secId) || (s?.type && s.type === secId)
+  );
+
+  if (!block) {
+    return true;
+  }
+
+  const type = block.type || block.id;
+
+  if (type === "summary" || type === "clause") {
+    const text = block.content || block.text || "";
+    return typeof text === "string" ? text.trim().length === 0 : true;
+  }
+
+  if (type === "skills") {
+    if (!block.items || !Array.isArray(block.items) || block.items.length === 0) {
+      return true;
+    }
+    return !block.items.some((cat: any) => {
+      if (typeof cat === "string") return cat.trim().length > 0;
+      if (cat && Array.isArray(cat.skills)) return cat.skills.length > 0;
+      return false;
+    });
+  }
+
+  if (type === "interests" || type === "custom") {
+    const hasItems =
+      Array.isArray(block.items) &&
+      block.items.some((i: any) => typeof i === "string" && i.trim().length > 0);
+    const hasContent = typeof block.content === "string" && block.content.trim().length > 0;
+    return !hasItems && !hasContent;
+  }
+
+  // List sections: experience, projects, education, certificates, languages, trainings, achievements
+  if (Array.isArray(block.items)) {
+    return block.items.length === 0;
+  }
+
+  return true;
+}
+
+function getBaselineSectionsForPreset(
+  presetId: string,
+  presetsList: BaseCVPresetRead[],
+  profile: CandidateProfileRead | null
+): any[] {
+  if (presetId.trim()) {
+    const preset = presetsList.find((p) => p.id === presetId);
+    if (preset && preset.layout_schema) {
+      if (typeof preset.layout_schema === "object" && "sections" in preset.layout_schema) {
+        return (preset.layout_schema as any).sections || [];
+      }
+      if (Array.isArray(preset.layout_schema)) {
+        return preset.layout_schema;
+      }
+    }
+    return [];
+  }
+  return profile?.sections || [];
+}
+
 export const CVGeneratorModal: React.FC<CVGeneratorModalProps> = ({
   job,
   isOpen,
@@ -124,7 +197,9 @@ export const CVGeneratorModal: React.FC<CVGeneratorModalProps> = ({
   onSuccess,
 }) => {
   const [presets, setPresets] = useState<BaseCVPresetRead[]>([]);
+  const [candidateProfile, setCandidateProfile] = useState<CandidateProfileRead | null>(null);
   const [availableSections, setAvailableSections] = useState<SectionDefinition[]>(STANDARD_SECTIONS);
+  const defaultModesRef = useRef<Record<string, SectionGenerationMode>>({});
 
   // Form State
   const [selectedPresetId, setSelectedPresetId] = useState<string>("");
@@ -151,6 +226,11 @@ export const CVGeneratorModal: React.FC<CVGeneratorModalProps> = ({
     clause: "ai",
   });
 
+  // Active baseline sections from preset or candidate profile
+  const activeBaselineSections = useMemo(() => {
+    return getBaselineSectionsForPreset(selectedPresetId, presets, candidateProfile);
+  }, [selectedPresetId, presets, candidateProfile]);
+
   // Generation state
   const [isGenerating, setIsGenerating] = useState(false);
   const [generationStage, setGenerationStage] = useState(0);
@@ -175,6 +255,7 @@ export const CVGeneratorModal: React.FC<CVGeneratorModalProps> = ({
       ]);
 
       setPresets(presetsData);
+      setCandidateProfile(profileData);
 
       // Assemble sections: standard + custom from candidate profile
       const sectionsList: SectionDefinition[] = [...STANDARD_SECTIONS];
@@ -223,14 +304,57 @@ export const CVGeneratorModal: React.FC<CVGeneratorModalProps> = ({
         }
       }
 
+      defaultModesRef.current = initialModes;
+
+      // Determine initial baseline sections
+      const initialBaseline = getBaselineSectionsForPreset(
+        selectedPresetId,
+        presetsData,
+        profileData
+      );
+
+      const computedModes: Record<string, SectionGenerationMode> = {};
+      sectionsList.forEach((sec) => {
+        const empty = isSectionEmptyInBaseline(sec.id, initialBaseline);
+        if (empty) {
+          computedModes[sec.id] = "off";
+        } else {
+          computedModes[sec.id] = initialModes[sec.id] || "ai";
+        }
+      });
+
       setAvailableSections(sectionsList);
-      setSectionModes(initialModes);
+      setSectionModes(computedModes);
     } catch {
       // Fallback
     }
   };
 
+  const handlePresetChange = (newPresetId: string) => {
+    setSelectedPresetId(newPresetId);
+    const newBaseline = getBaselineSectionsForPreset(newPresetId, presets, candidateProfile);
+
+    setSectionModes((prev) => {
+      const nextModes = { ...prev };
+      availableSections.forEach((sec) => {
+        const empty = isSectionEmptyInBaseline(sec.id, newBaseline);
+        if (empty) {
+          nextModes[sec.id] = "off";
+        } else if (nextModes[sec.id] === "off") {
+          // If section was set to 'off' because it was previously empty,
+          // restore its baseline default mode
+          nextModes[sec.id] = defaultModesRef.current[sec.id] || "ai";
+        }
+      });
+      return nextModes;
+    });
+  };
+
   const handleSetSectionMode = (secId: string, mode: SectionGenerationMode) => {
+    const empty = isSectionEmptyInBaseline(secId, activeBaselineSections);
+    if (empty && mode !== "off") {
+      return;
+    }
     setSectionModes((prev) => ({
       ...prev,
       [secId]: mode,
@@ -369,7 +493,7 @@ export const CVGeneratorModal: React.FC<CVGeneratorModalProps> = ({
             </label>
             <Select
               value={selectedPresetId}
-              onChange={(e) => setSelectedPresetId(e.target.value)}
+              onChange={(e) => handlePresetChange(e.target.value)}
               helperText="Brak wyboru szablonu oznacza użycie danych z całej bazy wiedzy."
             >
               <option value="">Brak szablonu (użyj całej bazy wiedzy)</option>
@@ -507,17 +631,21 @@ export const CVGeneratorModal: React.FC<CVGeneratorModalProps> = ({
             <div className="space-y-2.5">
               {availableSections.map((sec) => {
                 const IconComponent = sec.icon;
+                const isEmpty = isSectionEmptyInBaseline(sec.id, activeBaselineSections);
                 const currentMode = sectionModes[sec.id] || "ai";
                 const isOff = currentMode === "off";
                 const isRaw = currentMode === "raw";
                 const isAi = currentMode === "ai";
+                const emptyMessage = selectedPresetId.trim()
+                  ? "Brak danych w wybranym szablonie"
+                  : "Brak danych w bazie wiedzy";
 
                 return (
                   <div
                     key={sec.id}
                     className={`w-full flex flex-col sm:flex-row sm:items-center justify-between p-3.5 rounded-2xl border transition-colors duration-150 gap-3 ${
                       isOff
-                        ? "bg-slate-50/60 dark:bg-neutral-950/40 border-slate-200/60 dark:border-neutral-800/60 opacity-60"
+                        ? "bg-slate-50/60 dark:bg-neutral-950/40 border-slate-200/60 dark:border-neutral-800/60 opacity-70"
                         : isAi
                         ? "bg-indigo-50/30 dark:bg-neutral-900 border-2 border-indigo-200/90 dark:border-indigo-900/60 shadow-none"
                         : "bg-white dark:bg-neutral-900 border border-slate-200/80 dark:border-neutral-800 shadow-none"
@@ -547,6 +675,12 @@ export const CVGeneratorModal: React.FC<CVGeneratorModalProps> = ({
                           >
                             {sec.title}
                           </span>
+                          {isEmpty && (
+                            <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-amber-700 dark:text-amber-400 bg-amber-100/80 dark:bg-amber-950/60 px-2 py-0.5 rounded-md border border-amber-300 dark:border-amber-800/60">
+                              <AlertTriangle className="h-3 w-3 shrink-0" />
+                              {emptyMessage}
+                            </span>
+                          )}
                         </div>
                         <p className="text-xs text-slate-500 dark:text-neutral-400 truncate">
                           {sec.description}
@@ -569,9 +703,13 @@ export const CVGeneratorModal: React.FC<CVGeneratorModalProps> = ({
                       </button>
                       <button
                         type="button"
-                        onClick={() => handleSetSectionMode(sec.id, "raw")}
+                        disabled={isEmpty}
+                        title={isEmpty ? emptyMessage : undefined}
+                        onClick={() => !isEmpty && handleSetSectionMode(sec.id, "raw")}
                         className={`px-2.5 py-1 rounded-lg transition-colors duration-150 select-none whitespace-nowrap font-semibold ${
-                          isRaw
+                          isEmpty
+                            ? "opacity-35 cursor-not-allowed text-slate-400 dark:text-neutral-600"
+                            : isRaw
                             ? "bg-slate-700 dark:bg-neutral-700 text-white shadow-none"
                             : "text-slate-500 hover:text-slate-800 dark:text-neutral-400 dark:hover:text-white"
                         }`}
@@ -580,9 +718,13 @@ export const CVGeneratorModal: React.FC<CVGeneratorModalProps> = ({
                       </button>
                       <button
                         type="button"
-                        onClick={() => handleSetSectionMode(sec.id, "ai")}
+                        disabled={isEmpty}
+                        title={isEmpty ? emptyMessage : undefined}
+                        onClick={() => !isEmpty && handleSetSectionMode(sec.id, "ai")}
                         className={`px-2.5 py-1 rounded-lg transition-colors duration-150 flex items-center gap-1 select-none whitespace-nowrap font-bold ${
-                          isAi
+                          isEmpty
+                            ? "opacity-35 cursor-not-allowed text-slate-400 dark:text-neutral-600"
+                            : isAi
                             ? "bg-indigo-600 text-white shadow-none"
                             : "text-slate-500 hover:text-slate-800 dark:text-neutral-400 dark:hover:text-white"
                         }`}

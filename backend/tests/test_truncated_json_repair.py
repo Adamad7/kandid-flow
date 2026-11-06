@@ -115,26 +115,53 @@ def test_repair_truncated_json_with_markdown_fences():
 @pytest.mark.asyncio
 async def test_candidate_parser_passes_context_window(async_client):
     """Verify that /api/v1/candidate/ai-fill forwards context_window to generate_json."""
+    from typing import Any
+    from sqlalchemy import select
+    from app.database import async_session_factory
+    from app.models.candidate import CandidateProfile
+
+    backup_cand: dict[str, Any] | None = None
+    async with async_session_factory() as session:
+        cand = (await session.execute(select(CandidateProfile).limit(1))).scalar_one_or_none()
+        if cand:
+            backup_cand = {
+                "full_name": cand.full_name,
+                "contact_info": cand.contact_info,
+                "sections": cand.sections,
+                "default_sections": cand.default_sections,
+            }
+
     mock_llm_output = {
         "full_name": "Test User",
         "contact_info": {},
         "sections": [],
     }
 
-    with patch(
-        "app.services.candidate_parser.llm_client.generate_json", new_callable=AsyncMock
-    ) as mock_gen:
-        mock_gen.return_value = mock_llm_output
-        resp = await async_client.post(
-            "/api/v1/candidate/ai-fill",
-            json={
-                "text": "Sample candidate CV text here",
-                "context_window": 65536,
-                "mode": "replace",
-            },
-        )
-        assert resp.status_code == 200
+    try:
+        with patch(
+            "app.services.candidate_parser.llm_client.generate_json", new_callable=AsyncMock
+        ) as mock_gen:
+            mock_gen.return_value = mock_llm_output
+            resp = await async_client.post(
+                "/api/v1/candidate/ai-fill",
+                json={
+                    "text": "Sample candidate CV text here",
+                    "context_window": 65536,
+                    "mode": "replace",
+                },
+            )
+            assert resp.status_code == 200
 
-        mock_gen.assert_called_once()
-        _, kwargs = mock_gen.call_args
-        assert kwargs.get("context_window") == 65536
+            mock_gen.assert_called_once()
+            _, kwargs = mock_gen.call_args
+            assert kwargs.get("context_window") == 65536
+    finally:
+        if backup_cand:
+            async with async_session_factory() as session:
+                cand = (await session.execute(select(CandidateProfile).limit(1))).scalar_one_or_none()
+                if cand:
+                    cand.full_name = backup_cand["full_name"]
+                    cand.contact_info = backup_cand["contact_info"]
+                    cand.sections = backup_cand["sections"]
+                    cand.default_sections = backup_cand["default_sections"]
+                    await session.commit()
