@@ -37,9 +37,10 @@ services:
       OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://host.docker.internal:11434}
       OLLAMA_MODEL: ${OLLAMA_MODEL:-qwen2.5:14b}
       API_PROVIDER: ${API_PROVIDER:-gemini}
-      API_MODEL: ${API_MODEL:-gemini-2.5-flash}
+      API_MODEL: ${API_MODEL:-gemini-3.8-flash}
       GEMINI_API_KEY: ${GEMINI_API_KEY:-}
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      TEST_AI_PROVIDER: ${TEST_AI_PROVIDER:-local}
     extra_hosts:
       - "host.docker.internal:host-gateway"
     depends_on:
