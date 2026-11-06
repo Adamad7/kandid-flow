@@ -6,7 +6,9 @@ from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
-SourcePortalType = Literal["justjoin", "pracuj", "nofluffjobs", "linkedin", "generic"]
+SourcePortalType = Literal[
+    "justjoin", "pracuj", "nofluffjobs", "linkedin", "theprotocol", "generic"
+]
 WorkModelType = Literal["remote", "hybrid", "onsite"]
 SalaryPeriodType = Literal["month", "day", "hour"]
 

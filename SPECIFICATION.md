@@ -12,7 +12,7 @@
 **KandidFlow** is a self-hosted, modular platform for automating the IT recruitment workflow. The application eliminates the repetitive overhead of manual job copying, tedious formatting in graphic/document editors, and repetitive manual tailoring of application documents.
 
 The system consists of three cooperating components:
-1. **Browser Extension (Chromium MV3):** Capturing job postings from Polish and international job portals (Just Join IT, Pracuj.pl, No Fluff Jobs, LinkedIn) with automated URL canonicalization, noise removal, and metadata extraction.
+1. **Browser Extension (Chromium MV3):** Capturing job postings from Polish and international job portals (Just Join IT, Pracuj.pl, No Fluff Jobs, LinkedIn, the:protocol) with automated URL canonicalization, noise removal, and metadata extraction.
 2. **Backend & AI Engine (Python / FastAPI / Typst):** Normalizing job offers using a hybrid model chain (local Ollama with automatic fallback to cloud APIs) via a resilient database-backed queue, maintaining a strictly typed candidate knowledge base, scheduling recruitment pipeline events, tailoring resume contents, and providing instant Typst compilation to multi-page SVG (live preview) and PDF.
 3. **Web UI (React / Vite / Tailwind / shadcn/ui):** Responsive Polish-language interface for pipeline tracking, recruitment event management, candidate profile management, base CV presets, and CV editing via a Split-View workspace with AI section assistance and version history.
 
@@ -61,7 +61,7 @@ The system consists of three cooperating components:
 Stores imported job postings and recruitment pipeline statuses.
 * `id`: `UUID` (PK, default `gen_random_uuid()`)
 * `source_url`: `TEXT NOT NULL UNIQUE` (canonicalized URL stripped of tracking parameters like `utm_*`, `searchId`, etc.)
-* `source_portal`: `VARCHAR(50)` (`justjoin`, `pracuj`, `nofluffjobs`, `linkedin`, `generic`)
+* `source_portal`: `VARCHAR(50)` (`justjoin`, `pracuj`, `nofluffjobs`, `linkedin`, `theprotocol`, `generic`)
 * `company_name`: `VARCHAR(255)`
 * `role_title`: `VARCHAR(255)`
 * `status`: `VARCHAR(50) NOT NULL DEFAULT 'inbox'` (`inbox`, `parsing`, `failed_parsing`, `ready`, `applied`, `interview`, `rejected`, `offer`, `archived`)
@@ -152,6 +152,7 @@ Runtime application configuration (Non-secret settings only; all API keys and to
   * `extractors/pracuj.js`: targeted sections via `section[data-test="section-..."]`, office cities, stripping corporate perks and footer.
   * `extractors/nofluffjobs.js`: must-have and nice-to-have requirements, locations, header metadata.
   * `extractors/linkedin.js`: main description container excluding sidebar widgets.
+  * `extractors/theprotocol.js`: hybrid extraction (Next.js SSR state `__NEXT_DATA__` offer payload with semantic `data-test` selector fallbacks), multi-contract salary parsing, office/remote tags.
   * `extractors/fallback.js`: DOM sanitizer stripping `nav`, `footer`, `script`, `style`, cookie consent elements, and grabbing `<main>` or `<article>`.
 * **Popup UI:**
   * Main View: active tab title, canonical URL, duplicate warning badge (if URL already exists in DB), optional note input, "Zapisz ofertę" action button, operation status.
@@ -255,5 +256,5 @@ kandid-flow/
     └── src/
         ├── background.js            # Service Worker for API communication (optional if handled in popup.js)
         ├── content.js               # DOM extraction dispatcher & URL canonicalizer
-        └── extractors/              # justjoin, pracuj, nofluffjobs, linkedin, fallback
+        └── extractors/              # justjoin, pracuj, nofluffjobs, linkedin, theprotocol, fallback
 ```

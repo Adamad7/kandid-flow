@@ -186,6 +186,24 @@
         return `${parsed.protocol}//${parsed.hostname}${cleanPath}`;
       }
 
+      // theprotocol.it: normalize offer path and strip tracking params
+      if (host.includes("theprotocol.it")) {
+        let offerSlug = "";
+        if (parsed.pathname.startsWith("/szczegoly/praca/")) {
+          offerSlug = parsed.pathname.replace(/^\/szczegoly\/praca\//, "").replace(/\/+$/, "");
+        } else {
+          const offerUrlName = parsed.searchParams.get("offerUrlName");
+          if (offerUrlName) {
+            offerSlug = decodeURIComponent(offerUrlName).replace(/\/+$/, "");
+          }
+        }
+        if (offerSlug) {
+          return `${parsed.protocol}//${parsed.hostname}/szczegoly/praca/${offerSlug}`;
+        }
+        const cleanPath = parsed.pathname.replace(/\/+$/, "");
+        return `${parsed.protocol}//${parsed.hostname}${cleanPath}`;
+      }
+
       // Generic cleanup: strip blacklisted parameters
       const paramsToKeep = new URLSearchParams();
       for (const [key, value] of parsed.searchParams.entries()) {

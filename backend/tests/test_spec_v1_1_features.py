@@ -22,6 +22,15 @@ def test_url_canonicalization():
         canonicalize_url(nested_params) == "https://pracuj.pl/praca/devops-engineer,oferta?page=2"
     )
 
+    theprotocol_dirty = (
+        "https://theprotocol.it/szczegoly/praca/senior-python-developer-warszawa,7d9a3b/?"
+        "searchId=550e8400-e29b-41d4-a716-446655440000&utm_source=theprotocol&utm_medium=email"
+    )
+    assert (
+        canonicalize_url(theprotocol_dirty)
+        == "https://theprotocol.it/szczegoly/praca/senior-python-developer-warszawa,7d9a3b"
+    )
+
 
 @pytest.mark.asyncio
 async def test_events_crud_lifecycle(async_client: httpx.AsyncClient, sample_job_offer: JobOffer):

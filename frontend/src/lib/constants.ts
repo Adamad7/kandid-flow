@@ -88,6 +88,7 @@ export const PORTAL_LABELS: Record<JobPortalType, string> = {
   pracuj: "Pracuj.pl",
   nofluffjobs: "No Fluff Jobs",
   linkedin: "LinkedIn",
+  theprotocol: "the:protocol",
   generic: "Inny portal",
 };
 

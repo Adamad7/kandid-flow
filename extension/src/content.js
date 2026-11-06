@@ -11,12 +11,13 @@
 
   /**
    * Identifies the portal name based on current window location hostname.
-   * @returns {"justjoin" | "pracuj" | "nofluffjobs" | "linkedin" | "generic"}
+   * @returns {"justjoin" | "pracuj" | "theprotocol" | "nofluffjobs" | "linkedin" | "generic"}
    */
   function detectPortal() {
     const host = window.location.hostname.toLowerCase();
     if (host.includes("justjoin.it")) return "justjoin";
     if (host.includes("pracuj.pl")) return "pracuj";
+    if (host.includes("theprotocol.it")) return "theprotocol";
     if (host.includes("nofluffjobs.com")) return "nofluffjobs";
     if (host.includes("linkedin.com")) return "linkedin";
     return "generic";

@@ -13,6 +13,7 @@ export type SourcePortalType =
   | "pracuj"
   | "nofluffjobs"
   | "linkedin"
+  | "theprotocol"
   | "generic";
 
 export type JobPortalType = SourcePortalType;

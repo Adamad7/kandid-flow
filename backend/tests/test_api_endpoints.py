@@ -4,6 +4,7 @@ import httpx
 import pytest
 
 from app.config import settings
+from app.services.job_parser import canonicalize_url
 
 
 @pytest.mark.asyncio
@@ -524,3 +525,92 @@ async def test_job_next_interview_at_population(async_client: httpx.AsyncClient)
 
     finally:
         await async_client.delete(f"/api/v1/jobs/{job_id}")
+
+
+@pytest.mark.asyncio
+async def test_theprotocol_inbox_ingestion_and_url_canonicalization(
+    async_client: httpx.AsyncClient,
+):
+    """Verify ingestion, URL canonicalization, duplicate check, and portal filtering."""
+    # 1. Direct unit verification of canonicalize_url for theprotocol.it URLs
+    raw_proto_url = (
+        "https://theprotocol.it/szczegoly/praca/senior-python-dev-warszawa,7d9a3b/?"
+        "searchId=550e8400-e29b-41d4-a716-446655440000&utm_source=theprotocol&utm_medium=email"
+    )
+    expected_proto_url = "https://theprotocol.it/szczegoly/praca/senior-python-dev-warszawa,7d9a3b"
+    assert canonicalize_url(raw_proto_url) == expected_proto_url
+
+    # 2. Ingest via inbox API endpoint
+    job_uuid = uuid.uuid4().hex[:8]
+    clean_base = f"https://theprotocol.it/szczegoly/praca/python-dev-{job_uuid}"
+    tracking_query = "?searchId=test-uuid-123&utm_source=theprotocol&utm_campaign=winter2026"
+    dirty_url = f"{clean_base}/{tracking_query}"
+
+    payload = {
+        "source_url": dirty_url,
+        "source_portal": "theprotocol",
+        "title": "Senior Python Developer",
+        "company": "Protocol Soft",
+        "locations": ["Warszawa", "Kraków"],
+        "description_text": "Python 3.12, FastAPI, and Docker expertise required.",
+        "salary_raw": "20 000 - 25 000 PLN",
+        "salary_min": 20000,
+        "salary_max": 25000,
+        "salary_currency": "PLN",
+        "salary_period": "month",
+        "work_model": "hybrid",
+    }
+
+    created_job_ids: list[str] = []
+    try:
+        res = await async_client.post(
+            "/api/v1/inbox",
+            headers={"Authorization": f"Bearer {settings.EXTENSION_API_TOKEN}"},
+            json=payload,
+        )
+        assert res.status_code == 201
+        data = res.json()
+        job_id = data["id"]
+        created_job_ids.append(job_id)
+
+        # 3. Verify stored job attributes and canonical URL
+        job_res = await async_client.get(f"/api/v1/jobs/{job_id}")
+        assert job_res.status_code == 200
+        job_data = job_res.json()
+        assert job_data["source_portal"] == "theprotocol"
+        assert job_data["source_url"] == clean_base
+        assert not job_data["source_url"].endswith("/")
+        assert "searchId" not in job_data["source_url"]
+        assert "utm_" not in job_data["source_url"]
+
+        # 4. Duplicate check with alternate tracking query parameters
+        another_dirty_url = f"{clean_base}/?searchId=different-id&utm_term=python#tab-details"
+        check_res = await async_client.get(
+            f"/api/v1/inbox/check?url={another_dirty_url}",
+            headers={"Authorization": f"Bearer {settings.EXTENSION_API_TOKEN}"},
+        )
+        assert check_res.status_code == 200
+        check_data = check_res.json()
+        assert check_data["exists"] is True
+        assert check_data["job_id"] == job_id
+
+        # 5. Filter jobs by source_portal=theprotocol
+        filter_res = await async_client.get("/api/v1/jobs?source_portal=theprotocol")
+        assert filter_res.status_code == 200
+        filtered_jobs = filter_res.json()
+        assert any(j["id"] == job_id for j in filtered_jobs)
+
+        # 6. Verify analytics portal display mapping for theprotocol
+        analytics_res = await async_client.get("/api/v1/analytics/overview")
+        assert analytics_res.status_code == 200
+        analytics_data = analytics_res.json()
+        portal_metrics = analytics_data.get("portal_performance", [])
+        theprotocol_metric = next((m for m in portal_metrics if m["portal"] == "theprotocol"), None)
+        if theprotocol_metric:
+            assert theprotocol_metric["label"] == "the:protocol"
+    finally:
+        if created_job_ids:
+            await async_client.post(
+                "/api/v1/jobs/batch/delete",
+                json={"job_ids": created_job_ids},
+            )

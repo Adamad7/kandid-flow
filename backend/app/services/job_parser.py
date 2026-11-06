@@ -81,7 +81,11 @@ def canonicalize_url(url: str) -> str:
     parsed = urlparse(url.strip())
     # Keep query parameters that are not in the tracking blacklist
     query_items = parse_qsl(parsed.query, keep_blank_values=False)
-    filtered_items = [(k, v) for k, v in query_items if k.lower() not in TRACKING_PARAMS]
+    filtered_items = [
+        (k, v)
+        for k, v in query_items
+        if k.lower() not in TRACKING_PARAMS and not k.lower().startswith("utm_")
+    ]
     new_query = urlencode(filtered_items)
 
     # Normalize path (remove trailing slash except for root)

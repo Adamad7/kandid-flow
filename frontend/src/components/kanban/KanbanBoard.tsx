@@ -310,6 +310,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                 <option value="justjoin">Just Join IT</option>
                 <option value="pracuj">Pracuj.pl</option>
                 <option value="nofluffjobs">No Fluff Jobs</option>
+                <option value="theprotocol">the:protocol</option>
                 <option value="linkedin">LinkedIn</option>
                 <option value="generic">Inny portal</option>
               </select>

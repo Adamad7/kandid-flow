@@ -42,7 +42,7 @@ JobStatusType = Literal[
     "archived",
 ]
 WorkModelType = Literal["remote", "hybrid", "onsite"]
-JobPortalType = Literal["justjoin", "pracuj", "nofluffjobs", "linkedin", "generic"]
+JobPortalType = Literal["justjoin", "pracuj", "nofluffjobs", "linkedin", "theprotocol", "generic"]
 JobLanguageType = Literal["pl", "en"]
 
 

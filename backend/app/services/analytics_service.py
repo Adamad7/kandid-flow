@@ -20,6 +20,7 @@ PORTAL_DISPLAY_NAMES: dict[str, str] = {
     "pracuj": "Pracuj.pl",
     "nofluffjobs": "No Fluff Jobs",
     "linkedin": "LinkedIn",
+    "theprotocol": "the:protocol",
     "generic": "Inne źródła",
 }
 

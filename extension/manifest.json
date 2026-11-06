@@ -41,6 +41,7 @@
         "src/extractors/pracuj.js",
         "src/extractors/nofluffjobs.js",
         "src/extractors/linkedin.js",
+        "src/extractors/theprotocol.js",
         "src/content.js"
       ],
       "run_at": "document_idle"

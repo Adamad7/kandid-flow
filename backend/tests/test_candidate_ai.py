@@ -341,7 +341,6 @@ async def test_candidate_ai_fill_guarantees_all_7_sections(
     }
 
     with controlled_ai_mock(target_mock, mock_return=sparse_output, force_mock=True):
-
         res_replace = await async_client.post(
             "/api/v1/candidate/ai-fill",
             json={
@@ -387,7 +386,6 @@ async def test_candidate_ai_fill_guarantees_all_7_sections(
     }
 
     with controlled_ai_mock(target_mock, mock_return=merge_output, force_mock=True):
-
         res_merge = await async_client.post(
             "/api/v1/candidate/ai-fill",
             json={
@@ -506,7 +504,6 @@ async def test_candidate_ai_fill_narrative_bio_extraction(
 
     target_mock = "app.services.candidate_parser.llm_client.generate_json"
     with controlled_ai_mock(target_mock, mock_return=narrative_llm_output, force_mock=True):
-
         response = await async_client.post(
             "/api/v1/candidate/ai-fill",
             json={
@@ -588,7 +585,6 @@ async def test_candidate_ai_fill_flexible_top_level_sections(
 
     target_mock = "app.services.candidate_parser.llm_client.generate_json"
     with controlled_ai_mock(target_mock, mock_return=llm_dict_output, force_mock=True):
-
         response = await async_client.post(
             "/api/v1/candidate/ai-fill",
             json={
@@ -693,7 +689,6 @@ async def test_candidate_ai_fill_and_merge_new_sections(async_client: httpx.Asyn
 
     target_mock = "app.services.candidate_parser.llm_client.generate_json"
     with controlled_ai_mock(target_mock, mock_return=new_sections_output, force_mock=True):
-
         response = await async_client.post(
             "/api/v1/candidate/ai-fill",
             json={
