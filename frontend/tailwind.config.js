@@ -9,6 +9,10 @@ export default {
   ],
   theme: {
     extend: {
+      spacing: {
+        "7.5": "1.875rem",
+        "9.5": "2.375rem",
+      },
       colors: {
         slate: {
           ...colors.slate,
