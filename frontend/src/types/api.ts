@@ -677,6 +677,20 @@ export interface SettingsConnectionTestResponse {
   latency_ms: number | null;
 }
 
+export interface OllamaModelItem {
+  name: string;
+  size_bytes?: number | null;
+  parameter_size?: string | null;
+  quantization_level?: string | null;
+  modified_at?: string | null;
+}
+
+export interface OllamaModelsResponse {
+  success: boolean;
+  models: OllamaModelItem[];
+  message: string;
+}
+
 // ============================================================================
 // Realtime Server-Sent Events (SSE) Schemas
 // ============================================================================

@@ -249,3 +249,25 @@ class SettingsConnectionTestResponse(BaseModel):
     latency_ms: float | None = Field(
         default=None, description="Round-trip response latency in milliseconds"
     )
+
+
+class OllamaModelItem(BaseModel):
+    """Information about an installed Ollama model."""
+
+    name: str = Field(description="Identyfikator i tag modelu np. qwen2.5:14b")
+    size_bytes: int | None = Field(default=None, description="Rozmiar pliku modelu w bajtach")
+    parameter_size: str | None = Field(default=None, description="Liczba parametrów np. 14B")
+    quantization_level: str | None = Field(
+        default=None, description="Poziom kwantyzacji np. Q4_K_M"
+    )
+    modified_at: datetime | None = Field(default=None, description="Data ostatniej modyfikacji")
+
+
+class OllamaModelsResponse(BaseModel):
+    """Response payload containing list of discovered Ollama models."""
+
+    success: bool = Field(description="Czy udało się połączyć z serwerem Ollama")
+    models: list[OllamaModelItem] = Field(
+        default_factory=list, description="Lista wykrytych zainstalowanych modeli"
+    )
+    message: str = Field(description="Komunikat statusu lub opis błędu połączenia")

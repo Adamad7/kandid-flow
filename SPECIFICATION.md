@@ -139,7 +139,7 @@ Runtime application configuration (Single source of truth for runtime AI models 
 * `tasks_config`: `JSONB NOT NULL DEFAULT '{}'::jsonb` (Granular AI configuration validated via `AITasksConfig` for 4 distinct tasks: `job_parsing`, `cv_generation`, `cv_refinement`, `knowledge_base_parsing`. Each task maintains separate `local_model`, `cloud_model`, context window, thinking/reasoning effort parameters, test statuses, and routing mode: `fallback`, `local`, `cloud`).
 * `updated_at`: `TIMESTAMPTZ DEFAULT NOW()`
 * *DTO Flags & Diagnostics (Computed at API level via `AppSettingsRead`)*: `has_gemini_api_key: bool`, `has_openai_api_key: bool`.
-* *Test Endpoints*: `POST /api/v1/settings/test-ollama` (tags inspection, parameters test & latency) and `POST /api/v1/settings/test-cloud` (minimal model ping, reasoning verification & latency).
+* *Discovery & Test Endpoints*: `GET /api/v1/settings/ollama/models` (detects and lists installed Ollama models with sizes/quantization), `POST /api/v1/settings/test-ollama` (tags inspection, parameters test & latency) and `POST /api/v1/settings/test-cloud` (minimal model ping, reasoning verification & latency).
 
 ---
 

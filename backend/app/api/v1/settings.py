@@ -2,10 +2,12 @@
 
 import logging
 import time
+from datetime import datetime
 from typing import Any
 
 import httpx
 from fastapi import APIRouter, Depends, HTTPException, status
+from pydantic import TypeAdapter
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -17,6 +19,8 @@ from app.schemas.settings import (
     AppSettingsRead,
     AppSettingsUpdate,
     CloudTestRequest,
+    OllamaModelItem,
+    OllamaModelsResponse,
     OllamaTestRequest,
     SettingsConnectionTestResponse,
 )
@@ -157,6 +161,117 @@ async def update_settings(
         app_setting.api_provider,
     )
     return _build_app_settings_read(app_setting)
+
+
+@router.get(
+    "/ollama/models",
+    response_model=OllamaModelsResponse,
+    summary="List installed models on Ollama instance",
+)
+async def list_ollama_models(
+    base_url: str | None = None,
+    db: AsyncSession = Depends(get_db_session),
+) -> OllamaModelsResponse:
+    """Query Ollama /api/tags and return discovered installed models with details."""
+    target_url = (base_url or "").strip().rstrip("/")
+    if not target_url:
+        stmt = select(AppSettings).where(AppSettings.id == 1)
+        result = await db.execute(stmt)
+        app_setting = result.scalar_one_or_none()
+        if app_setting and app_setting.ollama_base_url:
+            target_url = app_setting.ollama_base_url.strip().rstrip("/")
+
+    if not target_url:
+        return OllamaModelsResponse(
+            success=False,
+            models=[],
+            message="Brak skonfigurowanego adresu URL dla Ollama.",
+        )
+
+    try:
+        async with httpx.AsyncClient(timeout=5.0) as client:
+            resp = await client.get(f"{target_url}/api/tags")
+
+        if resp.status_code != 200:
+            return OllamaModelsResponse(
+                success=False,
+                models=[],
+                message=f"Serwer Ollama zwrócił kod HTTP {resp.status_code}: {resp.text[:200]}",
+            )
+
+        data = resp.json()
+        raw_models = data.get("models", [])
+        parsed_models: list[OllamaModelItem] = []
+
+        if isinstance(raw_models, list):
+            for item in raw_models:
+                if not isinstance(item, dict):
+                    continue
+                name = item.get("name")
+                if not name or not isinstance(name, str):
+                    continue
+
+                size = item.get("size")
+                size_bytes = size if isinstance(size, int) else None
+
+                details = item.get("details")
+                parameter_size = None
+                quantization_level = None
+                if isinstance(details, dict):
+                    p_size = details.get("parameter_size")
+                    if isinstance(p_size, str):
+                        parameter_size = p_size
+                    q_level = details.get("quantization_level")
+                    if isinstance(q_level, str):
+                        quantization_level = q_level
+
+                mod_at: datetime | None = None
+                raw_mod = item.get("modified_at")
+                if raw_mod:
+                    try:
+                        mod_at = TypeAdapter(datetime).validate_python(raw_mod)
+                    except Exception:
+                        mod_at = None
+
+                parsed_models.append(
+                    OllamaModelItem(
+                        name=name,
+                        size_bytes=size_bytes,
+                        parameter_size=parameter_size,
+                        quantization_level=quantization_level,
+                        modified_at=mod_at,
+                    )
+                )
+
+        return OllamaModelsResponse(
+            success=True,
+            models=parsed_models,
+            message=f"Pomyślnie wykryto {len(parsed_models)} modeli w Ollama.",
+        )
+    except httpx.TimeoutException:
+        return OllamaModelsResponse(
+            success=False,
+            models=[],
+            message=(
+                f"Przekroczono limit czasu połączenia (5.0s) z instancją "
+                f"Ollama pod adresem {target_url}."
+            ),
+        )
+    except httpx.ConnectError:
+        return OllamaModelsResponse(
+            success=False,
+            models=[],
+            message=(
+                f"Nie udało się połączyć z serwerem Ollama pod adresem {target_url}. "
+                "Upewnij się, że usługa Ollama działa."
+            ),
+        )
+    except Exception as exc:
+        return OllamaModelsResponse(
+            success=False,
+            models=[],
+            message=f"Błąd podczas pobierania modeli z Ollama: {exc}",
+        )
 
 
 @router.post(

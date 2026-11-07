@@ -35,6 +35,7 @@ import type {
   JobOfferUpdate,
   JobPortalType,
   JobStatusType,
+  OllamaModelsResponse,
   OllamaTestRequest,
   RecruitmentEventCreate,
   RecruitmentEventRead,
@@ -369,6 +370,11 @@ export const api = {
         method: "POST",
         body: JSON.stringify(data),
       });
+    },
+
+    getOllamaModels: (baseUrl?: string): Promise<OllamaModelsResponse> => {
+      const query = baseUrl ? `?base_url=${encodeURIComponent(baseUrl)}` : "";
+      return request<OllamaModelsResponse>(`/api/v1/settings/ollama/models${query}`);
     },
   },
 

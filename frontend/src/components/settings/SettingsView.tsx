@@ -19,6 +19,7 @@ import {
   Copy,
   Server,
   Layers,
+  RefreshCw,
 } from "lucide-react";
 import { api } from "../../lib/api";
 import type {
@@ -29,6 +30,7 @@ import type {
   AppSettingsUpdate,
   CloudModelConfig,
   LocalModelConfig,
+  OllamaModelItem,
   ReasoningEffortType,
   SettingsConnectionTestResponse,
   TaskModelConfig,
@@ -102,6 +104,34 @@ const OPENAI_MODEL_SUGGESTIONS = [
   "gpt-4o",
   "o3-mini",
 ];
+
+const formatModelOptionLabel = (model: OllamaModelItem): string => {
+  const details: string[] = [];
+  if (model.parameter_size) {
+    details.push(model.parameter_size);
+  }
+  if (model.quantization_level) {
+    details.push(model.quantization_level);
+  }
+  if (model.size_bytes && details.length === 0) {
+    const gb = (model.size_bytes / (1024 * 1024 * 1024)).toFixed(1);
+    details.push(`${gb} GB`);
+  }
+  if (details.length > 0) {
+    return `${model.name} (${details.join(", ")})`;
+  }
+  return model.name;
+};
+
+const formatModelsCount = (count: number): string => {
+  if (count === 1) return "1 model";
+  const mod10 = count % 10;
+  const mod100 = count % 100;
+  if (mod10 >= 2 && mod10 <= 4 && (mod100 < 10 || mod100 >= 20)) {
+    return `${count} modele`;
+  }
+  return `${count} modeli`;
+};
 
 const createDefaultLocalModel = (): LocalModelConfig => ({
   model: "qwen2.5:14b",
@@ -181,8 +211,19 @@ export const SettingsView: React.FC = () => {
     knowledge_base_parsing: null,
   });
 
-  // Cached discovered models from Ollama
-  const [availableOllamaModels, setAvailableOllamaModels] = useState<string[] | null>(null);
+  // Discovered Ollama models metadata
+  const [installedOllamaModels, setInstalledOllamaModels] = useState<OllamaModelItem[]>([]);
+  const [isDetectingModels, setIsDetectingModels] = useState(false);
+  const [detectionMessage, setDetectionMessage] = useState<string | null>(null);
+  const [detectionSuccess, setDetectionSuccess] = useState<boolean | null>(null);
+
+  // Per-task override flag for custom model manual input mode
+  const [customModelMode, setCustomModelMode] = useState<Record<AITaskType, boolean>>({
+    job_parsing: false,
+    cv_generation: false,
+    cv_refinement: false,
+    knowledge_base_parsing: false,
+  });
 
   // Global Ollama connectivity test state
   const [isTestingGlobalOllama, setIsTestingGlobalOllama] = useState(false);
@@ -192,6 +233,35 @@ export const SettingsView: React.FC = () => {
   useEffect(() => {
     fetchSettings();
   }, []);
+
+  const fetchInstalledModels = async (url?: string) => {
+    const targetUrl = (url !== undefined ? url : ollamaBaseUrl).trim();
+    if (!targetUrl) {
+      setDetectionSuccess(false);
+      setDetectionMessage("Adres URL serwera Ollama nie może być pusty.");
+      setInstalledOllamaModels([]);
+      return;
+    }
+
+    try {
+      setIsDetectingModels(true);
+      setDetectionMessage(null);
+      const res = await api.settings.getOllamaModels(targetUrl);
+      setInstalledOllamaModels(res.models || []);
+      setDetectionSuccess(res.success);
+      setDetectionMessage(res.message);
+    } catch (err: unknown) {
+      const msg =
+        err instanceof Error
+          ? err.message
+          : "Nie udało się połączyć z serwerem Ollama.";
+      setInstalledOllamaModels([]);
+      setDetectionSuccess(false);
+      setDetectionMessage(msg);
+    } finally {
+      setIsDetectingModels(false);
+    }
+  };
 
   const fetchSettings = async () => {
     try {
@@ -227,6 +297,8 @@ export const SettingsView: React.FC = () => {
         }
       }
       setTasksConfig(mergedTasks);
+      // Fetch installed models immediately after settings load
+      fetchInstalledModels(data.ollama_base_url);
     } catch {
       setErrorMessage("Nie udało się pobrać ustawień aplikacji.");
     } finally {
@@ -284,8 +356,8 @@ export const SettingsView: React.FC = () => {
         ollama_base_url: trimmedUrl,
       });
       setGlobalOllamaTestResult(res);
-      if (res.available_models && res.available_models.length > 0) {
-        setAvailableOllamaModels(res.available_models);
+      if (res.success) {
+        fetchInstalledModels(trimmedUrl);
       }
     } catch (err: unknown) {
       setGlobalOllamaTestResult({
@@ -330,8 +402,8 @@ export const SettingsView: React.FC = () => {
       }));
       setLocalLatencies((prev) => ({ ...prev, [taskKey]: res.latency_ms }));
 
-      if (res.available_models && res.available_models.length > 0) {
-        setAvailableOllamaModels(res.available_models);
+      if (res.success && installedOllamaModels.length === 0) {
+        fetchInstalledModels(ollamaBaseUrl);
       }
     } catch (err: unknown) {
       const msg =
@@ -491,6 +563,11 @@ export const SettingsView: React.FC = () => {
   const activeTaskMeta = AI_TASKS.find((t) => t.key === activeTaskKey)!;
   const isFallbackAllowed =
     activeTask.local_test_passed && activeTask.cloud_test_passed;
+  const isCurrentModelInstalled = installedOllamaModels.some(
+    (m) => m.name === activeTask.local_model.model
+  );
+  const isCustomModel =
+    Boolean(customModelMode[activeTaskKey]) || !isCurrentModelInstalled;
 
   return (
     <div className="max-w-5xl mx-auto space-y-6 pb-16">
@@ -570,7 +647,7 @@ export const SettingsView: React.FC = () => {
               helperText="W kontenerze Docker użyj adresu host.docker.internal"
             />
 
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <Button
                 type="button"
                 variant="secondary"
@@ -582,7 +659,52 @@ export const SettingsView: React.FC = () => {
                 <Zap className="h-3.5 w-3.5 mr-1.5 text-amber-500" />
                 Sprawdź połączenie z serwerem Ollama
               </Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => fetchInstalledModels()}
+                isLoading={isDetectingModels}
+                className="text-xs"
+              >
+                <RefreshCw
+                  className={`h-3.5 w-3.5 mr-1.5 text-indigo-600 dark:text-indigo-400 ${
+                    isDetectingModels ? "animate-spin" : ""
+                  }`}
+                />
+                {isDetectingModels ? "Wykrywanie modeli..." : "Wykryj zainstalowane modele"}
+              </Button>
             </div>
+
+            {/* Discovered models badge or connection warning */}
+            {detectionSuccess !== null && (
+              <div className="pt-0.5">
+                {detectionSuccess ? (
+                  <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-medium bg-emerald-50 text-emerald-800 border border-emerald-200 dark:bg-neutral-950 dark:border-transparent dark:text-emerald-300">
+                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0" />
+                    <span className="font-semibold">
+                      Wykryto {formatModelsCount(installedOllamaModels.length)} w Ollama
+                    </span>
+                    {installedOllamaModels.length > 0 && (
+                      <span className="text-[11px] text-emerald-700 dark:text-emerald-400 font-mono">
+                        ({installedOllamaModels.map((m) => m.name).slice(0, 3).join(", ")}
+                        {installedOllamaModels.length > 3 ? "..." : ""})
+                      </span>
+                    )}
+                  </div>
+                ) : (
+                  <div className="flex items-start gap-2 p-3 rounded-xl text-xs bg-rose-50/80 border border-rose-200 text-rose-800 dark:bg-neutral-950 dark:border-transparent dark:text-rose-300">
+                    <AlertCircle className="h-4 w-4 shrink-0 text-rose-500 dark:text-rose-400 mt-0.5" />
+                    <div className="space-y-0.5">
+                      <p className="font-semibold">Brak połączenia z Ollama</p>
+                      <p className="text-[11px] text-rose-700 dark:text-rose-400">
+                        {detectionMessage || "Nie udało się połączyć z serwerem Ollama."}
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
 
             {globalOllamaTestResult && (
               <div
@@ -984,64 +1106,125 @@ export const SettingsView: React.FC = () => {
                 )}
               </div>
 
-              {/* Model identifier input */}
-              <div className="space-y-1.5">
-                <Input
-                  label="Model Ollama"
-                  value={activeTask.local_model.model}
-                  onChange={(e) =>
-                    updateLocalModel(activeTaskKey, { model: e.target.value })
-                  }
-                  placeholder="np. qwen2.5:14b"
-                />
+              {/* Model identifier selector / manual input */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <label className="block text-xs font-semibold uppercase tracking-wider text-slate-700 dark:text-neutral-300">
+                    Model Ollama
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => fetchInstalledModels()}
+                    disabled={isDetectingModels}
+                    className="inline-flex items-center gap-1 text-[11px] font-medium text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300 disabled:opacity-50 transition-colors"
+                    title="Odśwież listę zainstalowanych modeli z serwera Ollama"
+                  >
+                    <RefreshCw
+                      className={`h-3 w-3 ${isDetectingModels ? "animate-spin" : ""}`}
+                    />
+                    <span>{isDetectingModels ? "Wykrywanie..." : "Odśwież listę"}</span>
+                  </button>
+                </div>
 
-                {/* Suggestions and discovered models */}
+                {installedOllamaModels.length > 0 ? (
+                  <div className="space-y-2">
+                    <Select
+                      value={isCustomModel ? "__custom__" : activeTask.local_model.model}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if (val === "__custom__") {
+                          setCustomModelMode((prev) => ({
+                            ...prev,
+                            [activeTaskKey]: true,
+                          }));
+                        } else {
+                          setCustomModelMode((prev) => ({
+                            ...prev,
+                            [activeTaskKey]: false,
+                          }));
+                          updateLocalModel(activeTaskKey, { model: val });
+                        }
+                      }}
+                    >
+                      {installedOllamaModels.map((m) => (
+                        <option
+                          key={m.name}
+                          value={m.name}
+                          className="bg-white text-slate-900 dark:bg-neutral-900 dark:text-white"
+                        >
+                          {formatModelOptionLabel(m)}
+                        </option>
+                      ))}
+                      <option
+                        value="__custom__"
+                        className="bg-white text-slate-900 dark:bg-neutral-900 dark:text-white"
+                      >
+                        ✍️ Wpisz inny model ręcznie...
+                      </option>
+                    </Select>
+
+                    {isCustomModel && (
+                      <div className="pt-1">
+                        <Input
+                          label="Własna nazwa modelu Ollama"
+                          value={activeTask.local_model.model}
+                          onChange={(e) =>
+                            updateLocalModel(activeTaskKey, { model: e.target.value })
+                          }
+                          placeholder="np. gemma4:12b lub mistral:instruct"
+                          helperText="Wpisz dowolny identyfikator z tagiem modelu dostępnego w Ollama"
+                        />
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="space-y-1.5">
+                    <Input
+                      value={activeTask.local_model.model}
+                      onChange={(e) =>
+                        updateLocalModel(activeTaskKey, { model: e.target.value })
+                      }
+                      placeholder="np. qwen2.5:14b"
+                      helperText={
+                        detectionSuccess === false
+                          ? "Brak połączenia z Ollama. Upewnij się, że serwer działa i kliknij 'Odśwież listę'."
+                          : "Brak wykrytych modeli w Ollama. Wpisz nazwę modelu ręcznie lub kliknij 'Odśwież listę'."
+                      }
+                    />
+                  </div>
+                )}
+
+                {/* Suggestions */}
                 <div className="space-y-1.5 pt-1">
                   <div className="flex flex-wrap items-center gap-1">
                     <span className="text-[10px] text-slate-400 dark:text-neutral-500 uppercase font-semibold">
                       Sugestie:
                     </span>
-                    {OLLAMA_MODEL_SUGGESTIONS.map((sug) => (
-                      <button
-                        key={sug}
-                        type="button"
-                        onClick={() =>
-                          updateLocalModel(activeTaskKey, { model: sug })
-                        }
-                        className={`text-[11px] font-mono px-2 py-0.5 rounded transition-colors ${
-                          activeTask.local_model.model === sug
-                            ? "bg-emerald-600 text-white font-semibold dark:bg-emerald-600"
-                            : "bg-white text-slate-700 hover:bg-slate-200/80 border border-slate-200 dark:bg-neutral-900 dark:text-neutral-300 dark:border-transparent dark:hover:bg-neutral-800"
-                        }`}
-                      >
-                        {sug}
-                      </button>
-                    ))}
-                  </div>
-
-                  {availableOllamaModels && availableOllamaModels.length > 0 && (
-                    <div className="flex flex-wrap items-center gap-1 pt-1 border-t border-slate-200/60 dark:border-neutral-800">
-                      <span className="text-[10px] text-emerald-700 dark:text-emerald-400 uppercase font-semibold">
-                        Zainstalowane w Ollama:
-                      </span>
-                      {availableOllamaModels.map((inst) => (
+                    {OLLAMA_MODEL_SUGGESTIONS.map((sug) => {
+                      const isCur = activeTask.local_model.model === sug;
+                      return (
                         <button
-                          key={inst}
+                          key={sug}
                           type="button"
-                          onClick={() =>
-                            updateLocalModel(activeTaskKey, { model: inst })
-                          }
-                          className={`text-[10px] font-mono px-2 py-0.5 rounded transition-colors ${
-                            activeTask.local_model.model === inst
-                              ? "bg-emerald-600 text-white font-semibold"
+                          onClick={() => {
+                            const isInst = installedOllamaModels.some((m) => m.name === sug);
+                            setCustomModelMode((prev) => ({
+                              ...prev,
+                              [activeTaskKey]: !isInst,
+                            }));
+                            updateLocalModel(activeTaskKey, { model: sug });
+                          }}
+                          className={`text-[11px] font-mono px-2 py-0.5 rounded transition-colors ${
+                            isCur
+                              ? "bg-emerald-600 text-white font-semibold dark:bg-emerald-600"
                               : "bg-white text-slate-700 hover:bg-slate-200/80 border border-slate-200 dark:bg-neutral-900 dark:text-neutral-300 dark:border-transparent dark:hover:bg-neutral-800"
                           }`}
                         >
-                          {inst}
+                          {sug}
                         </button>
-                      ))}
-                    </div>
-                  )}
+                      );
+                    })}
+                  </div>
                 </div>
               </div>
 

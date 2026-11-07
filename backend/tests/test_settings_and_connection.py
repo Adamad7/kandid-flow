@@ -305,3 +305,169 @@ async def test_llm_client_resolves_task_config():
     assert "api_model" in cfg
     assert "local_context_window" in cfg
     assert "cloud_context_window" in cfg
+
+
+@pytest.mark.asyncio
+async def test_list_ollama_models_success(async_client: httpx.AsyncClient):
+    """Verify GET /api/v1/settings/ollama/models returns parsed installed models with metadata."""
+    mock_response = MagicMock()
+    mock_response.status_code = 200
+    mock_response.json.return_value = {
+        "models": [
+            {
+                "name": "qwen2.5:14b",
+                "size": 9005436666,
+                "modified_at": "2024-11-04T14:56:49.277302595Z",
+                "details": {
+                    "parent_model": "",
+                    "format": "gguf",
+                    "family": "qwen2",
+                    "parameter_size": "14.7B",
+                    "quantization_level": "Q4_K_M",
+                },
+            },
+            {
+                "name": "llama3.2:3b",
+                "size": 2000000000,
+                "modified_at": "2024-10-01T12:00:00Z",
+                "details": {
+                    "parameter_size": "3.2B",
+                    "quantization_level": "Q4_0",
+                },
+            },
+        ]
+    }
+
+    mock_client_inst = AsyncMock()
+    mock_client_inst.__aenter__.return_value = mock_client_inst
+    mock_client_inst.get.return_value = mock_response
+
+    with patch("app.api.v1.settings.httpx.AsyncClient", return_value=mock_client_inst):
+        res = await async_client.get(
+            "/api/v1/settings/ollama/models",
+            params={"base_url": "http://mock-ollama:11434"},
+        )
+        assert res.status_code == 200
+        data = res.json()
+        assert data["success"] is True
+        assert len(data["models"]) == 2
+
+        model_1 = data["models"][0]
+        assert model_1["name"] == "qwen2.5:14b"
+        assert model_1["size_bytes"] == 9005436666
+        assert model_1["parameter_size"] == "14.7B"
+        assert model_1["quantization_level"] == "Q4_K_M"
+        assert model_1["modified_at"] is not None
+
+        model_2 = data["models"][1]
+        assert model_2["name"] == "llama3.2:3b"
+        assert model_2["size_bytes"] == 2000000000
+        assert model_2["parameter_size"] == "3.2B"
+        assert model_2["quantization_level"] == "Q4_0"
+
+        assert "Pomyślnie wykryto 2 modeli" in data["message"]
+        mock_client_inst.get.assert_called_once_with("http://mock-ollama:11434/api/tags")
+
+
+@pytest.mark.asyncio
+async def test_list_ollama_models_fallback_to_db_url(async_client: httpx.AsyncClient):
+    """Verify GET /api/v1/settings/ollama/models falls back to database base URL."""
+    mock_response = MagicMock()
+    mock_response.status_code = 200
+    mock_response.json.return_value = {"models": []}
+
+    mock_client_inst = AsyncMock()
+    mock_client_inst.__aenter__.return_value = mock_client_inst
+    mock_client_inst.get.return_value = mock_response
+
+    with patch("app.api.v1.settings.httpx.AsyncClient", return_value=mock_client_inst):
+        res = await async_client.get("/api/v1/settings/ollama/models")
+        assert res.status_code == 200
+        data = res.json()
+        assert data["success"] is True
+        assert data["models"] == []
+        assert "Pomyślnie wykryto 0 modeli" in data["message"]
+        assert mock_client_inst.get.called
+        called_url = mock_client_inst.get.call_args[0][0]
+        assert called_url.endswith("/api/tags")
+
+
+@pytest.mark.asyncio
+async def test_list_ollama_models_no_url(async_client: httpx.AsyncClient):
+    """Verify GET /api/v1/settings/ollama/models returns error when no URL is available."""
+    # Temporarily set db ollama_base_url to empty
+    await async_client.patch("/api/v1/settings", json={"ollama_base_url": ""})
+    try:
+        res = await async_client.get("/api/v1/settings/ollama/models")
+        assert res.status_code == 200
+        data = res.json()
+        assert data["success"] is False
+        assert data["models"] == []
+        assert "Brak skonfigurowanego adresu URL" in data["message"]
+    finally:
+        # Restore default
+        await async_client.patch(
+            "/api/v1/settings",
+            json={"ollama_base_url": "http://host.docker.internal:11434"},
+        )
+
+
+@pytest.mark.asyncio
+async def test_list_ollama_models_connection_error(async_client: httpx.AsyncClient):
+    """Verify GET /api/v1/settings/ollama/models handles connection refused gracefully."""
+    mock_client_inst = AsyncMock()
+    mock_client_inst.__aenter__.return_value = mock_client_inst
+    mock_client_inst.get.side_effect = httpx.ConnectError("Connection refused")
+
+    with patch("app.api.v1.settings.httpx.AsyncClient", return_value=mock_client_inst):
+        res = await async_client.get(
+            "/api/v1/settings/ollama/models",
+            params={"base_url": "http://unreachable:11434"},
+        )
+        assert res.status_code == 200
+        data = res.json()
+        assert data["success"] is False
+        assert data["models"] == []
+        assert "Nie udało się połączyć z serwerem Ollama" in data["message"]
+
+
+@pytest.mark.asyncio
+async def test_list_ollama_models_timeout_error(async_client: httpx.AsyncClient):
+    """Verify GET /api/v1/settings/ollama/models handles timeouts gracefully."""
+    mock_client_inst = AsyncMock()
+    mock_client_inst.__aenter__.return_value = mock_client_inst
+    mock_client_inst.get.side_effect = httpx.TimeoutException("Connection timed out")
+
+    with patch("app.api.v1.settings.httpx.AsyncClient", return_value=mock_client_inst):
+        res = await async_client.get(
+            "/api/v1/settings/ollama/models",
+            params={"base_url": "http://timeout:11434"},
+        )
+        assert res.status_code == 200
+        data = res.json()
+        assert data["success"] is False
+        assert data["models"] == []
+        assert "Przekroczono limit czasu" in data["message"]
+
+
+@pytest.mark.asyncio
+async def test_list_ollama_models_http_error(async_client: httpx.AsyncClient):
+    """Verify GET /api/v1/settings/ollama/models handles HTTP error responses."""
+    mock_response = MagicMock()
+    mock_response.status_code = 502
+    mock_response.text = "Bad Gateway"
+
+    mock_client_inst = AsyncMock()
+    mock_client_inst.__aenter__.return_value = mock_client_inst
+    mock_client_inst.get.return_value = mock_response
+
+    with patch("app.api.v1.settings.httpx.AsyncClient", return_value=mock_client_inst):
+        res = await async_client.get(
+            "/api/v1/settings/ollama/models",
+            params={"base_url": "http://mock-ollama:11434"},
+        )
+        assert res.status_code == 200
+        data = res.json()
+        assert data["success"] is False
+        assert data["models"] == []
+        assert "502" in data["message"]
