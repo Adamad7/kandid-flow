@@ -1,7 +1,7 @@
 /**
  * KandidFlow — Browser Extension Popup Controller
  * Manages extraction display, duplicate checking, settings, and inbox submission.
- * Strictly enforces supported portals whitelist (Pracuj.pl, Just Join IT).
+ * Strictly enforces supported portals whitelist (Pracuj.pl, Just Join IT, the:protocol, No Fluff Jobs, LinkedIn).
  */
 
 document.addEventListener("DOMContentLoaded", async () => {
@@ -20,6 +20,27 @@ document.addEventListener("DOMContentLoaded", async () => {
       pattern: /(^|\.)justjoin\.it$/i,
       domainDisplay: "justjoin.it",
       url: "https://justjoin.it",
+    },
+    {
+      id: "theprotocol",
+      name: "the:protocol",
+      pattern: /(^|\.)theprotocol\.it$/i,
+      domainDisplay: "theprotocol.it",
+      url: "https://theprotocol.it",
+    },
+    {
+      id: "nofluffjobs",
+      name: "No Fluff Jobs",
+      pattern: /(^|\.)nofluffjobs\.com$/i,
+      domainDisplay: "nofluffjobs.com",
+      url: "https://nofluffjobs.com",
+    },
+    {
+      id: "linkedin",
+      name: "LinkedIn",
+      pattern: /(^|\.)linkedin\.com$/i,
+      domainDisplay: "linkedin.com",
+      url: "https://www.linkedin.com",
     },
   ];
 
@@ -87,7 +108,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   const DEFAULT_BACKEND_URL = "http://localhost:8000";
   const DEFAULT_API_TOKEN = "kandid_dev_secret_token_replace_in_production_32chars";
-  const CURRENT_EXTRACTOR_VERSION = "1.3.1";
+  const CURRENT_EXTRACTOR_VERSION = "1.3.2";
 
   /**
    * Updates rating UI elements (active star classes, container data-active-color, aria tags, and hint text).
@@ -182,6 +203,8 @@ document.addEventListener("DOMContentLoaded", async () => {
         return "Just Join IT";
       case "pracuj":
         return "Pracuj.pl";
+      case "theprotocol":
+        return "the:protocol";
       case "nofluffjobs":
         return "No Fluff Jobs";
       case "linkedin":
@@ -290,6 +313,7 @@ document.addEventListener("DOMContentLoaded", async () => {
           "src/extractors/pracuj.js",
           "src/extractors/nofluffjobs.js",
           "src/extractors/linkedin.js",
+          "src/extractors/theprotocol.js",
           "src/content.js",
         ],
       });

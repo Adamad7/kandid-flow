@@ -359,6 +359,20 @@ body {
   }
 }
 
+.badge.portal-theprotocol {
+  background: rgba(57, 100, 255, 0.12);
+  color: #3964ff;
+  border: 1px solid rgba(57, 100, 255, 0.28);
+}
+
+@media (prefers-color-scheme: dark) {
+  .badge.portal-theprotocol {
+    background: rgba(133, 188, 238, 0.2);
+    color: #85bcee;
+    border-color: rgba(133, 188, 238, 0.4);
+  }
+}
+
 .badge.portal-nofluffjobs {
   background: rgba(16, 185, 129, 0.12);
   color: #059669;
