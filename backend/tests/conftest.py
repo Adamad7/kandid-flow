@@ -13,6 +13,7 @@ from sqlalchemy import delete, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.pool import NullPool
 
+import app.database as app_db
 from app.config import settings
 from app.database import get_db_session
 from app.main import app
@@ -43,6 +44,7 @@ async def override_get_db_session() -> AsyncGenerator[AsyncSession, None]:
 
 
 app.dependency_overrides[get_db_session] = override_get_db_session
+app_db.async_session_factory = test_session_factory
 
 
 def get_ai_test_provider() -> str:
@@ -118,12 +120,12 @@ def controlled_ai_mock(
             if mode == "local":
                 kwargs["provider"] = "local"
                 if not kwargs.get("model"):
-                    kwargs["model"] = settings.OLLAMA_MODEL
+                    kwargs["model"] = settings.INITIAL_OLLAMA_MODEL
             elif mode == "cloud":
-                kwargs["provider"] = settings.API_PROVIDER or "gemini"
+                kwargs["provider"] = settings.INITIAL_API_PROVIDER or "gemini"
                 curr_model = kwargs.get("model")
                 if not curr_model or "gemini-2.5-flash" in str(curr_model):
-                    kwargs["model"] = settings.API_MODEL or "gemini-3.8-flash"
+                    kwargs["model"] = settings.INITIAL_API_MODEL or "gemini-3.8-flash"
                 if kwargs["provider"] == "gemini" and not kwargs.get("api_key"):
                     kwargs["api_key"] = settings.GEMINI_API_KEY
                 elif kwargs["provider"] == "openai" and not kwargs.get("api_key"):

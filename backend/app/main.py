@@ -29,11 +29,11 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
             if not existing:
                 default_settings = AppSettings(
                     id=1,
-                    auto_parse_mode=settings.AUTO_PARSE_MODE,
-                    ollama_base_url=settings.OLLAMA_BASE_URL,
-                    ollama_model=settings.OLLAMA_MODEL,
-                    api_provider=settings.API_PROVIDER,
-                    api_model=settings.API_MODEL,
+                    auto_parse_mode=settings.INITIAL_AUTO_PARSE_MODE,
+                    ollama_base_url=settings.INITIAL_OLLAMA_BASE_URL,
+                    ollama_model=settings.INITIAL_OLLAMA_MODEL,
+                    api_provider=settings.INITIAL_API_PROVIDER,
+                    api_model=settings.INITIAL_API_MODEL,
                 )
                 session.add(default_settings)
                 await session.commit()

@@ -31,7 +31,7 @@ class AppSettingsBase(BaseModel):
         description="Cloud LLM provider for fallback",
     )
     api_model: str = Field(
-        default="gemini-2.5-flash",
+        default="gemini-3.8-flash",
         description="Model identifier for cloud LLM provider",
     )
 
@@ -51,5 +51,44 @@ class AppSettingsRead(AppSettingsBase):
 
     id: int = Field(default=1, description="Singleton settings ID")
     updated_at: datetime = Field(..., description="Timestamp of last settings modification")
+    has_gemini_api_key: bool = Field(
+        default=False, description="Whether a valid GEMINI_API_KEY is configured in .env"
+    )
+    has_openai_api_key: bool = Field(
+        default=False, description="Whether a valid OPENAI_API_KEY is configured in .env"
+    )
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class OllamaTestRequest(BaseModel):
+    """Request payload to test local Ollama connectivity."""
+
+    ollama_base_url: str | None = Field(
+        default=None, description="Optional override for Ollama base URL"
+    )
+    ollama_model: str | None = Field(
+        default=None, description="Optional override for Ollama model identifier"
+    )
+
+
+class CloudTestRequest(BaseModel):
+    """Request payload to test cloud provider connectivity."""
+
+    provider: ApiProviderType = Field(
+        ..., description="Cloud provider to test ('gemini' or 'openai')"
+    )
+    model: str | None = Field(default=None, description="Optional model identifier override")
+
+
+class SettingsConnectionTestResponse(BaseModel):
+    """Response payload summarizing connectivity test results."""
+
+    success: bool = Field(..., description="Whether connection and probe test succeeded")
+    message: str = Field(..., description="Status or error message")
+    available_models: list[str] | None = Field(
+        default=None, description="List of models detected on the remote or local instance"
+    )
+    latency_ms: float | None = Field(
+        default=None, description="Round-trip response latency in milliseconds"
+    )

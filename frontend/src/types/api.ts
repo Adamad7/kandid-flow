@@ -602,6 +602,25 @@ export interface AppSettingsUpdate {
 export interface AppSettingsRead extends AppSettingsBase {
   id: number;
   updated_at: string; // ISO 8601
+  has_gemini_api_key: boolean;
+  has_openai_api_key: boolean;
+}
+
+export interface OllamaTestRequest {
+  ollama_base_url?: string | null;
+  ollama_model?: string | null;
+}
+
+export interface CloudTestRequest {
+  provider: ApiProviderType;
+  model?: string | null;
+}
+
+export interface SettingsConnectionTestResponse {
+  success: boolean;
+  message: string;
+  available_models: string[] | null;
+  latency_ms: number | null;
 }
 
 // ============================================================================

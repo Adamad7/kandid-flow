@@ -107,6 +107,9 @@ from app.schemas.settings import (
     AppSettingsRead,
     AppSettingsUpdate,
     AutoParseModeType,
+    CloudTestRequest,
+    OllamaTestRequest,
+    SettingsConnectionTestResponse,
 )
 
 __all__ = [
@@ -205,6 +208,9 @@ __all__ = [
     "AppSettingsRead",
     "AppSettingsUpdate",
     "AutoParseModeType",
+    "CloudTestRequest",
+    "OllamaTestRequest",
+    "SettingsConnectionTestResponse",
     # Real-time Events
     "RealtimeEventType",
     "RealtimeEventPayload",

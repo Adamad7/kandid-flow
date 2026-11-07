@@ -2,6 +2,7 @@
 
 import json
 import logging
+import os
 import re
 from datetime import UTC
 from typing import Any
@@ -147,21 +148,17 @@ class LLMClient:
     """Orchestrates structured LLM invocations with automatic fallback."""
 
     def __init__(self) -> None:
-        self.ollama_base_url = settings.OLLAMA_BASE_URL.rstrip("/")
-        self.ollama_model = settings.OLLAMA_MODEL
-        self.api_provider = settings.API_PROVIDER
-        self.api_model = settings.API_MODEL
         self.gemini_api_key = settings.GEMINI_API_KEY
         self.openai_api_key = settings.OPENAI_API_KEY
 
     async def _resolve_runtime_config(self) -> dict[str, str]:
-        """Resolve current runtime settings from database or fallback to environment."""
+        """Resolve current runtime settings strictly from database AppSettings."""
         cfg = {
-            "auto_parse_mode": settings.AUTO_PARSE_MODE,
-            "ollama_base_url": settings.OLLAMA_BASE_URL.rstrip("/"),
-            "ollama_model": settings.OLLAMA_MODEL,
-            "api_provider": settings.API_PROVIDER,
-            "api_model": settings.API_MODEL,
+            "auto_parse_mode": "",
+            "ollama_base_url": "",
+            "ollama_model": "",
+            "api_provider": "",
+            "api_model": "",
         }
         try:
             from sqlalchemy import select
@@ -185,7 +182,7 @@ class LLMClient:
                     if db_setting.api_model:
                         cfg["api_model"] = db_setting.api_model
         except Exception as e:
-            logger.debug("Using environment LLM settings (DB settings unavailable: %s)", e)
+            logger.warning("Could not read AppSettings from database: %s", e)
         return cfg
 
     async def generate_json(
@@ -213,11 +210,12 @@ class LLMClient:
 
         # Resolve provider for "local", "api", or test environment routing
         effective_provider = provider
-        test_ai_provider = getattr(settings, "TEST_AI_PROVIDER", "local").lower().strip()
-        if test_ai_provider == "local":
-            effective_provider = "local"
-        elif test_ai_provider == "cloud":
-            effective_provider = effective_api_provider or "gemini"
+        if os.getenv("PYTEST_CURRENT_TEST"):
+            test_ai_provider = getattr(settings, "TEST_AI_PROVIDER", "local").lower().strip()
+            if test_ai_provider == "local":
+                effective_provider = "local"
+            elif test_ai_provider == "cloud":
+                effective_provider = effective_api_provider or "gemini"
 
         if effective_provider == "api":
             if custom_key:
@@ -245,80 +243,105 @@ class LLMClient:
         local_error_detail: str | None = None
         if should_use_ollama:
             ollama_target_model = model or effective_ollama_model
-            is_reasoning_model = any(
-                m in ollama_target_model.lower() for m in ("deepseek-r1", "r1", "qwq", "reasoning")
-            )
-            ollama_think = bool(enable_thinking and is_reasoning_model)
-            ollama_timeout = timeout if timeout is not None else (300.0 if ollama_think else 120.0)
-            eff_context_window = context_window or 32768
-            eff_max_tokens = max_tokens or min(eff_context_window, 16384)
-            try:
-                async with httpx.AsyncClient(timeout=ollama_timeout) as client:
-                    resp = await client.post(
-                        f"{effective_ollama_base_url}/api/generate",
-                        json={
-                            "model": ollama_target_model,
-                            "system": system_prompt,
-                            "prompt": user_prompt,
-                            "stream": False,
-                            "format": "json",
-                            "think": ollama_think,
-                            "options": {
-                                "num_ctx": eff_context_window,
-                                "num_predict": eff_max_tokens,
-                                "temperature": 0.2,
-                                "repeat_penalty": 1.15,
+            if not effective_ollama_base_url:
+                local_error_detail = (
+                    "Adres serwera Ollama (ollama_base_url) nie został "
+                    "skonfigurowany w bazie danych."
+                )
+                logger.warning(local_error_detail)
+                if (
+                    effective_provider in ("local", "ollama")
+                    or effective_auto_parse_mode == "auto_ollama_only"
+                ):
+                    raise RuntimeError(local_error_detail)
+            elif not ollama_target_model:
+                local_error_detail = (
+                    "Model Ollama (ollama_model) nie został skonfigurowany w bazie danych."
+                )
+                logger.warning(local_error_detail)
+                if (
+                    effective_provider in ("local", "ollama")
+                    or effective_auto_parse_mode == "auto_ollama_only"
+                ):
+                    raise RuntimeError(local_error_detail)
+            else:
+                is_reasoning_model = any(
+                    m in ollama_target_model.lower()
+                    for m in ("deepseek-r1", "r1", "qwq", "reasoning")
+                )
+                ollama_think = bool(enable_thinking and is_reasoning_model)
+                ollama_timeout = (
+                    timeout if timeout is not None else (300.0 if ollama_think else 120.0)
+                )
+                eff_context_window = context_window or 32768
+                eff_max_tokens = max_tokens or min(eff_context_window, 16384)
+                try:
+                    async with httpx.AsyncClient(timeout=ollama_timeout) as client:
+                        resp = await client.post(
+                            f"{effective_ollama_base_url}/api/generate",
+                            json={
+                                "model": ollama_target_model,
+                                "system": system_prompt,
+                                "prompt": user_prompt,
+                                "stream": False,
+                                "format": "json",
+                                "think": ollama_think,
+                                "options": {
+                                    "num_ctx": eff_context_window,
+                                    "num_predict": eff_max_tokens,
+                                    "temperature": 0.2,
+                                    "repeat_penalty": 1.15,
+                                },
                             },
-                        },
-                    )
-                    if resp.status_code == 200:
-                        data = resp.json()
-                        raw_response = data.get("response", "").strip()
-                        # Fallback to thinking tokens if reasoning model generated JSON in think
-                        if not raw_response:
-                            raw_response = data.get("thinking", "").strip()
-                        if raw_response:
-                            return _extract_json_data(raw_response)
+                        )
+                        if resp.status_code == 200:
+                            data = resp.json()
+                            raw_response = data.get("response", "").strip()
+                            # Fallback to thinking tokens if reasoning model generated JSON in think
+                            if not raw_response:
+                                raw_response = data.get("thinking", "").strip()
+                            if raw_response:
+                                return _extract_json_data(raw_response)
+                            else:
+                                local_error_detail = "Model lokalny zwrócił pustą odpowiedź"
                         else:
-                            local_error_detail = "Model lokalny zwrócił pustą odpowiedź"
-                    else:
-                        local_error_detail = (
-                            f"Serwer Ollama zwrócił kod HTTP {resp.status_code}: {resp.text}"
-                        )
-                        logger.warning(
-                            "Local Ollama returned HTTP %s: %s", resp.status_code, resp.text
-                        )
-            except httpx.TimeoutException:
-                local_error_detail = (
-                    f"Przekroczono limit czasu oczekiwania na odpowiedź modelu lokalnego "
-                    f"({int(ollama_timeout)}s). Spróbuj wyłączyć 'Tryb namysłu' "
-                    "lub użyć szybszego modelu."
-                )
-                logger.warning(
-                    "Local Ollama request timed out (%s, %ss)",
-                    ollama_target_model,
-                    ollama_timeout,
-                )
-            except (json.JSONDecodeError, ValueError) as json_err:
-                local_error_detail = (
-                    "Model lokalny wygenerował niepełny lub uszkodzony JSON "
-                    f"(prawdopodobne ucięcie tokenów): {json_err}"
-                )
-                logger.warning(
-                    "Local Ollama JSON extraction failed (%s): %s",
-                    ollama_target_model,
-                    json_err,
-                )
-            except httpx.ConnectError:
-                local_error_detail = (
-                    f"Nie udało się nawiązać połączenia z serwerem Ollama pod adresem "
-                    f"{effective_ollama_base_url}. Upewnij się, że lokalna usługa Ollama "
-                    "jest uruchomiona na maszynie hosta ('ollama serve')."
-                )
-                logger.warning("Local Ollama connection failed (%s)", effective_ollama_base_url)
-            except Exception as err:
-                local_error_detail = f"Błąd wykonania zapytania do Ollama: {err}"
-                logger.warning("Local Ollama request failed (%s): %s", ollama_target_model, err)
+                            local_error_detail = (
+                                f"Serwer Ollama zwrócił kod HTTP {resp.status_code}: {resp.text}"
+                            )
+                            logger.warning(
+                                "Local Ollama returned HTTP %s: %s", resp.status_code, resp.text
+                            )
+                except httpx.TimeoutException:
+                    local_error_detail = (
+                        f"Przekroczono limit czasu oczekiwania na odpowiedź modelu lokalnego "
+                        f"({int(ollama_timeout)}s). Spróbuj wyłączyć 'Tryb namysłu' "
+                        "lub użyć szybszego modelu."
+                    )
+                    logger.warning(
+                        "Local Ollama request timed out (%s, %ss)",
+                        ollama_target_model,
+                        ollama_timeout,
+                    )
+                except (json.JSONDecodeError, ValueError) as json_err:
+                    local_error_detail = (
+                        "Model lokalny wygenerował niepełny lub uszkodzony JSON "
+                        f"(prawdopodobne ucięcie tokenów): {json_err}"
+                    )
+                    logger.warning(
+                        "Local Ollama JSON extraction failed (%s): %s",
+                        ollama_target_model,
+                        json_err,
+                    )
+                except httpx.ConnectError:
+                    local_error_detail = (
+                        f"Nie udało się nawiązać połączenia z serwerem Ollama pod adresem "
+                        f"{effective_ollama_base_url}. Upewnij się, że lokalna usługa Ollama "
+                        "jest uruchomiona na maszynie hosta ('ollama serve')."
+                    )
+                    logger.warning("Local Ollama connection failed (%s)", effective_ollama_base_url)
+                except Exception as err:
+                    local_error_detail = f"Błąd wykonania zapytania do Ollama: {err}"
+                    logger.warning("Local Ollama request failed (%s): %s", ollama_target_model, err)
 
         # 2. Cloud Fallback if configured (only with valid non-placeholder keys)
         gemini_key = (
@@ -329,10 +352,10 @@ class LLMClient:
         )
 
         has_valid_gemini = bool(
-            gemini_key and not gemini_key.startswith("your_") and len(gemini_key) > 10
+            gemini_key and not gemini_key.startswith("your_") and len(gemini_key.strip()) > 10
         )
         has_valid_openai = bool(
-            openai_key and not openai_key.startswith("your_") and len(openai_key) > 10
+            openai_key and not openai_key.startswith("your_") and len(openai_key.strip()) > 10
         )
 
         cloud_timeout = timeout if timeout is not None else (120.0 if enable_thinking else 30.0)
@@ -348,18 +371,28 @@ class LLMClient:
             and effective_api_provider == "openai"
         )
 
+        cloud_error_detail: str | None = None
+
         if should_use_gemini:
-            if not has_valid_gemini:
-                logger.warning("Cloud Gemini requested but valid GEMINI_API_KEY is not configured")
+            target_api_model = model or effective_api_model
+            if not target_api_model:
+                cloud_error_detail = (
+                    "Model Gemini (api_model) nie został skonfigurowany w bazie danych."
+                )
+                logger.warning(cloud_error_detail)
+                if effective_provider == "gemini" or effective_auto_parse_mode == "auto_api_only":
+                    raise RuntimeError(cloud_error_detail)
+            elif not has_valid_gemini:
+                cloud_error_detail = (
+                    "Brak skonfigurowanego lub poprawny klucz GEMINI_API_KEY w pliku .env."
+                )
+                logger.warning(cloud_error_detail)
+                if effective_provider == "gemini" or effective_auto_parse_mode == "auto_api_only":
+                    raise RuntimeError(cloud_error_detail)
             else:
                 try:
                     import litellm
 
-                    target_api_model = model or effective_api_model
-                    if "gemini-2.5-flash" in target_api_model:
-                        target_api_model = target_api_model.replace(
-                            "gemini-2.5-flash", "gemini-3.8-flash"
-                        )
                     litellm_model = (
                         target_api_model
                         if target_api_model.startswith("gemini/")
@@ -380,16 +413,31 @@ class LLMClient:
                     content = response.choices[0].message.content
                     return _extract_json_data(content)
                 except Exception as err:
+                    cloud_error_detail = (
+                        f"Błąd wykonania zapytania do Gemini ({target_api_model}): {err}"
+                    )
                     logger.warning("Cloud Gemini LLM API call failed: %s", err)
 
         elif should_use_openai:
-            if not has_valid_openai:
-                logger.warning("Cloud OpenAI requested but valid OPENAI_API_KEY is not configured")
+            target_api_model = model or effective_api_model
+            if not target_api_model:
+                cloud_error_detail = (
+                    "Model OpenAI (api_model) nie został skonfigurowany w bazie danych."
+                )
+                logger.warning(cloud_error_detail)
+                if effective_provider == "openai" or effective_auto_parse_mode == "auto_api_only":
+                    raise RuntimeError(cloud_error_detail)
+            elif not has_valid_openai:
+                cloud_error_detail = (
+                    "Brak skonfigurowanego lub poprawny klucz OPENAI_API_KEY w pliku .env."
+                )
+                logger.warning(cloud_error_detail)
+                if effective_provider == "openai" or effective_auto_parse_mode == "auto_api_only":
+                    raise RuntimeError(cloud_error_detail)
             else:
                 try:
                     import litellm
 
-                    target_api_model = model or effective_api_model
                     extra_kwargs: dict[str, Any] = {}
                     if enable_thinking and any(
                         m in target_api_model.lower() for m in ("o1", "o3", "reasoning")
@@ -412,6 +460,9 @@ class LLMClient:
                     content = response.choices[0].message.content
                     return _extract_json_data(content)
                 except Exception as err:
+                    cloud_error_detail = (
+                        f"Błąd wykonania zapytania do OpenAI ({target_api_model}): {err}"
+                    )
                     logger.warning("Cloud OpenAI LLM API call failed: %s", err)
 
         # 3. Return fallback data if provided, or raise error if strict AI parsing was requested
@@ -419,19 +470,27 @@ class LLMClient:
             logger.info("Using baseline fallback schema")
             return fallback_data
 
-        target_name = model or effective_ollama_model
+        errors: list[str] = []
         if local_error_detail:
+            ollama_name = model or effective_ollama_model or "brak modelu"
+            errors.append(f"Silnik lokalny (Ollama: {ollama_name}): {local_error_detail}")
+        if cloud_error_detail:
+            cloud_name = model or effective_api_model or "brak modelu"
+            provider_label = (
+                effective_api_provider.upper() if effective_api_provider else "Cloud API"
+            )
+            errors.append(f"Silnik chmurowy ({provider_label}: {cloud_name}): {cloud_error_detail}")
+
+        if errors:
             raise RuntimeError(
-                f"Błąd modelu AI ({target_name}): {local_error_detail}. "
-                f"Upewnij się, że model jest zainstalowany ('ollama run {target_name}') "
-                "lub skonfiguruj klucz API w chmurze (GEMINI_API_KEY / OPENAI_API_KEY) "
-                "w pliku .env."
+                "Niepowodzenie przetwarzania przez model AI. Szczegóły błędów:\n - "
+                + "\n - ".join(errors)
             )
 
+        target_name = model or effective_ollama_model or effective_api_model or "brak modelu"
         raise RuntimeError(
-            f"Nie udało się połączyć z modelem AI ({target_name}). "
-            f"Upewnij się, że lokalna Ollama działa poprawnie ('ollama run {target_name}') "
-            "lub uzupełnij klucz GEMINI_API_KEY / OPENAI_API_KEY w pliku .env."
+            f"Nie udało się połączyć z żadnym skonfigurowanym modelem AI ({target_name}). "
+            "Sprawdź konfigurację Ollama w panelu ustawień oraz klucze API w pliku .env."
         )
 
     async def generate_follow_up(

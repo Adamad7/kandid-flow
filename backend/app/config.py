@@ -19,12 +19,12 @@ class Settings(BaseSettings):
     EXTENSION_API_TOKEN: str = "kandid_dev_secret_token_replace_in_production_32chars"
     CORS_ORIGINS: str = "http://localhost:5173,http://127.0.0.1:5173"
 
-    # LLM Settings
-    AUTO_PARSE_MODE: str = "auto_ollama_fallback_api"
-    OLLAMA_BASE_URL: str = "http://host.docker.internal:11434"
-    OLLAMA_MODEL: str = "qwen2.5:14b"
-    API_PROVIDER: str = "gemini"
-    API_MODEL: str = "gemini-3.8-flash"
+    # Initial LLM Settings (used strictly for seeding AppSettings id=1 on fresh DB)
+    INITIAL_AUTO_PARSE_MODE: str = "auto_ollama_fallback_api"
+    INITIAL_OLLAMA_BASE_URL: str = "http://host.docker.internal:11434"
+    INITIAL_OLLAMA_MODEL: str = "qwen2.5:14b"
+    INITIAL_API_PROVIDER: str = "gemini"
+    INITIAL_API_MODEL: str = "gemini-3.8-flash"
     GEMINI_API_KEY: str | None = None
     OPENAI_API_KEY: str | None = None
 

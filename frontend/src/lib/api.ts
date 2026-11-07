@@ -13,6 +13,7 @@ import type {
   CandidateAIFillRequest,
   CandidateProfileRead,
   CandidateProfileUpdate,
+  CloudTestRequest,
   CVGenerateRequest,
   CVPreviewRequest,
   CVPreviewResponse,
@@ -34,9 +35,11 @@ import type {
   JobOfferUpdate,
   JobPortalType,
   JobStatusType,
+  OllamaTestRequest,
   RecruitmentEventCreate,
   RecruitmentEventRead,
   RecruitmentEventUpdate,
+  SettingsConnectionTestResponse,
   WorkModelType,
 } from "../types";
 
@@ -350,6 +353,20 @@ export const api = {
     update: (data: AppSettingsUpdate): Promise<AppSettingsRead> => {
       return request<AppSettingsRead>("/api/v1/settings", {
         method: "PATCH",
+        body: JSON.stringify(data),
+      });
+    },
+
+    testOllama: (data?: OllamaTestRequest): Promise<SettingsConnectionTestResponse> => {
+      return request<SettingsConnectionTestResponse>("/api/v1/settings/test-ollama", {
+        method: "POST",
+        body: JSON.stringify(data || {}),
+      });
+    },
+
+    testCloud: (data: CloudTestRequest): Promise<SettingsConnectionTestResponse> => {
+      return request<SettingsConnectionTestResponse>("/api/v1/settings/test-cloud", {
+        method: "POST",
         body: JSON.stringify(data),
       });
     },

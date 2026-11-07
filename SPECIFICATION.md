@@ -129,14 +129,16 @@ Versioned historical records of generated and tailored CVs.
 * `created_at`: `TIMESTAMPTZ DEFAULT NOW()`
 
 ### 3.6. Table: `app_settings`
-Runtime application configuration (Non-secret settings only; all API keys and tokens are injected strictly from `.env`).
+Runtime application configuration (Single source of truth for runtime AI models and parsing modes; all API keys and secrets are injected strictly from `.env`). Initial defaults seeded once from `INITIAL_*` environment variables during first startup.
 * `id`: `INTEGER PRIMARY KEY DEFAULT 1`
 * `auto_parse_mode`: `VARCHAR(50) DEFAULT 'auto_ollama_fallback_api'` (`auto_ollama_fallback_api`, `auto_ollama_only`, `auto_api_only`, `manual`)
-* `ollama_base_url`: `TEXT DEFAULT '[http://host.docker.internal:11434](http://host.docker.internal:11434)'`
+* `ollama_base_url`: `TEXT DEFAULT 'http://host.docker.internal:11434'`
 * `ollama_model`: `VARCHAR(100) DEFAULT 'qwen2.5:14b'`
 * `api_provider`: `VARCHAR(50) DEFAULT 'gemini'`
-* `api_model`: `VARCHAR(100) DEFAULT 'gemini-2.5-flash'`
+* `api_model`: `VARCHAR(100) DEFAULT 'gemini-3.8-flash'`
 * `updated_at`: `TIMESTAMPTZ DEFAULT NOW()`
+* *DTO Flags & Diagnostics (Computed at API level via `AppSettingsRead`)*: `has_gemini_api_key: bool`, `has_openai_api_key: bool`.
+* *Test Endpoints*: `POST /api/v1/settings/test-ollama` (tags inspection & latency) and `POST /api/v1/settings/test-cloud` (minimal model ping & credential verification).
 
 ---
 
