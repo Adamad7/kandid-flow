@@ -151,14 +151,28 @@ class LLMClient:
         self.gemini_api_key = settings.GEMINI_API_KEY
         self.openai_api_key = settings.OPENAI_API_KEY
 
-    async def _resolve_runtime_config(self) -> dict[str, str]:
-        """Resolve current runtime settings strictly from database AppSettings."""
-        cfg = {
+    async def _resolve_runtime_config(self, task: str | None = None) -> dict[str, Any]:
+        """Resolve current runtime settings strictly from database AppSettings.
+
+        If task is specified and configured in db_setting.tasks_config, extracts
+        task-specific routing_mode, local_model, and cloud_model configurations.
+        Otherwise falls back to global AppSettings fields.
+        """
+        cfg: dict[str, Any] = {
             "auto_parse_mode": "",
             "ollama_base_url": "",
             "ollama_model": "",
             "api_provider": "",
             "api_model": "",
+            "routing_mode": "",
+            "local_context_window": 32768,
+            "local_enable_thinking": False,
+            "local_reasoning_effort": "medium",
+            "local_thinking_budget": None,
+            "cloud_context_window": 32768,
+            "cloud_enable_thinking": False,
+            "cloud_reasoning_effort": "medium",
+            "cloud_thinking_budget": None,
         }
         try:
             from sqlalchemy import select
@@ -181,6 +195,51 @@ class LLMClient:
                         cfg["api_provider"] = db_setting.api_provider
                     if db_setting.api_model:
                         cfg["api_model"] = db_setting.api_model
+
+                    tasks_dict = db_setting.tasks_config
+                    if task and isinstance(tasks_dict, dict) and task in tasks_dict:
+                        task_data = tasks_dict[task]
+                        if isinstance(task_data, dict):
+                            routing = task_data.get("routing_mode", "fallback")
+                            cfg["routing_mode"] = routing
+                            if routing == "local":
+                                cfg["auto_parse_mode"] = "auto_ollama_only"
+                            elif routing == "cloud":
+                                cfg["auto_parse_mode"] = "auto_api_only"
+                            elif routing == "fallback":
+                                cfg["auto_parse_mode"] = "auto_ollama_fallback_api"
+
+                            loc_model = task_data.get("local_model")
+                            if isinstance(loc_model, dict):
+                                if loc_model.get("model"):
+                                    cfg["ollama_model"] = loc_model["model"]
+                                if loc_model.get("context_window"):
+                                    cfg["local_context_window"] = loc_model["context_window"]
+                                if "enable_thinking" in loc_model:
+                                    cfg["local_enable_thinking"] = bool(
+                                        loc_model["enable_thinking"]
+                                    )
+                                if loc_model.get("reasoning_effort"):
+                                    cfg["local_reasoning_effort"] = loc_model["reasoning_effort"]
+                                if loc_model.get("thinking_budget") is not None:
+                                    cfg["local_thinking_budget"] = loc_model["thinking_budget"]
+
+                            cld_model = task_data.get("cloud_model")
+                            if isinstance(cld_model, dict):
+                                if cld_model.get("provider"):
+                                    cfg["api_provider"] = cld_model["provider"]
+                                if cld_model.get("model"):
+                                    cfg["api_model"] = cld_model["model"]
+                                if cld_model.get("context_window"):
+                                    cfg["cloud_context_window"] = cld_model["context_window"]
+                                if "enable_thinking" in cld_model:
+                                    cfg["cloud_enable_thinking"] = bool(
+                                        cld_model["enable_thinking"]
+                                    )
+                                if cld_model.get("reasoning_effort"):
+                                    cfg["cloud_reasoning_effort"] = cld_model["reasoning_effort"]
+                                if cld_model.get("thinking_budget") is not None:
+                                    cfg["cloud_thinking_budget"] = cld_model["thinking_budget"]
         except Exception as e:
             logger.warning("Could not read AppSettings from database: %s", e)
         return cfg
@@ -197,19 +256,29 @@ class LLMClient:
         api_key: str | None = None,
         context_window: int | None = None,
         max_tokens: int | None = None,
+        task: str | None = None,
     ) -> Any:
         """Attempt local Ollama or specified provider; fall back to cloud API or fallback data."""
-        runtime_cfg = await self._resolve_runtime_config()
+        runtime_cfg = await self._resolve_runtime_config(task=task)
         effective_auto_parse_mode = runtime_cfg["auto_parse_mode"]
         effective_ollama_base_url = runtime_cfg["ollama_base_url"]
         effective_ollama_model = runtime_cfg["ollama_model"]
         effective_api_provider = runtime_cfg["api_provider"]
         effective_api_model = runtime_cfg["api_model"]
+        routing_mode = runtime_cfg.get("routing_mode")
 
         custom_key = api_key.strip() if (api_key and api_key.strip()) else None
 
         # Resolve provider for "local", "api", or test environment routing
         effective_provider = provider
+        if effective_provider is None and routing_mode:
+            if routing_mode == "local":
+                effective_provider = "local"
+            elif routing_mode == "cloud":
+                effective_provider = effective_api_provider or "gemini"
+            elif routing_mode == "fallback":
+                effective_provider = None
+
         if os.getenv("PYTEST_CURRENT_TEST"):
             test_ai_provider = getattr(settings, "TEST_AI_PROVIDER", "local").lower().strip()
             if test_ai_provider == "local":
@@ -269,12 +338,25 @@ class LLMClient:
                     m in ollama_target_model.lower()
                     for m in ("deepseek-r1", "r1", "qwq", "reasoning")
                 )
-                ollama_think = bool(enable_thinking and is_reasoning_model)
+                eff_local_enable_thinking = bool(
+                    enable_thinking or runtime_cfg.get("local_enable_thinking", False)
+                )
+                ollama_think = bool(
+                    eff_local_enable_thinking and (is_reasoning_model or eff_local_enable_thinking)
+                )
                 ollama_timeout = (
                     timeout if timeout is not None else (300.0 if ollama_think else 120.0)
                 )
-                eff_context_window = context_window or 32768
+                eff_context_window = (
+                    context_window or runtime_cfg.get("local_context_window") or 32768
+                )
                 eff_max_tokens = max_tokens or min(eff_context_window, 16384)
+                options_payload: dict[str, Any] = {
+                    "num_ctx": eff_context_window,
+                    "num_predict": eff_max_tokens,
+                    "temperature": 0.2,
+                    "repeat_penalty": 1.15,
+                }
                 try:
                     async with httpx.AsyncClient(timeout=ollama_timeout) as client:
                         resp = await client.post(
@@ -286,12 +368,7 @@ class LLMClient:
                                 "stream": False,
                                 "format": "json",
                                 "think": ollama_think,
-                                "options": {
-                                    "num_ctx": eff_context_window,
-                                    "num_predict": eff_max_tokens,
-                                    "temperature": 0.2,
-                                    "repeat_penalty": 1.15,
-                                },
+                                "options": options_payload,
                             },
                         )
                         if resp.status_code == 200:
@@ -358,7 +435,17 @@ class LLMClient:
             openai_key and not openai_key.startswith("your_") and len(openai_key.strip()) > 10
         )
 
-        cloud_timeout = timeout if timeout is not None else (120.0 if enable_thinking else 30.0)
+        eff_cloud_enable_thinking = bool(
+            enable_thinking or runtime_cfg.get("cloud_enable_thinking", False)
+        )
+        cloud_timeout = (
+            timeout if timeout is not None else (120.0 if eff_cloud_enable_thinking else 30.0)
+        )
+        eff_cloud_context_window = (
+            context_window or runtime_cfg.get("cloud_context_window") or 32768
+        )
+        eff_cloud_reasoning_effort = runtime_cfg.get("cloud_reasoning_effort") or "medium"
+        eff_cloud_thinking_budget = runtime_cfg.get("cloud_thinking_budget")
 
         should_use_gemini = effective_provider == "gemini" or (
             effective_provider is None
@@ -393,12 +480,19 @@ class LLMClient:
                 try:
                     import litellm
 
+                    litellm.drop_params = True
                     litellm_model = (
                         target_api_model
                         if target_api_model.startswith("gemini/")
                         else f"gemini/{target_api_model}"
                     )
-                    eff_cloud_max_tokens = max_tokens or 16384
+                    eff_cloud_max_tokens = max_tokens or min(eff_cloud_context_window, 16384)
+                    gemini_kwargs: dict[str, Any] = {}
+                    if eff_cloud_enable_thinking:
+                        gemini_kwargs["reasoning_effort"] = eff_cloud_reasoning_effort
+                        if eff_cloud_thinking_budget is not None and eff_cloud_thinking_budget > 0:
+                            gemini_kwargs["thinking_budget"] = eff_cloud_thinking_budget
+
                     response = await litellm.acompletion(
                         model=litellm_model,
                         api_key=gemini_key,
@@ -409,6 +503,7 @@ class LLMClient:
                         response_format={"type": "json_object"},
                         max_tokens=eff_cloud_max_tokens,
                         timeout=cloud_timeout,
+                        **gemini_kwargs,
                     )
                     content = response.choices[0].message.content
                     return _extract_json_data(content)
@@ -438,13 +533,14 @@ class LLMClient:
                 try:
                     import litellm
 
-                    extra_kwargs: dict[str, Any] = {}
-                    if enable_thinking and any(
+                    litellm.drop_params = True
+                    openai_kwargs: dict[str, Any] = {}
+                    if eff_cloud_enable_thinking and any(
                         m in target_api_model.lower() for m in ("o1", "o3", "reasoning")
                     ):
-                        extra_kwargs["reasoning_effort"] = "medium"
+                        openai_kwargs["reasoning_effort"] = eff_cloud_reasoning_effort
 
-                    eff_cloud_max_tokens = max_tokens or 16384
+                    eff_cloud_max_tokens = max_tokens or min(eff_cloud_context_window, 16384)
                     response = await litellm.acompletion(
                         model=target_api_model,
                         api_key=openai_key,
@@ -455,7 +551,7 @@ class LLMClient:
                         response_format={"type": "json_object"},
                         max_tokens=eff_cloud_max_tokens,
                         timeout=cloud_timeout,
-                        **extra_kwargs,
+                        **openai_kwargs,
                     )
                     content = response.choices[0].message.content
                     return _extract_json_data(content)

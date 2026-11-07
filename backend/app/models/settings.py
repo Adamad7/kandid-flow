@@ -1,8 +1,10 @@
 """SQLAlchemy model for Application Settings."""
 
 from datetime import datetime
+from typing import Any
 
 from sqlalchemy import DateTime, Integer, String, Text, func, text
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.models.base import Base
@@ -43,6 +45,12 @@ class AppSettings(Base):
         nullable=False,
         default="gemini-2.5-flash",
         server_default=text("'gemini-2.5-flash'"),
+    )
+    tasks_config: Mapped[dict[str, Any]] = mapped_column(
+        JSONB,
+        nullable=False,
+        default=dict,
+        server_default=text("'{}'::jsonb"),
     )
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),

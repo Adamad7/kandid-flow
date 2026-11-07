@@ -453,6 +453,7 @@ class CVGeneratorService:
             baseline_payload, job, request.tailoring_mode
         )
         provider = request.llm_provider if request.llm_provider != "default" else None
+        task_name = "cv_generation" if request.llm_provider == "default" else None
 
         if has_ai_sections:
             tailored_data = await llm_client.generate_json(
@@ -464,6 +465,7 @@ class CVGeneratorService:
                 enable_thinking=request.enable_thinking,
                 timeout=120.0,
                 api_key=request.api_key,
+                task=task_name,
             )
         else:
             tailored_data = deterministic_fallback
@@ -650,6 +652,7 @@ class CVGeneratorService:
                 model=llm_model,
                 enable_thinking=enable_thinking,
                 timeout=60.0,
+                task="cv_refinement",
             )
         except Exception as e:
             logger.warning("LLM block refinement failed, falling back to deterministic: %s", e)

@@ -25,9 +25,16 @@ async def seed() -> None:
     """Populate database with development mock data."""
     async with async_session_factory() as session:
         # 1. Initialize App Settings
+        from app.schemas.settings import create_default_tasks_config
+
         stmt_settings = select(AppSettings).where(AppSettings.id == 1)
         res_settings = await session.execute(stmt_settings)
         app_setting = res_settings.scalar_one_or_none()
+        default_tasks = create_default_tasks_config(
+            ollama_model=settings.INITIAL_OLLAMA_MODEL,
+            api_provider=settings.INITIAL_API_PROVIDER,  # type: ignore[arg-type]
+            api_model=settings.INITIAL_API_MODEL,
+        ).model_dump()
 
         if not app_setting:
             app_setting = AppSettings(
@@ -37,10 +44,14 @@ async def seed() -> None:
                 ollama_model=settings.INITIAL_OLLAMA_MODEL,
                 api_provider=settings.INITIAL_API_PROVIDER,
                 api_model=settings.INITIAL_API_MODEL,
+                tasks_config=default_tasks,
             )
             session.add(app_setting)
             logger.info("Created app_settings record")
         else:
+            if not app_setting.tasks_config:
+                app_setting.tasks_config = default_tasks
+                logger.info("Updated existing app_settings record with default tasks_config")
             logger.info("app_settings already present")
 
         # 2. Seed Candidate Profile

@@ -1983,6 +1983,7 @@ class CandidateParser:
                     api_key=request.api_key,
                     enable_thinking=request.enable_thinking,
                     context_window=request.context_window,
+                    task="knowledge_base_parsing",
                 )
                 if not isinstance(res, (dict, list)):
                     return None
@@ -2057,6 +2058,7 @@ class CandidateParser:
                 api_key=request.api_key,
                 enable_thinking=request.enable_thinking,
                 context_window=request.context_window,
+                task="knowledge_base_parsing",
             )
 
             if not isinstance(parsed_data, dict):

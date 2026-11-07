@@ -22,10 +22,18 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     """Application lifespan events (startup and shutdown)."""
     # Ensure default app settings exist in database
     try:
+        from app.schemas.settings import create_default_tasks_config
+
         async with async_session_factory() as session:
             stmt = select(AppSettings).where(AppSettings.id == 1)
             result = await session.execute(stmt)
             existing = result.scalar_one_or_none()
+            default_tasks = create_default_tasks_config(
+                ollama_model=settings.INITIAL_OLLAMA_MODEL,
+                api_provider=settings.INITIAL_API_PROVIDER,  # type: ignore[arg-type]
+                api_model=settings.INITIAL_API_MODEL,
+            ).model_dump()
+
             if not existing:
                 default_settings = AppSettings(
                     id=1,
@@ -34,10 +42,15 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
                     ollama_model=settings.INITIAL_OLLAMA_MODEL,
                     api_provider=settings.INITIAL_API_PROVIDER,
                     api_model=settings.INITIAL_API_MODEL,
+                    tasks_config=default_tasks,
                 )
                 session.add(default_settings)
                 await session.commit()
                 logger.info("Initialized default app_settings in database")
+            elif not existing.tasks_config:
+                existing.tasks_config = default_tasks
+                await session.commit()
+                logger.info("Populated default tasks_config in existing app_settings")
     except Exception as exc:
         logger.warning("Could not initialize default app_settings on startup: %s", exc)
 

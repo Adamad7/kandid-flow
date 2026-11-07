@@ -102,14 +102,22 @@ from app.schemas.realtime import (
     RealtimeEventType,
 )
 from app.schemas.settings import (
+    AITasksConfig,
+    AITaskType,
     ApiProviderType,
     AppSettingsBase,
     AppSettingsRead,
     AppSettingsUpdate,
     AutoParseModeType,
+    CloudModelConfig,
     CloudTestRequest,
+    LocalModelConfig,
     OllamaTestRequest,
+    ReasoningEffortType,
+    RoutingModeType,
     SettingsConnectionTestResponse,
+    TaskModelConfig,
+    create_default_tasks_config,
 )
 
 __all__ = [
@@ -203,14 +211,22 @@ __all__ = [
     "FollowUpGenerateRequest",
     "FollowUpGenerateResponse",
     # Settings
+    "AITasksConfig",
+    "AITaskType",
     "ApiProviderType",
     "AppSettingsBase",
     "AppSettingsRead",
     "AppSettingsUpdate",
     "AutoParseModeType",
+    "CloudModelConfig",
     "CloudTestRequest",
+    "LocalModelConfig",
     "OllamaTestRequest",
+    "ReasoningEffortType",
+    "RoutingModeType",
     "SettingsConnectionTestResponse",
+    "TaskModelConfig",
+    "create_default_tasks_config",
     # Real-time Events
     "RealtimeEventType",
     "RealtimeEventPayload",

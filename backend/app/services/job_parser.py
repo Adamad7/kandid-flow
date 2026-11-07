@@ -493,6 +493,7 @@ class JobParserWorker:
                     user_prompt=user_prompt,
                     fallback_data=None,
                     enable_thinking=False,
+                    task="job_parsing",
                 )
 
                 if not isinstance(parsed_data, dict):

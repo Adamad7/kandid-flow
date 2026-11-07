@@ -583,12 +583,55 @@ export interface BaseCVPresetRead extends BaseCVPresetBase {
 // Application Settings Schemas
 // ============================================================================
 
+export type ReasoningEffortType = "low" | "medium" | "high";
+export type RoutingModeType = "fallback" | "local" | "cloud";
+export type AITaskType =
+  | "job_parsing"
+  | "cv_generation"
+  | "cv_refinement"
+  | "knowledge_base_parsing";
+
+export interface LocalModelConfig {
+  model: string;
+  context_window: number;
+  enable_thinking: boolean;
+  reasoning_effort: ReasoningEffortType;
+  thinking_budget?: number | null;
+}
+
+export interface CloudModelConfig {
+  provider: ApiProviderType;
+  model: string;
+  context_window: number;
+  enable_thinking: boolean;
+  reasoning_effort: ReasoningEffortType;
+  thinking_budget?: number | null;
+}
+
+export interface TaskModelConfig {
+  routing_mode: RoutingModeType;
+  local_model: LocalModelConfig;
+  cloud_model: CloudModelConfig;
+  local_test_passed: boolean;
+  local_test_message?: string | null;
+  cloud_test_passed: boolean;
+  cloud_test_message?: string | null;
+}
+
+export interface AITasksConfig {
+  job_parsing: TaskModelConfig;
+  cv_generation: TaskModelConfig;
+  cv_refinement: TaskModelConfig;
+  knowledge_base_parsing: TaskModelConfig;
+}
+
 export interface AppSettingsBase {
   auto_parse_mode: AutoParseModeType;
   ollama_base_url: string;
   ollama_model: string;
   api_provider: ApiProviderType;
   api_model: string;
+  tasks_config: AITasksConfig;
 }
 
 export interface AppSettingsUpdate {
@@ -597,6 +640,7 @@ export interface AppSettingsUpdate {
   ollama_model?: string | null;
   api_provider?: ApiProviderType | null;
   api_model?: string | null;
+  tasks_config?: AITasksConfig | null;
 }
 
 export interface AppSettingsRead extends AppSettingsBase {
@@ -609,11 +653,21 @@ export interface AppSettingsRead extends AppSettingsBase {
 export interface OllamaTestRequest {
   ollama_base_url?: string | null;
   ollama_model?: string | null;
+  context_window?: number | null;
+  enable_thinking?: boolean;
+  reasoning_effort?: ReasoningEffortType | null;
+  thinking_budget?: number | null;
+  task?: AITaskType | null;
 }
 
 export interface CloudTestRequest {
   provider: ApiProviderType;
   model?: string | null;
+  context_window?: number | null;
+  enable_thinking?: boolean;
+  reasoning_effort?: ReasoningEffortType | null;
+  thinking_budget?: number | null;
+  task?: AITaskType | null;
 }
 
 export interface SettingsConnectionTestResponse {
