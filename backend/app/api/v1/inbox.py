@@ -1,10 +1,11 @@
 """Inbox ingestion endpoint for Chrome extension."""
 
 import logging
+from datetime import date
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, Header, HTTPException, Query, status
-from sqlalchemy import select
+from sqlalchemy import case, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
@@ -18,6 +19,52 @@ from app.services.job_parser import canonicalize_url, sanitize_work_model_detail
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/inbox", tags=["Inbox"])
+
+
+async def find_duplicate_offer(
+    db: AsyncSession,
+    title: str | None,
+    company: str | None,
+    application_deadline: date | None = None,
+) -> JobOffer | None:
+    """Find an existing job offer matching title, company, and deadline rules.
+
+    Rules:
+    - title and company must both be non-empty after strip()
+    - case-insensitive, trimmed comparison on role_title and company_name
+    - application_deadline logic:
+      - If None: matches any offer with same company and title (deadline is None or set)
+      - If provided: matches if DB deadline is None OR DB deadline == application_deadline
+      - Ordering prioritizes exact deadline match (0 vs 1), then newest created_at
+    """
+    clean_title = title.strip() if title else ""
+    clean_company = company.strip() if company else ""
+
+    if not clean_title or not clean_company:
+        return None
+
+    conditions = [
+        func.lower(func.trim(JobOffer.role_title)) == func.lower(clean_title),
+        func.lower(func.trim(JobOffer.company_name)) == func.lower(clean_company),
+    ]
+
+    if application_deadline is not None:
+        conditions.append(
+            or_(
+                JobOffer.application_deadline.is_(None),
+                JobOffer.application_deadline == application_deadline,
+            )
+        )
+        order_clause = [
+            case((JobOffer.application_deadline == application_deadline, 0), else_=1),
+            JobOffer.created_at.desc(),
+        ]
+    else:
+        order_clause = [JobOffer.created_at.desc()]
+
+    stmt = select(JobOffer).where(*conditions).order_by(*order_clause)
+    result = await db.execute(stmt)
+    return result.scalars().first()
 
 
 async def verify_extension_token(
@@ -58,18 +105,39 @@ async def verify_extension_token(
 @router.get(
     "/check",
     response_model=InboxCheckResponse,
-    summary="Check if a job posting URL has already been captured",
+    summary="Check if a job posting has already been captured",
 )
 async def check_duplicate_url(
-    url: str = Query(..., description="Target job posting URL to verify for duplicates"),
+    title: str | None = Query(None, description="Job role title to check for duplicates"),
+    company: str | None = Query(None, description="Company name to check for duplicates"),
+    application_deadline: date | None = Query(
+        None, description="Application deadline date (YYYY-MM-DD)"
+    ),
+    url: str | None = Query(
+        None, description="Legacy URL parameter for backward compatibility/health pings"
+    ),
     _: None = Depends(verify_extension_token),
     db: AsyncSession = Depends(get_db_session),
 ) -> InboxCheckResponse:
-    """Canonicalize given URL and check if an active record already exists in job_offers."""
-    canonical_url = canonicalize_url(url)
-    stmt = select(JobOffer).where(JobOffer.source_url == canonical_url)
-    result = await db.execute(stmt)
-    job = result.scalar_one_or_none()
+    """Check if an active record already exists by title, company, and deadline."""
+    clean_title = title.strip() if title else ""
+    clean_company = company.strip() if company else ""
+
+    if not clean_title or not clean_company:
+        return InboxCheckResponse(
+            exists=False,
+            job_id=None,
+            status=None,
+            role_title=None,
+            company_name=None,
+        )
+
+    job = await find_duplicate_offer(
+        db=db,
+        title=clean_title,
+        company=clean_company,
+        application_deadline=application_deadline,
+    )
 
     if job:
         return InboxCheckResponse(
@@ -103,18 +171,27 @@ async def ingest_job_offer(
     """Ingest a parsed job offer from the Chrome extension and queue it in inbox status."""
     canonical_url = canonicalize_url(payload.source_url)
 
-    # Check for existing offer by canonical URL
-    stmt = select(JobOffer).where(JobOffer.source_url == canonical_url)
-    res = await db.execute(stmt)
-    existing = res.scalar_one_or_none()
+    # Check for existing offer by title, company, and application_deadline
+    existing = await find_duplicate_offer(
+        db=db,
+        title=payload.title,
+        company=payload.company,
+        application_deadline=payload.application_deadline,
+    )
+
+    # Fallback to check by canonical URL if not found by title and company
+    if not existing:
+        stmt = select(JobOffer).where(JobOffer.source_url == canonical_url)
+        res = await db.execute(stmt)
+        existing = res.scalar_one_or_none()
 
     raw_dict = payload.model_dump(mode="json")
     raw_dict["source_url"] = canonical_url
 
     if existing:
         logger.info(
-            "Job offer already exists for URL %s, updating with fresh extracted data",
-            canonical_url,
+            "Job offer already exists (id=%s), updating with fresh extracted data",
+            existing.id,
         )
         if payload.application_deadline is not None:
             existing.application_deadline = payload.application_deadline

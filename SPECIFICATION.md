@@ -149,7 +149,7 @@ Runtime application configuration (Single source of truth for runtime AI models 
 * **Standard:** Manifest v3 (Vanilla JavaScript, zero bundlers/npm).
 * **Execution & Security Architecture:**
   * `content.js` + `extractors/*.js`: Executed in page context solely to inspect DOM, canonicalize `source_url` (stripping tracking query parameters), and return `ExtractedJobPayload` via message passing (`chrome.runtime.onMessage`).
-  * `popup.js` / `background.js`: Performs all HTTP requests (`GET /api/v1/inbox/check?url=...` for duplicate detection and `POST /api/v1/inbox` for submission) to avoid CORS and page-level CSP blocks.
+  * `popup.js` / `background.js`: Performs all HTTP requests (`GET /api/v1/inbox/check?title=...&company=...&application_deadline=...` for duplicate detection across multi-portal postings and `POST /api/v1/inbox` for submission) to avoid CORS and page-level CSP blocks.
 * **Extraction (Strategy Pattern):**
   * `extractors/justjoin.js`: skill tags, salary ranges, location list, description container.
   * `extractors/pracuj.js`: targeted sections via `section[data-test="section-..."]`, office cities, stripping corporate perks and footer.
@@ -158,7 +158,7 @@ Runtime application configuration (Single source of truth for runtime AI models 
   * `extractors/theprotocol.js`: hybrid extraction (Next.js SSR state `__NEXT_DATA__` offer payload with semantic `data-test` selector fallbacks), multi-contract salary parsing, office/remote tags.
   * `extractors/fallback.js`: DOM sanitizer stripping `nav`, `footer`, `script`, `style`, cookie consent elements, and grabbing `<main>` or `<article>`.
 * **Popup UI:**
-  * Main View: active tab title, canonical URL, duplicate warning badge (if URL already exists in DB), optional note input, "Zapisz ofertę" action button, operation status.
+  * Main View: active tab title, canonical URL, duplicate warning badge (if matching role title, company name, and application deadline already exist in DB across portals), optional note input, "Zapisz ofertę" action button, operation status.
   * Settings View: backend `server_url` and `api_token` persisted via `chrome.storage.local`.
 
 ### 4.2. Backend (`backend/`)

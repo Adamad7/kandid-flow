@@ -353,7 +353,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
       setRating(1);
       renderExtractedOffer(currentPayload);
-      await checkDuplicateOffer(currentPayload.source_url);
+      await checkDuplicateOffer(currentPayload);
     } catch (error) {
       console.error("[KandidFlow] Error during extraction init:", error);
       jobTitleEl.textContent = "Wystąpił błąd podczas wczytywania oferty.";
@@ -435,10 +435,17 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   /**
-   * Checks whether the current canonical URL is already captured in the backend.
+   * Checks whether the current offer is already captured in the backend.
    */
-  async function checkDuplicateOffer(url) {
-    if (!url) return;
+  async function checkDuplicateOffer(payload) {
+    if (!payload || !payload.title || !payload.company) {
+      duplicateBanner.className = "alert-banner success";
+      duplicateIcon.textContent = "✨";
+      duplicateTitle.textContent = "Nowa oferta — gotowa do zapisania";
+      duplicateDesc.textContent = "Tej oferty nie ma jeszcze w Twoim panelu rekrutacji.";
+      saveBtnText.textContent = "Zapisz ofertę w KandidFlow";
+      return;
+    }
 
     updateConnectionStatus("checking", "Weryfikacja...");
     duplicateBanner.classList.remove("hidden", "warning", "success");
@@ -450,7 +457,13 @@ document.addEventListener("DOMContentLoaded", async () => {
     const { backendUrl, apiToken } = await getStoredConfig();
 
     try {
-      const checkUrl = `${backendUrl}/api/v1/inbox/check?url=${encodeURIComponent(url)}`;
+      const params = new URLSearchParams();
+      params.append("title", payload.title);
+      params.append("company", payload.company);
+      if (payload.application_deadline) {
+        params.append("application_deadline", payload.application_deadline);
+      }
+      const checkUrl = `${backendUrl}/api/v1/inbox/check?${params.toString()}`;
       const response = await fetch(checkUrl, {
         method: "GET",
         headers: {
@@ -725,8 +738,8 @@ document.addEventListener("DOMContentLoaded", async () => {
           settingsStatus.classList.add("hidden");
           showMain();
           // Refresh connection or duplicate check with updated settings
-          if (isCurrentPageSupported && currentPayload && currentPayload.source_url) {
-            checkDuplicateOffer(currentPayload.source_url);
+          if (isCurrentPageSupported && currentPayload && currentPayload.title && currentPayload.company) {
+            checkDuplicateOffer(currentPayload);
           } else {
             checkBackendConnection();
           }

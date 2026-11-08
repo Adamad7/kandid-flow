@@ -58,7 +58,7 @@ async def test_inbox_authentication_and_ingestion(async_client: httpx.AsyncClien
 
     # 3. Check duplicate endpoint before ingestion (should return exists=False)
     check_before = await async_client.get(
-        f"/api/v1/inbox/check?url={test_url}",
+        f"/api/v1/inbox/check?url={test_url}&title={payload['title']}&company={payload['company']}",
         headers={"Authorization": f"Bearer {settings.EXTENSION_API_TOKEN}"},
     )
     assert check_before.status_code == 200
@@ -80,16 +80,19 @@ async def test_inbox_authentication_and_ingestion(async_client: httpx.AsyncClien
 
         # 5. Check duplicate endpoint after ingestion (should return exists=True)
         check_after = await async_client.get(
-            f"/api/v1/inbox/check?url={test_url}",
+            f"/api/v1/inbox/check?url={test_url}&title={payload['title']}&company={payload['company']}",
             headers={"Authorization": f"Bearer {settings.EXTENSION_API_TOKEN}"},
         )
         assert check_after.status_code == 200
         assert check_after.json()["exists"] is True
         assert check_after.json()["job_id"] == body["id"]
+        assert check_after.json()["role_title"] == payload["title"]
+        assert check_after.json()["company_name"] == payload["company"]
 
-        # 6. Valid token with X-API-Token header should also succeed with 201
+        # 6. Valid token with X-API-Token header should also succeed with 201 (new offer)
         payload["source_url"] = f"https://pracuj.pl/praca/pytest-job-{uuid.uuid4()}"
         payload["source_portal"] = "pracuj"
+        payload["title"] = f"Cloud Architect {uuid.uuid4().hex[:6]}"
         header_res = await async_client.post(
             "/api/v1/inbox",
             headers={"X-API-Token": settings.EXTENSION_API_TOKEN},
@@ -586,7 +589,12 @@ async def test_theprotocol_inbox_ingestion_and_url_canonicalization(
         # 4. Duplicate check with alternate tracking query parameters
         another_dirty_url = f"{clean_base}/?searchId=different-id&utm_term=python#tab-details"
         check_res = await async_client.get(
-            f"/api/v1/inbox/check?url={another_dirty_url}",
+            "/api/v1/inbox/check",
+            params={
+                "url": another_dirty_url,
+                "title": payload["title"],
+                "company": payload["company"],
+            },
             headers={"Authorization": f"Bearer {settings.EXTENSION_API_TOKEN}"},
         )
         assert check_res.status_code == 200
@@ -608,6 +616,198 @@ async def test_theprotocol_inbox_ingestion_and_url_canonicalization(
         theprotocol_metric = next((m for m in portal_metrics if m["portal"] == "theprotocol"), None)
         if theprotocol_metric:
             assert theprotocol_metric["label"] == "the:protocol"
+    finally:
+        if created_job_ids:
+            await async_client.post(
+                "/api/v1/jobs/batch/delete",
+                json={"job_ids": created_job_ids},
+            )
+
+
+@pytest.mark.asyncio
+async def test_inbox_duplicate_detection_matrix(async_client: httpx.AsyncClient):
+    """Verify duplicate detection rules based on title, company, and deadline."""
+    auth_headers = {"Authorization": f"Bearer {settings.EXTENSION_API_TOKEN}"}
+    created_job_ids: list[str] = []
+
+    try:
+        # 1. Missing or empty title / company returns 200 with exists=False
+        res_no_params = await async_client.get("/api/v1/inbox/check", headers=auth_headers)
+        assert res_no_params.status_code == 200
+        assert res_no_params.json()["exists"] is False
+
+        res_ping_url = await async_client.get(
+            "/api/v1/inbox/check?url=https://justjoin.it/offers/ping-test",
+            headers=auth_headers,
+        )
+        assert res_ping_url.status_code == 200
+        assert res_ping_url.json()["exists"] is False
+
+        res_only_title = await async_client.get(
+            "/api/v1/inbox/check?title=Software%20Engineer",
+            headers=auth_headers,
+        )
+        assert res_only_title.status_code == 200
+        assert res_only_title.json()["exists"] is False
+
+        res_whitespace = await async_client.get(
+            "/api/v1/inbox/check?title=%20%20&company=%20%20",
+            headers=auth_headers,
+        )
+        assert res_whitespace.status_code == 200
+        assert res_whitespace.json()["exists"] is False
+
+        # 2. Ingest first job offer with a deadline
+        unique_suffix = uuid.uuid4().hex[:8]
+        title_a = f"Senior DevOps Specialist {unique_suffix}"
+        company_a = f"CloudScale Inc {unique_suffix}"
+        deadline_a = "2026-12-31"
+
+        offer_1_payload = {
+            "source_url": f"https://justjoin.it/offers/devops-{unique_suffix}",
+            "source_portal": "justjoin",
+            "title": title_a,
+            "company": company_a,
+            "application_deadline": deadline_a,
+            "salary_min": 18000,
+            "salary_max": 24000,
+            "description_text": "Terraform and AWS required.",
+        }
+
+        res_create_1 = await async_client.post(
+            "/api/v1/inbox",
+            headers=auth_headers,
+            json=offer_1_payload,
+        )
+        assert res_create_1.status_code == 201
+        job_1_id = res_create_1.json()["id"]
+        created_job_ids.append(job_1_id)
+
+        # 3. Duplicate check from a DIFFERENT portal with identical title, company, deadline
+        diff_portal_url = f"https://pracuj.pl/praca/devops-pracuj-{unique_suffix}"
+        res_check_dup = await async_client.get(
+            "/api/v1/inbox/check",
+            params={
+                "url": diff_portal_url,
+                "title": title_a,
+                "company": company_a,
+                "application_deadline": deadline_a,
+            },
+            headers=auth_headers,
+        )
+        assert res_check_dup.status_code == 200
+        dup_data = res_check_dup.json()
+        assert dup_data["exists"] is True
+        assert dup_data["job_id"] == job_1_id
+        assert dup_data["role_title"] == title_a
+        assert dup_data["company_name"] == company_a
+
+        # 4. Ingesting from Pracuj with different URL updates the existing job
+        offer_2_payload = {
+            "source_url": diff_portal_url,
+            "source_portal": "pracuj",
+            "title": title_a,
+            "company": company_a,
+            "application_deadline": deadline_a,
+            "salary_min": 20000,
+            "salary_max": 26000,
+            "description_text": "Updated text from Pracuj portal.",
+        }
+        res_update = await async_client.post(
+            "/api/v1/inbox",
+            headers=auth_headers,
+            json=offer_2_payload,
+        )
+        assert res_update.status_code == 201
+        assert res_update.json()["id"] == job_1_id
+        assert "zaktualizowana" in res_update.json()["message"]
+
+        # Verify job in DB retained original source_url but updated salary
+        job_1_get = await async_client.get(f"/api/v1/jobs/{job_1_id}")
+        assert job_1_get.status_code == 200
+        job_1_data = job_1_get.json()
+        assert job_1_data["source_url"] == offer_1_payload["source_url"]
+        assert job_1_data["salary_min"] == 20000
+        assert job_1_data["salary_max"] == 26000
+
+        # 5. One offer has deadline, query has None -> treated as duplicate
+        res_check_no_deadline = await async_client.get(
+            f"/api/v1/inbox/check?title={title_a}&company={company_a}",
+            headers=auth_headers,
+        )
+        assert res_check_no_deadline.status_code == 200
+        assert res_check_no_deadline.json()["exists"] is True
+        assert res_check_no_deadline.json()["job_id"] == job_1_id
+
+        # 6. Both offers have DIFFERENT deadlines -> treated as separate offers (exists=False)
+        diff_deadline = "2027-01-15"
+        res_check_diff_deadline = await async_client.get(
+            f"/api/v1/inbox/check?title={title_a}&company={company_a}&application_deadline={diff_deadline}",
+            headers=auth_headers,
+        )
+        assert res_check_diff_deadline.status_code == 200
+        assert res_check_diff_deadline.json()["exists"] is False
+
+        # Ingesting with different deadline creates a distinct job offer
+        offer_diff_deadline_payload = {
+            "source_url": f"https://nofluffjobs.com/job/devops-{unique_suffix}-v2",
+            "source_portal": "nofluffjobs",
+            "title": title_a,
+            "company": company_a,
+            "application_deadline": diff_deadline,
+        }
+        res_create_diff = await async_client.post(
+            "/api/v1/inbox",
+            headers=auth_headers,
+            json=offer_diff_deadline_payload,
+        )
+        assert res_create_diff.status_code == 201
+        job_2_id = res_create_diff.json()["id"]
+        assert job_2_id != job_1_id
+        created_job_ids.append(job_2_id)
+
+        # 7. Job in DB has NO deadline -> query with deadline is treated as duplicate
+        title_b = f"Backend Lead {unique_suffix}"
+        company_b = f"AlphaTech {unique_suffix}"
+        offer_no_date_payload = {
+            "source_url": f"https://justjoin.it/offers/lead-{unique_suffix}",
+            "source_portal": "justjoin",
+            "title": title_b,
+            "company": company_b,
+            "application_deadline": None,
+        }
+        res_create_no_date = await async_client.post(
+            "/api/v1/inbox",
+            headers=auth_headers,
+            json=offer_no_date_payload,
+        )
+        assert res_create_no_date.status_code == 201
+        job_3_id = res_create_no_date.json()["id"]
+        created_job_ids.append(job_3_id)
+
+        # Query with deadline matches offer with no deadline
+        res_check_date_against_none = await async_client.get(
+            f"/api/v1/inbox/check?title={title_b}&company={company_b}&application_deadline=2026-11-20",
+            headers=auth_headers,
+        )
+        assert res_check_date_against_none.status_code == 200
+        assert res_check_date_against_none.json()["exists"] is True
+        assert res_check_date_against_none.json()["job_id"] == job_3_id
+
+        # 8. Different role title or different company -> treated as separate offers
+        res_diff_title = await async_client.get(
+            f"/api/v1/inbox/check?title=Completely%20Different%20Role&company={company_a}",
+            headers=auth_headers,
+        )
+        assert res_diff_title.status_code == 200
+        assert res_diff_title.json()["exists"] is False
+
+        res_diff_company = await async_client.get(
+            f"/api/v1/inbox/check?title={title_a}&company=Completely%20Different%20Company",
+            headers=auth_headers,
+        )
+        assert res_diff_company.status_code == 200
+        assert res_diff_company.json()["exists"] is False
     finally:
         if created_job_ids:
             await async_client.post(

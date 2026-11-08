@@ -46,12 +46,31 @@ async function getBackendUrl() {
 
 // Runtime message listener for background operations
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-  if (request.action === "CHECK_DUPLICATE_URL") {
+  if (request.action === "CHECK_DUPLICATE_URL" || request.action === "CHECK_DUPLICATE_OFFER") {
     (async () => {
       try {
         const baseUrl = await getBackendUrl();
         const headers = await getAuthHeaders();
-        const checkUrl = `${baseUrl}/api/v1/inbox/check?url=${encodeURIComponent(request.url)}`;
+        let checkUrl;
+
+        const payload = request.payload || request;
+        if (payload && payload.title && payload.company) {
+          const params = new URLSearchParams();
+          params.append("title", payload.title);
+          params.append("company", payload.company);
+          if (payload.application_deadline) {
+            params.append("application_deadline", payload.application_deadline);
+          }
+          checkUrl = `${baseUrl}/api/v1/inbox/check?${params.toString()}`;
+        } else if (request.url) {
+          checkUrl = `${baseUrl}/api/v1/inbox/check?url=${encodeURIComponent(request.url)}`;
+        } else {
+          sendResponse({
+            success: true,
+            data: { exists: false },
+          });
+          return;
+        }
 
         const response = await fetch(checkUrl, {
           method: "GET",
