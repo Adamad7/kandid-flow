@@ -14,6 +14,8 @@ import {
   Send,
   Paperclip,
   Download,
+  AlertCircle,
+  RefreshCw,
 } from "lucide-react";
 import { api } from "../../lib/api";
 import type {
@@ -49,6 +51,7 @@ export const RecruitmentTimeline: React.FC<RecruitmentTimelineProps> = ({
   const [events, setEvents] = useState<RecruitmentEventRead[]>([]);
   const [currentJob, setCurrentJob] = useState<JobOfferRead | null>(job || null);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingEvent, setEditingEvent] = useState<RecruitmentEventRead | null>(null);
 
@@ -90,11 +93,13 @@ export const RecruitmentTimeline: React.FC<RecruitmentTimelineProps> = ({
   const fetchEvents = async () => {
     try {
       setIsLoading(true);
+      setError(null);
       const data = await api.events.list({ job_offer_id: jobOfferId });
       setEvents(data);
       if (onEventsCountChange) onEventsCountChange(data.length);
-    } catch {
-      // ignore
+    } catch (err) {
+      console.error("Failed to fetch recruitment events:", err);
+      setError("Nie udało się pobrać etapów rekrutacji.");
     } finally {
       setIsLoading(false);
     }
@@ -253,6 +258,25 @@ export const RecruitmentTimeline: React.FC<RecruitmentTimelineProps> = ({
       {isLoading ? (
         <div className="py-6 text-center text-xs text-slate-400 dark:text-neutral-500">
           Ładowanie etapów...
+        </div>
+      ) : error ? (
+        <div className="rounded-2xl border border-rose-200 bg-rose-50/50 dark:border-rose-900/60 dark:bg-rose-950/20 p-5 text-center">
+          <AlertCircle className="mx-auto h-8 w-8 text-rose-500 dark:text-rose-400 mb-2" />
+          <p className="text-sm font-semibold text-rose-800 dark:text-rose-300">
+            {error}
+          </p>
+          <p className="text-xs text-rose-600 dark:text-rose-400 mt-1 mb-3">
+            Wystąpił problem podczas pobierania etapów rekrutacji z serwera.
+          </p>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={fetchEvents}
+            className="rounded-xl border-rose-300 hover:bg-rose-100 dark:border-rose-800 dark:hover:bg-rose-900/40 text-rose-700 dark:text-rose-300"
+          >
+            <RefreshCw className="h-3.5 w-3.5 mr-1.5" />
+            Spróbuj ponownie
+          </Button>
         </div>
       ) : events.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-slate-200/90 dark:border-neutral-800 p-6 text-center bg-slate-50/40 dark:bg-neutral-900/40">

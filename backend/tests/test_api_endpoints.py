@@ -814,3 +814,92 @@ async def test_inbox_duplicate_detection_matrix(async_client: httpx.AsyncClient)
                 "/api/v1/jobs/batch/delete",
                 json={"job_ids": created_job_ids},
             )
+
+
+@pytest.mark.asyncio
+async def test_events_with_attachments_serialization(async_client: httpx.AsyncClient):
+    """Verify that events with file attachments serialize download_url and list properly."""
+    auth_headers = {"Authorization": f"Bearer {settings.EXTENSION_API_TOKEN}"}
+    inbox_res = await async_client.post(
+        "/api/v1/inbox",
+        headers=auth_headers,
+        json={
+            "source_url": f"https://example.com/jobs/attachment-event-test-{uuid.uuid4()}",
+            "source_portal": "generic",
+            "title": "Attachment Event Test Role",
+            "company": "Event Attach Corp",
+        },
+    )
+    assert inbox_res.status_code == 201
+    job_id = inbox_res.json()["id"]
+
+    try:
+        # 1. Create a recruitment event
+        event_res = await async_client.post(
+            "/api/v1/events",
+            json={
+                "job_offer_id": job_id,
+                "event_type": "application_submitted",
+                "title": "Wysłano aplikację z CV",
+                "scheduled_at": "2026-11-10T12:00:00Z",
+                "duration_minutes": 0,
+                "is_completed": True,
+            },
+        )
+        assert event_res.status_code == 201
+        event_id = event_res.json()["id"]
+
+        # 2. Upload an attachment linked to this event
+        file_content = b"%PDF-1.4 test cv dummy content"
+        upload_res = await async_client.post(
+            f"/api/v1/jobs/{job_id}/attachments",
+            files={"file": ("test_cv.pdf", file_content, "application/pdf")},
+            data={"category": "cv_external", "event_id": event_id, "notes": "Attached CV"},
+        )
+        assert upload_res.status_code == 201
+        att_data = upload_res.json()
+        expected_url = f"/api/v1/jobs/{job_id}/attachments/{att_data['id']}/download"
+        assert att_data["download_url"] == expected_url
+
+        # 3. Create a second recruitment event (interview) without attachments
+        interview_res = await async_client.post(
+            "/api/v1/events",
+            json={
+                "job_offer_id": job_id,
+                "event_type": "manager_interview",
+                "title": "Rozmowa z managerem",
+                "scheduled_at": "2026-11-20T10:00:00Z",
+                "duration_minutes": 60,
+                "is_completed": False,
+            },
+        )
+        assert interview_res.status_code == 201
+        interview_id = interview_res.json()["id"]
+
+        # 4. List all events for this job -> MUST succeed with status 200 and serialize attachments
+        list_res = await async_client.get(f"/api/v1/events?job_offer_id={job_id}")
+        assert list_res.status_code == 200
+        events = list_res.json()
+        assert len(events) == 2
+
+        app_event = next(e for e in events if e["id"] == event_id)
+        assert len(app_event["attachments"]) == 1
+        assert (
+            app_event["attachments"][0]["download_url"]
+            == f"/api/v1/jobs/{job_id}/attachments/{att_data['id']}/download"
+        )
+
+        interview_event = next(e for e in events if e["id"] == interview_id)
+        assert len(interview_event["attachments"]) == 0
+        assert interview_event["title"] == "Rozmowa z managerem"
+
+        # 5. Fetch single event by ID
+        get_single = await async_client.get(f"/api/v1/events/{event_id}")
+        assert get_single.status_code == 200
+        assert len(get_single.json()["attachments"]) == 1
+        assert (
+            get_single.json()["attachments"][0]["download_url"]
+            == f"/api/v1/jobs/{job_id}/attachments/{att_data['id']}/download"
+        )
+    finally:
+        await async_client.delete(f"/api/v1/jobs/{job_id}")

@@ -30,18 +30,7 @@ def _sanitize_filename(name: str) -> str:
 
 def _to_read_dto(attachment: JobAttachment) -> JobAttachmentRead:
     """Convert ORM model to Pydantic read schema with dynamic download URL."""
-    return JobAttachmentRead(
-        id=attachment.id,
-        job_offer_id=attachment.job_offer_id,
-        event_id=attachment.event_id,
-        file_name=attachment.file_name,
-        mime_type=attachment.mime_type,
-        file_size_bytes=attachment.file_size_bytes,
-        category=attachment.category,  # type: ignore[arg-type]
-        notes=attachment.notes,
-        created_at=attachment.created_at,
-        download_url=f"/api/v1/jobs/{attachment.job_offer_id}/attachments/{attachment.id}/download",
-    )
+    return JobAttachmentRead.model_validate(attachment)
 
 
 class AttachmentService:

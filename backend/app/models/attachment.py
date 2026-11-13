@@ -60,3 +60,8 @@ class JobAttachment(Base):
     event: Mapped["RecruitmentEvent | None"] = relationship(
         "RecruitmentEvent", back_populates="attachments"
     )
+
+    @property
+    def download_url(self) -> str:
+        """Relative API URL to download or preview the file."""
+        return f"/api/v1/jobs/{self.job_offer_id}/attachments/{self.id}/download"

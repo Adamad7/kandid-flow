@@ -1,10 +1,10 @@
 """Pydantic schemas for Job Attachments and File Management."""
 
 from datetime import datetime
-from typing import Literal
+from typing import Literal, Self
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 JobAttachmentCategory = Literal[
     "cv_external",
@@ -50,6 +50,15 @@ class JobAttachmentRead(JobAttachmentBase):
 
     id: UUID = Field(..., description="Unique attachment identifier")
     created_at: datetime = Field(..., description="Upload timestamp")
-    download_url: str = Field(..., description="Relative API URL to download or preview the file")
+    download_url: str = Field(
+        default="", description="Relative API URL to download or preview the file"
+    )
 
     model_config = ConfigDict(from_attributes=True)
+
+    @model_validator(mode="after")
+    def ensure_download_url(self) -> Self:
+        """Ensure download_url is populated even if not directly supplied."""
+        if not self.download_url and self.job_offer_id and self.id:
+            self.download_url = f"/api/v1/jobs/{self.job_offer_id}/attachments/{self.id}/download"
+        return self
