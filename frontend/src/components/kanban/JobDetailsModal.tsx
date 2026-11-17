@@ -232,60 +232,109 @@ export const JobDetailsModal: React.FC<JobDetailsModalProps> = ({
       contentClassName="p-0 flex flex-col flex-1 overflow-hidden h-full"
     >
       {/* Header Container */}
-      <div className="bg-slate-50/90 border-b border-slate-200/80 px-6 py-5 shrink-0 dark:bg-neutral-900/90 dark:border-neutral-800">
-        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
-          <div>
-            <div className="flex flex-wrap items-center gap-2 mb-2">
-              <span className="rounded-full text-[10px] py-0.5 px-2.5 font-bold uppercase tracking-wider bg-slate-100 dark:bg-neutral-800 text-slate-600 dark:text-neutral-300 border border-slate-200/60 dark:border-neutral-700/60">
-                {PORTAL_LABELS[job.source_portal] || job.source_portal}
+      <div className="bg-slate-50/90 border-b border-slate-200/80 px-6 py-4.5 shrink-0 dark:bg-neutral-900/90 dark:border-transparent">
+        {/* Top Utility Bar: Source pills, work model, contract type, external link, and close button */}
+        <div className="flex items-center justify-between gap-4 pb-3 border-b border-slate-200/60 dark:border-neutral-800/60">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="rounded-full text-[10px] py-0.5 px-2.5 font-bold uppercase tracking-wider bg-slate-100 dark:bg-neutral-800 text-slate-600 dark:text-neutral-300 border border-slate-200/60 dark:border-neutral-700/60">
+              {PORTAL_LABELS[job.source_portal] || job.source_portal}
+            </span>
+            {job.work_model && (
+              <span className="rounded-full text-[10px] py-0.5 px-2.5 font-semibold border-2 border-slate-200 dark:border-neutral-700 bg-slate-50 dark:bg-neutral-800/60 text-slate-600 dark:text-neutral-300">
+                {WORK_MODEL_LABELS[job.work_model] || job.work_model}
+                {job.work_model_details ? ` (${job.work_model_details})` : ""}
               </span>
-              {job.work_model && (
-                <span className="rounded-full text-[10px] py-0.5 px-2.5 font-semibold border-2 border-slate-200 dark:border-neutral-700 bg-slate-50 dark:bg-neutral-800/60 text-slate-600 dark:text-neutral-300">
-                  {WORK_MODEL_LABELS[job.work_model] || job.work_model}
-                  {job.work_model_details ? ` (${job.work_model_details})` : ""}
-                </span>
-              )}
-              {job.contract_type && (
-                <span className="rounded-full text-[10px] py-0.5 px-2.5 font-semibold border-2 border-slate-200 dark:border-neutral-700 bg-slate-50 dark:bg-neutral-800/60 text-slate-600 dark:text-neutral-300">
-                  {job.contract_type}
-                </span>
-              )}
-            </div>
-
-            <h2 className="text-xl font-bold text-slate-900 dark:text-white leading-tight">
-              {job.role_title || "Nieokreślone stanowisko"}
-            </h2>
-
-            <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 mt-2.5 text-sm text-slate-600 dark:text-neutral-300">
-              <span className="flex items-center gap-1.5 font-semibold text-slate-800 dark:text-neutral-200">
-                <Building className="h-4 w-4 text-indigo-500" />
-                {job.company_name || "Nieznana firma"}
+            )}
+            {job.contract_type && (
+              <span className="rounded-full text-[10px] py-0.5 px-2.5 font-semibold border-2 border-slate-200 dark:border-neutral-700 bg-slate-50 dark:bg-neutral-800/60 text-slate-600 dark:text-neutral-300">
+                {job.contract_type}
               </span>
+            )}
+            {job.source_url && (
+              <a
+                href={normalizeJobOfferUrl(job.source_url)}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-1.5 rounded-full py-0.5 px-2.5 text-xs font-medium text-indigo-600 bg-indigo-50/80 hover:bg-indigo-100 dark:text-indigo-300 dark:bg-indigo-950/40 dark:hover:bg-indigo-950/70 border border-indigo-200/60 dark:border-indigo-800/50 transition-colors"
+                title="Otwórz oryginalną ofertę pracy w nowej karcie"
+              >
+                <span>Otwórz ogłoszenie źródłowe</span>
+                <ExternalLink className="h-3 w-3 shrink-0" />
+              </a>
+            )}
+          </div>
 
-              {job.locations && job.locations.length > 0 && (
-                <span className="flex items-center gap-1.5">
-                  <MapPin className="h-4 w-4 text-indigo-500" />
-                  {job.locations.join(", ")}
-                </span>
-              )}
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-xl p-1.5 text-slate-400 hover:bg-slate-200/70 hover:text-slate-700 dark:text-neutral-400 dark:hover:bg-neutral-800 dark:hover:text-neutral-200 transition-colors outline-none focus:outline-none focus:ring-2 focus:ring-indigo-500/40 shrink-0 cursor-pointer"
+            aria-label="Zamknij"
+            title="Zamknij (Esc)"
+          >
+            <X className="h-5 w-5" />
+          </button>
+        </div>
 
-              {salaryText && (
-                <span className="inline-flex items-center gap-1.5 font-bold text-xs text-emerald-700 bg-emerald-50 dark:text-emerald-300 dark:bg-emerald-950/50 px-3 py-1 rounded-full border border-emerald-200/60 dark:border-emerald-800/60">
-                  <span>{salaryText}</span>
-                  {job.salary_period && job.salary_period !== "month" && (
-                    <span
-                      title={getSalaryPeriodLabel(job.salary_period)}
-                      className="inline-flex items-center cursor-help"
-                    >
-                      <HelpCircle className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
-                    </span>
-                  )}
-                </span>
-              )}
-            </div>
+        {/* Hero & Metadata Block */}
+        <div className="mt-3.5 space-y-2.5">
+          {/* Job Title */}
+          <h2 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white leading-tight tracking-tight">
+            {job.role_title || "Nieokreślone stanowisko"}
+          </h2>
 
-            {/* Rating Stars row */}
-            <div className="flex items-center gap-2 mt-2.5">
+          {/* Metadata Ribbon */}
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-slate-600 dark:text-neutral-300">
+            {/* Company Name */}
+            <span className="flex items-center gap-1.5 font-semibold text-slate-800 dark:text-neutral-200">
+              <Building className="h-4 w-4 text-indigo-500 shrink-0" />
+              <span>{job.company_name || "Nieznana firma"}</span>
+            </span>
+
+            {/* Location */}
+            {job.locations && job.locations.length > 0 && (
+              <span className="flex items-center gap-1.5">
+                <MapPin className="h-4 w-4 text-indigo-500 shrink-0" />
+                <span>{job.locations.join(", ")}</span>
+              </span>
+            )}
+
+            {/* Salary Badge */}
+            {salaryText && (
+              <span className="inline-flex items-center gap-1.5 font-bold text-xs text-emerald-700 bg-emerald-50 dark:text-emerald-300 dark:bg-emerald-950/50 px-3 py-1 rounded-full border border-emerald-200/60 dark:border-emerald-800/60 shrink-0">
+                <span>{salaryText}</span>
+                {job.salary_period && job.salary_period !== "month" && (
+                  <span
+                    title={getSalaryPeriodLabel(job.salary_period)}
+                    className="inline-flex items-center cursor-help"
+                  >
+                    <HelpCircle className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                  </span>
+                )}
+              </span>
+            )}
+
+            {/* Application Deadline Badge (Moved to Metadata Ribbon) */}
+            {deadlineInfo && (
+              <Badge
+                variant={
+                  deadlineInfo.isExpired
+                    ? "danger"
+                    : deadlineInfo.isUrgent
+                    ? "warning"
+                    : "secondary"
+                }
+                className="text-xs rounded-full border-2 shrink-0 py-1"
+              >
+                <Clock className="h-3.5 w-3.5 mr-1 shrink-0" />
+                <span>{deadlineInfo.detailText}</span>
+              </Badge>
+            )}
+          </div>
+
+          {/* Rating and Tags Row */}
+          <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 pt-1">
+            {/* Rating Stars */}
+            <div className="flex items-center gap-2">
               <span className="text-xs font-semibold text-slate-500 dark:text-neutral-400">
                 Ranga oferty:
               </span>
@@ -298,19 +347,19 @@ export const JobDetailsModal: React.FC<JobDetailsModalProps> = ({
               />
             </div>
 
-            {/* Tags row */}
-            <div className="flex flex-wrap items-center gap-1.5 mt-3">
+            {/* User Tags */}
+            <div className="flex flex-wrap items-center gap-1.5">
               {(job.tags || []).map((tag) => (
                 <span
                   key={tag}
                   className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-0.5 text-[10px] text-slate-600 font-mono dark:bg-neutral-800 dark:text-neutral-300 border border-slate-200/60 dark:border-neutral-700/60"
                 >
-                  <TagIcon className="h-3 w-3 text-indigo-500" />
-                  {tag}
+                  <TagIcon className="h-3 w-3 text-indigo-500 shrink-0" />
+                  <span>{tag}</span>
                   <button
                     type="button"
                     onClick={() => handleRemoveTag(tag)}
-                    className="ml-0.5 text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 transition-colors"
+                    className="ml-0.5 text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 transition-colors outline-none focus:outline-none"
                     title="Usuń tag"
                   >
                     <X className="h-3 w-3" />
@@ -331,14 +380,14 @@ export const JobDetailsModal: React.FC<JobDetailsModalProps> = ({
                   }}
                   placeholder="+ Dodaj tag..."
                   disabled={isAddingTag}
-                  className="h-6.5 w-24 text-xs rounded-full border border-slate-200 bg-white px-2.5 text-slate-800 dark:border-neutral-700 dark:bg-neutral-950 dark:text-neutral-200 focus:w-36 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/30 transition-all shadow-none"
+                  className="h-6.5 w-24 text-xs rounded-full border border-slate-200 bg-white px-2.5 text-slate-800 dark:border-transparent dark:bg-neutral-950 dark:focus:bg-neutral-950 dark:text-neutral-200 focus:w-36 outline-none focus:outline-none focus:border-indigo-500 dark:focus:border-indigo-500/50 focus:ring-1 focus:ring-indigo-500/30 transition-all shadow-none"
                 />
                 {newTagInput.trim() && (
                   <button
                     type="button"
                     onClick={handleAddTag}
                     disabled={isAddingTag}
-                    className="p-1 rounded-full text-indigo-600 hover:bg-indigo-50 dark:text-indigo-400 dark:hover:bg-neutral-800"
+                    className="p-1 rounded-full text-indigo-600 hover:bg-indigo-50 dark:text-indigo-400 dark:hover:bg-neutral-800 transition-colors outline-none focus:outline-none"
                     title="Dodaj tag"
                   >
                     <Plus className="h-3.5 w-3.5" />
@@ -347,264 +396,17 @@ export const JobDetailsModal: React.FC<JobDetailsModalProps> = ({
               </div>
             </div>
           </div>
-
-          <div className="flex flex-col items-end gap-2.5 shrink-0">
-            <div className="flex items-center gap-3">
-              {/* Current Status Badge */}
-              <span
-                className={cn(
-                  "inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1 rounded-full border-2 shadow-none",
-                  STATUS_COLORS[job.status]?.bg || "bg-slate-100 dark:bg-neutral-800",
-                  STATUS_COLORS[job.status]?.text || "text-slate-700 dark:text-neutral-200",
-                  STATUS_COLORS[job.status]?.border || "border-slate-300 dark:border-neutral-700"
-                )}
-              >
-                <span
-                  className={cn(
-                    "h-1.5 w-1.5 rounded-full shrink-0",
-                    STATUS_COLORS[job.status]?.dot || "bg-slate-400"
-                  )}
-                />
-                {STATUS_LABELS[job.status] || job.status}
-              </span>
-
-              <button
-                type="button"
-                onClick={onClose}
-                className="rounded-xl p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:text-neutral-400 dark:hover:bg-neutral-800 dark:hover:text-neutral-200 transition-colors focus:outline-none"
-                aria-label="Zamknij"
-              >
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-
-            {/* Dedicated Primary Stage Transition Button */}
-            <div className="flex flex-wrap items-center justify-end gap-2 mt-1">
-              {job.status === "archived" && (
-                <>
-                  {isExpiredWithoutApp ? (
-                    <>
-                      <Button
-                        size="sm"
-                        variant="primary"
-                        onClick={() => setIsStatusModalOpen(true)}
-                        className="text-xs rounded-xl"
-                      >
-                        <Send className="h-3.5 w-3.5 mr-1.5" />
-                        Aplikowałem na tę ofertę
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="primary"
-                        onClick={() => handleStatusChange("interview")}
-                        className="text-xs rounded-xl bg-purple-600 hover:bg-purple-500 text-white"
-                      >
-                        <Users className="h-3.5 w-3.5 mr-1.5" />
-                        Zaproszenie na rozmowę
-                      </Button>
-                    </>
-                  ) : (
-                    <Button
-                      size="sm"
-                      variant="success"
-                      onClick={() => handleStatusChange("ready")}
-                      className="text-xs rounded-xl font-bold"
-                    >
-                      <ArchiveRestore className="h-3.5 w-3.5 mr-1.5" />
-                      Przywróć do gotowych
-                    </Button>
-                  )}
-                </>
-              )}
-
-              {(job.status === "inbox" || job.status === "failed_parsing") && (
-                <>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => handleStatusChange("ready")}
-                    className="text-xs rounded-xl"
-                  >
-                    <CheckCircle className="h-3.5 w-3.5 mr-1 text-indigo-600 dark:text-indigo-400" />
-                    Do aplikacji
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="primary"
-                    onClick={() => setIsStatusModalOpen(true)}
-                    className="text-xs rounded-xl"
-                  >
-                    <Send className="h-3.5 w-3.5 mr-1.5" />
-                    Zaaplikowano
-                  </Button>
-                </>
-              )}
-
-              {job.status === "ready" && (
-                <Button
-                  size="sm"
-                  variant="primary"
-                  onClick={() => setIsStatusModalOpen(true)}
-                  className="text-xs font-bold rounded-xl"
-                >
-                  <Send className="h-3.5 w-3.5 mr-1.5" />
-                  Aplikowałem na tę ofertę
-                </Button>
-              )}
-
-              {job.status === "applied" && (
-                <>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => setIsStatusModalOpen(true)}
-                    className="text-xs rounded-xl border-slate-200 dark:border-neutral-700 text-slate-700 hover:bg-slate-50 dark:text-neutral-300 dark:hover:bg-neutral-800"
-                    title="Edytuj datę wysłania, notatki lub dokumenty powiązane z aplikacją"
-                  >
-                    <Edit2 className="h-3.5 w-3.5 mr-1 text-slate-500" />
-                    Szczegóły aplikacji
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => setIsFollowUpModalOpen(true)}
-                    className="text-xs rounded-xl border-indigo-200 dark:border-indigo-900/60 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-50 dark:hover:bg-neutral-850"
-                  >
-                    <MessageSquare className="h-3.5 w-3.5 mr-1.5 text-indigo-600 dark:text-indigo-400" />
-                    Generuj follow-up
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="primary"
-                    onClick={() => handleStatusChange("interview")}
-                    className="text-xs rounded-xl bg-purple-600 hover:bg-purple-500 text-white"
-                  >
-                    <Users className="h-3.5 w-3.5 mr-1.5" />
-                    Zaproszenie na rozmowę
-                  </Button>
-                </>
-              )}
-
-              {job.status === "interview" && (
-                <Button
-                  size="sm"
-                  variant="success"
-                  onClick={() => handleStatusChange("offer")}
-                  className="text-xs rounded-xl font-bold"
-                >
-                  <Award className="h-3.5 w-3.5 mr-1.5" />
-                  Otrzymano ofertę
-                </Button>
-              )}
-
-              {job.status === "rejected" && (
-                <Button
-                  size="sm"
-                  variant="success"
-                  onClick={() => handleStatusChange("ready")}
-                  className="text-xs rounded-xl font-bold"
-                >
-                  <ArchiveRestore className="h-3.5 w-3.5 mr-1.5" />
-                  Przywróć do gotowych
-                </Button>
-              )}
-
-              {job.status !== "rejected" && job.status !== "archived" && (
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => handleStatusChange("rejected")}
-                  className="text-xs rounded-xl text-rose-600 dark:text-rose-400 border-rose-200 dark:border-rose-900/60 hover:bg-rose-50 dark:hover:bg-neutral-800"
-                  title="Odrzuć ofertę i przenieś do archiwum"
-                >
-                  <XCircle className="h-3.5 w-3.5 mr-1" />
-                  Odrzuć ofertę
-                </Button>
-              )}
-
-              {job.status !== "archived" && job.status !== "rejected" && (
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => handleStatusChange("archived")}
-                  className="text-xs rounded-xl text-stone-600 dark:text-neutral-400 border-slate-200 dark:border-neutral-700 hover:bg-slate-100 dark:hover:bg-neutral-800"
-                  title="Przenieś ofertę do archiwum"
-                >
-                  <Archive className="h-3.5 w-3.5 mr-1 text-stone-500" />
-                  Zarchiwizuj ofertę
-                </Button>
-              )}
-            </div>
-
-            {/* Subdued / Secondary Manual Status Switcher */}
-            <div className="flex items-center gap-2 text-[11px] text-slate-500 dark:text-neutral-400">
-              {job.applied_at && (
-                <button
-                  type="button"
-                  onClick={() => setIsStatusModalOpen(true)}
-                  className="text-amber-600 dark:text-amber-400 font-semibold mr-1 hover:underline cursor-pointer inline-flex items-center gap-1"
-                  title="Kliknij, aby edytować szczegóły aplikacji"
-                >
-                  <Send className="h-3 w-3" />
-                  Zaaplikowano: {new Date(job.applied_at).toLocaleDateString("pl-PL")}
-                </button>
-              )}
-              <span className="text-slate-300 dark:text-neutral-700">•</span>
-              <label className="text-slate-500 dark:text-neutral-400">Zmień status ręcznie:</label>
-              {job.status === "archived" && isExpiredWithoutApp ? (
-                <select
-                  value={job.status}
-                  onChange={(e) =>
-                    handleStatusChange(e.target.value as JobStatusType)
-                  }
-                  className="text-[11px] rounded-xl border border-slate-200 bg-white px-2 py-1 text-slate-700 dark:border-neutral-700 dark:bg-neutral-950 dark:text-neutral-300 cursor-pointer focus:outline-none focus:border-indigo-500 shadow-none"
-                >
-                  <option value="archived">Zarchiwizowane</option>
-                  <option value="applied">Zaaplikowano</option>
-                  <option value="interview">Rozmowy</option>
-                  <option value="offer">Oferta</option>
-                  <option value="rejected">Odrzucone</option>
-                </select>
-              ) : (
-                <select
-                  value={job.status}
-                  onChange={(e) =>
-                    handleStatusChange(e.target.value as JobStatusType)
-                  }
-                  className="text-[11px] rounded-xl border border-slate-200 bg-white px-2 py-1 text-slate-700 dark:border-neutral-700 dark:bg-neutral-950 dark:text-neutral-300 cursor-pointer focus:outline-none focus:border-indigo-500 shadow-none"
-                >
-                  <option value="inbox">Do przetworzenia</option>
-                  <option value="ready">Gotowe do aplikacji</option>
-                  <option value="applied">Zaaplikowano</option>
-                  <option value="interview">Rozmowy</option>
-                  <option value="offer">Oferta</option>
-                  <option value="rejected">Odrzucone</option>
-                  <option value="archived">Zarchiwizowane</option>
-                </select>
-              )}
-            </div>
-
-            {job.source_url && (
-              <a
-                href={normalizeJobOfferUrl(job.source_url)}
-                target="_blank"
-                rel="noreferrer"
-                className="inline-flex items-center gap-1 text-xs text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 hover:underline font-medium"
-              >
-                Otwórz ogłoszenie źródłowe
-                <ExternalLink className="h-3 w-3" />
-              </a>
-            )}
-          </div>
         </div>
 
-        {/* Archive banner */}
+        {/* Archive Banner */}
         {job.status === "archived" && (
-          <div className="mt-4 rounded-2xl bg-stone-50 border border-stone-200/80 p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-stone-800 dark:bg-neutral-900/60 dark:border-neutral-800 dark:text-neutral-300 shadow-none">
+          <div className="mt-3.5 rounded-2xl bg-stone-100/90 border border-stone-200/80 p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-stone-800 dark:bg-neutral-800/60 dark:border-transparent dark:text-neutral-300 shadow-none">
             <div className="flex items-start gap-2.5">
               <Archive className="h-4 w-4 text-stone-600 dark:text-stone-400 mt-0.5 shrink-0" />
               <div>
-                <p className="font-semibold text-stone-900 dark:text-neutral-100">Oferta znajduje się w archiwum</p>
+                <p className="font-semibold text-stone-900 dark:text-neutral-100">
+                  Oferta znajduje się w archiwum
+                </p>
                 <p className="mt-0.5 text-stone-600 dark:text-neutral-400 leading-relaxed">
                   {isExpiredWithoutApp
                     ? "Termin zgłoszeń minął bez zarejestrowanej aplikacji. Aby przywrócić tę ofertę do aktywnego lejka, wybierz status 'Zaaplikowano' lub zaproszenie na rozmowę."
@@ -617,7 +419,7 @@ export const JobDetailsModal: React.FC<JobDetailsModalProps> = ({
                 size="sm"
                 variant="outline"
                 onClick={() => handleStatusChange("ready")}
-                className="text-xs rounded-xl bg-white dark:bg-neutral-950 border-stone-300 dark:border-neutral-700 text-stone-800 dark:text-neutral-200 shrink-0 gap-1.5"
+                className="text-xs rounded-xl bg-white dark:bg-neutral-900 border-stone-300 dark:border-neutral-700 text-stone-800 dark:text-neutral-200 hover:bg-slate-100 dark:hover:bg-neutral-800 shrink-0 gap-1.5 shadow-none"
               >
                 <ArchiveRestore className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
                 Przywróć do gotowych
@@ -626,13 +428,15 @@ export const JobDetailsModal: React.FC<JobDetailsModalProps> = ({
           </div>
         )}
 
-        {/* Failed parsing banner */}
+        {/* Failed Parsing Banner */}
         {job.status === "failed_parsing" && (
-          <div className="mt-4 rounded-2xl bg-rose-50/80 border border-rose-200 p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-rose-800 dark:bg-rose-950/40 dark:border-rose-900 dark:text-rose-300 shadow-none">
+          <div className="mt-3.5 rounded-2xl bg-rose-50/80 border border-rose-200 p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-rose-800 dark:bg-rose-950/40 dark:border-transparent dark:text-rose-300 shadow-none">
             <div className="flex items-start gap-2.5">
               <AlertCircle className="h-4 w-4 text-rose-600 dark:text-rose-400 mt-0.5 shrink-0" />
               <div>
-                <p className="font-semibold text-rose-950 dark:text-rose-200">Błąd podczas przetwarzania AI</p>
+                <p className="font-semibold text-rose-950 dark:text-rose-200">
+                  Błąd podczas przetwarzania AI
+                </p>
                 <p className="mt-0.5 text-rose-700 dark:text-rose-300">{job.error_message}</p>
               </div>
             </div>
@@ -642,7 +446,7 @@ export const JobDetailsModal: React.FC<JobDetailsModalProps> = ({
                 variant="outline"
                 onClick={() => handleReparse("ai")}
                 isLoading={isReparsing}
-                className="text-xs rounded-xl bg-white border-indigo-200 text-indigo-700 hover:bg-indigo-50 dark:bg-neutral-950 dark:border-indigo-900/60 dark:text-indigo-400 dark:hover:bg-neutral-850"
+                className="text-xs rounded-xl bg-white border-indigo-200 text-indigo-700 hover:bg-indigo-50 dark:bg-neutral-900 dark:border-indigo-900/60 dark:text-indigo-400 dark:hover:bg-neutral-800 shadow-none"
               >
                 <Sparkles className="h-3 w-3 mr-1 text-indigo-600 dark:text-indigo-400" />
                 Parsuj przez AI
@@ -652,7 +456,7 @@ export const JobDetailsModal: React.FC<JobDetailsModalProps> = ({
                 variant="outline"
                 onClick={() => handleReparse("traditional")}
                 isLoading={isReparsing}
-                className="text-xs rounded-xl bg-white border-slate-200 text-slate-700 hover:bg-slate-50 dark:bg-neutral-950 dark:border-neutral-700 dark:text-neutral-300 dark:hover:bg-neutral-850"
+                className="text-xs rounded-xl bg-white border-slate-200 text-slate-700 hover:bg-slate-50 dark:bg-neutral-900 dark:border-neutral-700 dark:text-neutral-300 dark:hover:bg-neutral-800 shadow-none"
               >
                 <Cpu className="h-3 w-3 mr-1 text-slate-600 dark:text-neutral-400" />
                 Auto-parsuj tradycyjne
@@ -661,24 +465,241 @@ export const JobDetailsModal: React.FC<JobDetailsModalProps> = ({
           </div>
         )}
 
-        {/* Deadline Banner */}
-        {deadlineInfo && (
-          <div className="mt-3">
-            <Badge
-              variant={
-                deadlineInfo.isExpired
-                  ? "danger"
-                  : deadlineInfo.isUrgent
-                  ? "warning"
-                  : "secondary"
-              }
-              className="text-xs rounded-full border-2"
+        {/* Workflow Action Bar */}
+        <div className="mt-3.5 rounded-2xl bg-slate-100/90 dark:bg-neutral-800/60 p-3 border border-slate-200/80 dark:border-transparent flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-none">
+          {/* Left: Status Badge, Applied Date & Manual Select */}
+          <div className="flex flex-wrap items-center gap-2.5">
+            {/* Current Status Badge */}
+            <span
+              className={cn(
+                "inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1 rounded-full border-2 shadow-none",
+                STATUS_COLORS[job.status]?.bg || "bg-slate-100 dark:bg-neutral-800",
+                STATUS_COLORS[job.status]?.text || "text-slate-700 dark:text-neutral-200",
+                STATUS_COLORS[job.status]?.border || "border-slate-300 dark:border-neutral-700"
+              )}
             >
-              <Clock className="h-3.5 w-3.5 mr-1" />
-              {deadlineInfo.detailText}
-            </Badge>
+              <span
+                className={cn(
+                  "h-1.5 w-1.5 rounded-full shrink-0",
+                  STATUS_COLORS[job.status]?.dot || "bg-slate-400"
+                )}
+              />
+              {STATUS_LABELS[job.status] || job.status}
+            </span>
+
+            {/* Applied Date Pill (Clickable to edit application details) */}
+            {job.applied_at && (
+              <button
+                type="button"
+                onClick={() => setIsStatusModalOpen(true)}
+                className="inline-flex items-center gap-1 text-xs font-semibold text-amber-700 bg-amber-50 dark:text-amber-300 dark:bg-amber-950/50 px-2.5 py-1 rounded-full border border-amber-200/60 dark:border-amber-800/60 hover:bg-amber-100 dark:hover:bg-amber-900/40 transition-colors cursor-pointer outline-none focus:outline-none"
+                title="Kliknij, aby edytować szczegóły aplikacji"
+              >
+                <Send className="h-3 w-3 shrink-0" />
+                <span>Zaaplikowano: {new Date(job.applied_at).toLocaleDateString("pl-PL")}</span>
+              </button>
+            )}
+
+            {/* Manual Status Switcher */}
+            <div className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-neutral-400">
+              <span className="text-slate-300 dark:text-neutral-700 hidden sm:inline">•</span>
+              <label htmlFor="manual-status-select" className="text-xs text-slate-500 dark:text-neutral-400 whitespace-nowrap">
+                Zmień status ręcznie:
+              </label>
+              {job.status === "archived" && isExpiredWithoutApp ? (
+                <select
+                  id="manual-status-select"
+                  value={job.status}
+                  onChange={(e) =>
+                    handleStatusChange(e.target.value as JobStatusType)
+                  }
+                  className="text-xs rounded-xl border border-slate-200 bg-white px-2 py-1 text-slate-700 dark:border-transparent dark:bg-neutral-950 dark:focus:bg-neutral-950 dark:text-neutral-200 cursor-pointer outline-none focus:outline-none focus:border-indigo-500 dark:focus:border-indigo-500/50 focus:ring-1 focus:ring-indigo-500/30 transition-colors shadow-none"
+                >
+                  <option value="archived">Zarchiwizowane</option>
+                  <option value="applied">Zaaplikowano</option>
+                  <option value="interview">Rozmowy</option>
+                  <option value="offer">Oferta</option>
+                  <option value="rejected">Odrzucone</option>
+                </select>
+              ) : (
+                <select
+                  id="manual-status-select"
+                  value={job.status}
+                  onChange={(e) =>
+                    handleStatusChange(e.target.value as JobStatusType)
+                  }
+                  className="text-xs rounded-xl border border-slate-200 bg-white px-2 py-1 text-slate-700 dark:border-transparent dark:bg-neutral-950 dark:focus:bg-neutral-950 dark:text-neutral-200 cursor-pointer outline-none focus:outline-none focus:border-indigo-500 dark:focus:border-indigo-500/50 focus:ring-1 focus:ring-indigo-500/30 transition-colors shadow-none"
+                >
+                  <option value="inbox">Do przetworzenia</option>
+                  <option value="ready">Gotowe do aplikacji</option>
+                  <option value="applied">Zaaplikowano</option>
+                  <option value="interview">Rozmowy</option>
+                  <option value="offer">Oferta</option>
+                  <option value="rejected">Odrzucone</option>
+                  <option value="archived">Zarchiwizowane</option>
+                </select>
+              )}
+            </div>
           </div>
-        )}
+
+          {/* Right: Stage Transition & Auxiliary Actions */}
+          <div className="flex flex-wrap items-center sm:justify-end gap-2 shrink-0">
+            {job.status === "archived" && (
+              <>
+                {isExpiredWithoutApp ? (
+                  <>
+                    <Button
+                      size="sm"
+                      variant="primary"
+                      onClick={() => setIsStatusModalOpen(true)}
+                      className="text-xs font-bold rounded-xl shadow-none"
+                    >
+                      <Send className="h-3.5 w-3.5 mr-1.5" />
+                      Aplikowałem na tę ofertę
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="primary"
+                      onClick={() => handleStatusChange("interview")}
+                      className="text-xs font-semibold rounded-xl bg-purple-600 hover:bg-purple-500 text-white shadow-none"
+                    >
+                      <Users className="h-3.5 w-3.5 mr-1.5" />
+                      Zaproszenie na rozmowę
+                    </Button>
+                  </>
+                ) : (
+                  <Button
+                    size="sm"
+                    variant="success"
+                    onClick={() => handleStatusChange("ready")}
+                    className="text-xs rounded-xl font-bold shadow-none"
+                  >
+                    <ArchiveRestore className="h-3.5 w-3.5 mr-1.5" />
+                    Przywróć do gotowych
+                  </Button>
+                )}
+              </>
+            )}
+
+            {(job.status === "inbox" || job.status === "failed_parsing") && (
+              <>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => handleStatusChange("ready")}
+                  className="text-xs rounded-xl border-slate-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 text-slate-700 dark:text-neutral-200 hover:bg-slate-50 dark:hover:bg-neutral-800 shadow-none"
+                >
+                  <CheckCircle className="h-3.5 w-3.5 mr-1 text-indigo-600 dark:text-indigo-400" />
+                  Do aplikacji
+                </Button>
+                <Button
+                  size="sm"
+                  variant="primary"
+                  onClick={() => setIsStatusModalOpen(true)}
+                  className="text-xs font-bold rounded-xl shadow-none"
+                >
+                  <Send className="h-3.5 w-3.5 mr-1.5" />
+                  Zaaplikowano
+                </Button>
+              </>
+            )}
+
+            {job.status === "ready" && (
+              <Button
+                size="sm"
+                variant="primary"
+                onClick={() => setIsStatusModalOpen(true)}
+                className="text-xs font-bold rounded-xl shadow-none"
+              >
+                <Send className="h-3.5 w-3.5 mr-1.5" />
+                Aplikowałem na tę ofertę
+              </Button>
+            )}
+
+            {job.status === "applied" && (
+              <>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setIsStatusModalOpen(true)}
+                  className="text-xs rounded-xl border-slate-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 text-slate-700 hover:bg-slate-50 dark:text-neutral-300 dark:hover:bg-neutral-800 shadow-none"
+                  title="Edytuj datę wysłania, notatki lub dokumenty powiązane z aplikacją"
+                >
+                  <Edit2 className="h-3.5 w-3.5 mr-1 text-slate-500 dark:text-neutral-400" />
+                  Szczegóły aplikacji
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setIsFollowUpModalOpen(true)}
+                  className="text-xs rounded-xl border-indigo-200 dark:border-indigo-900/60 bg-white dark:bg-neutral-900 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-50 dark:hover:bg-neutral-800 shadow-none"
+                >
+                  <MessageSquare className="h-3.5 w-3.5 mr-1.5 text-indigo-600 dark:text-indigo-400" />
+                  Generuj follow-up
+                </Button>
+                <Button
+                  size="sm"
+                  variant="primary"
+                  onClick={() => handleStatusChange("interview")}
+                  className="text-xs font-semibold rounded-xl bg-purple-600 hover:bg-purple-500 text-white shadow-none"
+                >
+                  <Users className="h-3.5 w-3.5 mr-1.5" />
+                  Zaproszenie na rozmowę
+                </Button>
+              </>
+            )}
+
+            {job.status === "interview" && (
+              <Button
+                size="sm"
+                variant="success"
+                onClick={() => handleStatusChange("offer")}
+                className="text-xs rounded-xl font-bold shadow-none"
+              >
+                <Award className="h-3.5 w-3.5 mr-1.5" />
+                Otrzymano ofertę
+              </Button>
+            )}
+
+            {job.status === "rejected" && (
+              <Button
+                size="sm"
+                variant="success"
+                onClick={() => handleStatusChange("ready")}
+                className="text-xs rounded-xl font-bold shadow-none"
+              >
+                <ArchiveRestore className="h-3.5 w-3.5 mr-1.5" />
+                Przywróć do gotowych
+              </Button>
+            )}
+
+            {job.status !== "rejected" && job.status !== "archived" && (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => handleStatusChange("rejected")}
+                className="text-xs rounded-xl text-rose-600 dark:text-rose-400 border-rose-200 dark:border-rose-900/60 bg-white dark:bg-neutral-900 hover:bg-rose-50 dark:hover:bg-neutral-800 shadow-none"
+                title="Odrzuć ofertę i przenieś do archiwum"
+              >
+                <XCircle className="h-3.5 w-3.5 mr-1 text-rose-500 dark:text-rose-400" />
+                Odrzuć ofertę
+              </Button>
+            )}
+
+            {job.status !== "archived" && job.status !== "rejected" && (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => handleStatusChange("archived")}
+                className="text-xs rounded-xl text-stone-600 dark:text-neutral-400 border-slate-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 hover:bg-slate-100 dark:hover:bg-neutral-800 shadow-none"
+                title="Przenieś ofertę do archiwum"
+              >
+                <Archive className="h-3.5 w-3.5 mr-1 text-stone-500 dark:text-neutral-400" />
+                Zarchiwizuj ofertę
+              </Button>
+            )}
+          </div>
+        </div>
       </div>
 
       {/* Navigation Tabs */}
