@@ -171,9 +171,10 @@ export function formatDateTime(isoString?: string | null): string {
 }
 
 /**
- * Formats relative date when job was created.
- * Under 24h: "Dzisiaj"
- * 24h and more: "{dni}d" (e.g. "1d", "3d", "12d")
+ * Formats relative date when job was created in compact format:
+ * - < 60 min: "< 1m" (if < 1 min) or "{m}m" (e.g. "1m", "15m", "58m")
+ * - Next calendar day or later (calendarDaysDiff >= 1): "{d}d" (e.g. "1d", "3d")
+ * - Same calendar day, 1+ hours: "{h}h" (e.g. "1h", "5h", "22h")
  */
 export function formatRelativeCreatedDate(
   isoString?: string | null
@@ -184,15 +185,27 @@ export function formatRelativeCreatedDate(
 
   const fullDate = formatDateTime(isoString);
   const now = new Date();
-  const diffMs = now.getTime() - d.getTime();
+  const diffMs = Math.max(0, now.getTime() - d.getTime());
 
-  const oneDayMs = 24 * 60 * 60 * 1000;
-  if (diffMs < oneDayMs) {
-    return { text: "Dzisiaj", fullDate };
+  // Check calendar days diff in local time
+  const nowDateOnly = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const createdDateOnly = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  const calendarDaysDiff = Math.round(
+    (nowDateOnly.getTime() - createdDateOnly.getTime()) / (24 * 60 * 60 * 1000)
+  );
+
+  let text: string;
+  if (diffMs < 60 * 60 * 1000) {
+    const minutes = Math.floor(diffMs / (60 * 1000));
+    text = minutes < 1 ? "< 1m" : `${minutes}m`;
+  } else if (calendarDaysDiff >= 1) {
+    text = `${calendarDaysDiff}d`;
+  } else {
+    const hours = Math.floor(diffMs / (60 * 60 * 1000));
+    text = `${hours}h`;
   }
 
-  const days = Math.floor(diffMs / oneDayMs);
-  return { text: `${days}d`, fullDate };
+  return { text, fullDate };
 }
 
 /**

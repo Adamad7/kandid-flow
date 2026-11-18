@@ -123,8 +123,8 @@ export const JobListView: React.FC<JobListViewProps> = ({
   const [showFilters, setShowFilters] = useState(false);
 
   // Sorting states
-  const [sortField, setSortField] = useState<SortField>("deadline");
-  const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
+  const [sortField, setSortField] = useState<SortField>("created_at");
+  const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
 
   // Selection & Bulk actions states
   const [selectedJobIds, setSelectedJobIds] = useState<Set<string>>(new Set());
@@ -420,7 +420,7 @@ export const JobListView: React.FC<JobListViewProps> = ({
       setSortDirection((prev) => (prev === "asc" ? "desc" : "asc"));
     } else {
       setSortField(field);
-      setSortDirection(field === "rating" ? "desc" : "asc");
+      setSortDirection(field === "rating" || field === "created_at" ? "desc" : "asc");
     }
   };
 
@@ -979,7 +979,7 @@ export const JobListView: React.FC<JobListViewProps> = ({
         <div className="overflow-x-auto min-w-full">
           <div className="md:min-w-[1080px]">
             {/* Table / List Header */}
-            <div className="bg-slate-50/80 border-b border-slate-200/80 px-6 py-3.5 hidden md:grid md:grid-cols-[40px_minmax(50px,0.4fr)_minmax(160px,2fr)_minmax(95px,0.95fr)_minmax(95px,1fr)_minmax(100px,1.1fr)_minmax(85px,0.9fr)_minmax(100px,1.1fr)_minmax(160px,1.6fr)] gap-4 text-xs font-semibold text-slate-600 select-none dark:bg-neutral-800/80 dark:border-neutral-800 dark:text-neutral-300">
+            <div className="bg-slate-50/80 border-b border-slate-200/80 px-6 py-3.5 hidden md:grid md:grid-cols-[40px_minmax(65px,0.45fr)_minmax(160px,2fr)_minmax(95px,0.95fr)_minmax(95px,1fr)_minmax(100px,1.1fr)_minmax(85px,0.9fr)_minmax(100px,1.1fr)_minmax(160px,1.6fr)] gap-4 text-xs font-semibold text-slate-600 select-none dark:bg-neutral-800/80 dark:border-neutral-800 dark:text-neutral-300">
               {/* Checkbox (zaznacz wszystkie) */}
               <div className="flex items-center justify-center">
                 <input
@@ -1103,7 +1103,7 @@ export const JobListView: React.FC<JobListViewProps> = ({
                       key={job.id}
                       onClick={() => onSelectJob(job)}
                       className={cn(
-                        "group px-6 py-4 hover:bg-slate-50/80 dark:hover:bg-neutral-800/35 transition-colors cursor-pointer grid grid-cols-1 md:grid-cols-[40px_minmax(50px,0.4fr)_minmax(160px,2fr)_minmax(95px,0.95fr)_minmax(95px,1fr)_minmax(100px,1.1fr)_minmax(85px,0.9fr)_minmax(100px,1.1fr)_minmax(160px,1.6fr)] gap-3 md:gap-4 items-center",
+                        "group px-6 py-4 hover:bg-slate-50/80 dark:hover:bg-neutral-800/35 transition-colors cursor-pointer grid grid-cols-1 md:grid-cols-[40px_minmax(65px,0.45fr)_minmax(160px,2fr)_minmax(95px,0.95fr)_minmax(95px,1fr)_minmax(100px,1.1fr)_minmax(85px,0.9fr)_minmax(100px,1.1fr)_minmax(160px,1.6fr)] gap-3 md:gap-4 items-center",
                         isSelected && "ring-2 ring-indigo-600 dark:ring-indigo-500 bg-indigo-50/20 dark:bg-neutral-900"
                       )}
                     >
@@ -1130,7 +1130,7 @@ export const JobListView: React.FC<JobListViewProps> = ({
                       <div className="flex items-center justify-center text-center text-xs text-slate-500 dark:text-neutral-400">
                         {createdDateInfo ? (
                           <span
-                            className="cursor-help font-medium text-slate-600 dark:text-neutral-300 hover:text-slate-900 dark:hover:text-white transition-colors"
+                            className="cursor-help font-medium text-slate-600 dark:text-neutral-300 hover:text-slate-900 dark:hover:text-white transition-colors whitespace-nowrap"
                             title={`Dodano: ${createdDateInfo.fullDate}`}
                           >
                             <span className="md:hidden text-slate-400 dark:text-neutral-500 mr-1.5 font-normal">
