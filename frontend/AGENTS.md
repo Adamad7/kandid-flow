@@ -2,15 +2,15 @@
 
 ## Scope & Boundaries
 - **Allowed Scope:** `frontend/`.
-- **Forbidden Scope:** Do not edit `backend/` or `extension/` without updating the schema contract first.
+- **Forbidden Scope:** Do not edit `backend/` or `extension/`. Backend Pydantic schemas (`backend/app/schemas/`) are the read-only source of truth for `frontend/src/types/`.
 
 ## Tech Stack & Responsibilities
 - **Stack:** React 18/19, Vite, TypeScript, Tailwind CSS, shadcn/ui.
-- **Strict Type Mirroring:** Every interface in `frontend/src/types/` MUST mirror `backend/app/schemas/` 1:1. Using `any` or `Record<string, unknown>` is strictly forbidden.
+- **Strict Type Mirroring:** Every interface in `frontend/src/types/` MUST mirror `backend/app/schemas/` 1:1 (follow Phase B of `@schema-sync`). Using `any` or `Record<string, unknown>` is strictly forbidden.
 - **Localization:** All user-facing labels, buttons, empty states, and notifications MUST be written in Polish.
 - **Theme Support (Light & Dark Mode):** The application strictly supports both Light and Dark modes (with Dark Mode enabled by default via `useTheme`). All new and updated UI components, dialogs, inputs, and views MUST provide complete, high-contrast Tailwind `dark:` variant styling, ensuring visual harmony and zero clipping or illegible text across both themes.
 
-## Universal UI & Theme Design Principles
+## Universal UI & Theme Design Principles (Single Source of Truth)
 
 1. **Borderless Dark Mode Panels & Containers:**
    - In Dark Mode, all primary panels, cards, widgets, and modal containers MUST have transparent borders (`dark:border-transparent`) instead of visible borders (`dark:border-neutral-800`).
@@ -36,14 +36,17 @@
    - Interactive item/row hover states in Dark Mode must remain subtle and understated (`dark:hover:bg-neutral-800/35`), avoiding sudden stark gray flashes against dark backgrounds.
    - Supplementary bars, pagination strips, and footers must visually harmonize in shade and opacity with their respective section/table headers (e.g. `dark:bg-neutral-800/80`).
 
-## Core Views & Features:
-  1. **Kanban & Job Queue:** Filtering (work model, deadlines, salary), parsing status indicators (`parsing` spinner, `failed_parsing` retry trigger), and "Upcoming Interviews" widget.
-  2. **Job Details & Recruitment Timeline:** Full CRUD for `recruitment_events`.
-  3. **CV Generation Dialog:** Baseline selector (Candidate Profile vs Archetype Preset from `base_cv_presets`), tailoring mode (`targeted_summary_keywords` vs `full`), persistent default sections, custom prompt, 2D loading animation.
-  4. **Split-View CV Editor:** Left pane with block editor, inline AI refinement (`refine-block`), and version switcher (`v1`, `v2`...). Right pane with 400ms debounced multi-page SVG preview (`string[]`). Responsive mobile tabs (*Edycja* / *Podgląd*).
-  5. **Candidate Knowledge Base:** Flexible date support (`YYYY`, `YYYY-MM`, `YYYY-MM-DD`, `present`).
-  6. **Base CV Presets Manager:** CRUD and live SVG preview for CV archetypes.
+## Core Views & Features
+1. **Kanban & Job Queue:** Filtering (work model, deadlines, salary), parsing status indicators (`parsing` spinner, `failed_parsing` retry trigger), and "Upcoming Interviews" widget.
+2. **Job Details & Recruitment Timeline:** Full CRUD for `recruitment_events` and attachments.
+3. **CV Generation Dialog:** Baseline selector (Candidate Profile vs Archetype Preset from `base_cv_presets`), tailoring mode (`targeted_summary_keywords` vs `full`), persistent default sections, custom prompt, 2D loading animation.
+4. **Split-View CV Editor:** Left pane with block editor, inline AI refinement (`refine-block`), and version switcher (`v1`, `v2`...). Right pane with 400ms debounced multi-page SVG preview (`string[]`). Responsive mobile tabs (*Edycja* / *Podgląd*).
+5. **Candidate Knowledge Base:** Flexible date support (`YYYY`, `YYYY-MM`, `YYYY-MM-DD`, `present`).
+6. **Base CV Presets Manager:** CRUD and live SVG preview for CV archetypes.
 
-## Quality Gate (Docker-Only)
+## Quality Gates & Skills (Docker-Only)
+Leverage `@schema-sync` (Phase B), `@ui-test-page` (for `/test-menu` sandbox work), and `@docker-check`.
+
 Before completing any task in `frontend/`, verify inside Docker:
-- `docker compose exec frontend npm run build` (must pass with zero `tsc` or Vite errors).
+1. `docker compose exec frontend npm run lint` (0 ESLint errors or warnings)
+2. `docker compose exec frontend npm run build` (0 `tsc` or Vite errors)

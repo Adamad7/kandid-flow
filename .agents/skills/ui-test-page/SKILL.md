@@ -7,8 +7,8 @@ description: Guidelines and procedure for creating, designing, and managing visu
 
 Use this skill whenever:
 - Designing a new visual style or aesthetic variant for KandidFlow.
-- Adding a new numbered test page (e.g. `test-page-3`, `test-page-4`).
-- Referencing existing test pages (`test-page-1`, `test-page-2`) to evaluate design decisions or port styled components into the main application.
+- Adding a new numbered test page (`test-page-<N>`).
+- Referencing existing test pages in `frontend/src/components/test-views/` to evaluate design decisions or port styled components into the main application.
 - Triggered explicitly via `@ui-test-page`.
 
 ---
@@ -23,7 +23,7 @@ Use this skill whenever:
    - **URL Route:** Accessible directly via `/test-menu` (initialized upon page load in `frontend/src/App.tsx`).
    - **Hub & Subpages:**
      - `TestMenu` (`/test-menu`) is the central navigation hub with cards and buttons to open each test page.
-     - Each test page (`test-page-1`, `test-page-2`, `test-page-X`) must provide a back button (`← Wróć do menu testowego`) and a quick-switcher bar to hop between test pages.
+     - Each test page (`test-page-<N>`) must provide a back button (`← Wróć do menu testowego`) and a quick-switcher bar to hop between test pages.
 
 3. **Strict Data Mocking & Zero DB Dependencies:**
    - **NEVER** fetch live data from the backend or database for test pages.
@@ -44,7 +44,7 @@ Use this skill whenever:
 To enable objective, side-by-side comparison between different visual styles, **every test page MUST present the exact same 6 core component sections**:
 
 ### Section 1: Style Description & Meta Header
-- Numbered badge: `test-page-X`.
+- Numbered badge: `test-page-<N>`.
 - Title of the style (e.g. *Styl Płaski z Żywymi Akcentami*, *Styl Neumorficzny*, *Styl Brutalistyczny*).
 - Detailed technical description of the style (explaining shadows, border radius, border thickness, color saturation, and typography).
 - Quick switcher buttons between available test pages.
@@ -68,7 +68,7 @@ To enable objective, side-by-side comparison between different visual styles, **
 ### Section 5: Hardcoded Offer Rows (Min. 3 Rows)
 - Render realistic rows using `MOCK_JOB_OFFERS` from `mockData.ts`.
 - Must showcase:
-  - Source portal badge (`justjoin`, `nofluffjobs`, `pracuj`).
+  - Source portal badge (`justjoin`, `nofluffjobs`, `pracuj`, `theprotocol`).
   - Role title and company name.
   - Work model badge (Zdalnie / Hybryda / Biuro) and location.
   - Salary pill with clear currency formatting.
@@ -84,16 +84,16 @@ To enable objective, side-by-side comparison between different visual styles, **
 
 ---
 
-## 3. Step-by-Step: Adding a New Test Page (e.g. `test-page-3`)
+## 3. Step-by-Step: Adding a New Test Page (`test-page-<N>`)
 
-Follow this exact procedure when asked to create a new visual style:
+Inspect `frontend/src/components/test-views/` to determine the next available number `<N>`, then follow this procedure:
 
 ### Step 3.1: Create the Test Page Component
-Create `frontend/src/components/test-views/TestPageThree.tsx`:
+Create `frontend/src/components/test-views/TestPage<N>.tsx`:
 - Implement the 6 required component sections following the user's requested aesthetic.
 - Accept standard props:
   ```tsx
-  interface TestPageThreeProps {
+  interface TestPage<N>Props {
     onBackToMenu: () => void;
     onSwitchPage: (pageId: TestSubPage) => void;
   }
@@ -101,46 +101,24 @@ Create `frontend/src/components/test-views/TestPageThree.tsx`:
 
 ### Step 3.2: Update Container Subpage Types & Routing
 In `frontend/src/components/test-views/TestViewsContainer.tsx`:
-1. Expand the `TestSubPage` union type:
-   ```tsx
-   export type TestSubPage = "menu" | "test-page-1" | "test-page-2" | "test-page-3";
-   ```
-2. Add conditional rendering for `currentSubPage === "test-page-3"`:
-   ```tsx
-   if (currentSubPage === "test-page-3") {
-     return (
-       <TestPageThree
-         onBackToMenu={() => setCurrentSubPage("menu")}
-         onSwitchPage={(pageId) => setCurrentSubPage(pageId)}
-       />
-     );
-   }
-   ```
+1. Expand the `TestSubPage` union type with `"test-page-<N>"`.
+2. Add conditional rendering for `currentSubPage === "test-page-<N>"`.
 
 ### Step 3.3: Register in the Test Menu Hub
 In `frontend/src/components/test-views/TestMenu.tsx`:
-1. Add a new card in the grid for `test-page-3`.
-2. Include the style title, Polish description, key aesthetic tags, and an action button:
-   ```tsx
-   <button
-     type="button"
-     onClick={() => onSelectPage("test-page-3")}
-     className="..."
-   >
-     <span>Otwórz test-page-3 (Nazwa Stylu)</span>
-     <ArrowRight className="h-4 w-4" />
-   </button>
-   ```
+1. Add a new card in the grid for `test-page-<N>`.
+2. Include the style title, Polish description, key aesthetic tags, and an action button calling `onSelectPage("test-page-<N>")`.
 
 ### Step 3.4: Update Quick Switchers in Existing Pages
-Ensure that the top quick switcher bar across all test pages includes the new `test-page-3` button so the user can seamlessly switch between all styles.
+Ensure that the top quick switcher bar across all existing test pages includes the new `test-page-<N>` button so the user can seamlessly switch between all styles.
 
-### Step 3.5: Verify Build Inside Docker
-Run the frontend build check strictly inside the Docker container:
+### Step 3.5: Verify Lint & Build Inside Docker
+Run both frontend quality gates strictly inside the Docker container:
 ```bash
+docker compose exec frontend npm run lint
 docker compose exec frontend npm run build
 ```
-Ensure 0 TypeScript errors and clean build output before presenting to the user.
+Ensure 0 ESLint warnings/errors and 0 TypeScript/Vite build errors before presenting to the user.
 
 ---
 

@@ -5,7 +5,14 @@ description: Run linters, type checks, database migrations, and container rebuil
 
 # Docker Quality Gates & Execution Skill
 
-Host execution of dev tools is strictly prohibited. Always use these exact commands:
+Host execution of dev tools is strictly prohibited (enforced by `.agents/hooks.json`). Always use these exact commands:
+
+## 0. Container Health Check (If `exec` Fails)
+```bash
+docker compose ps
+# Start services if stopped:
+docker compose up -d
+```
 
 ## 1. Backend Checks
 ```bash
@@ -19,18 +26,22 @@ docker compose exec backend ruff format .
 
 # Apply database migrations
 docker compose exec backend alembic upgrade head
+
+# Run backend tests
+docker compose exec backend pytest -v
 ```
 
 ## 2. Frontend Checks
 ```bash
+# ESLint check (zero warnings)
+docker compose exec frontend npm run lint
+
 # TypeScript compilation & Vite production bundle check
 docker compose exec frontend npm run build
 ```
 
 ## 3. Adding Dependencies & Rebuilding
-Edit backend/pyproject.toml or frontend/package.json directly.
-
-Rebuild and restart the specific container:
+Edit `backend/pyproject.toml` or `frontend/package.json` directly, then rebuild and restart the specific container:
 
 ```bash
 docker compose build <backend|frontend>

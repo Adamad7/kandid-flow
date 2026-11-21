@@ -2,44 +2,30 @@
 
 ## 1. Inviolable Rules (Złote Zasady)
 
-1. **Architecture & Plan Approval Gate:** Before modifying code, database models, API contracts, or system architecture, always inspect `@SPECIFICATION.md` and generate an **Implementation Plan** artifact for review (with `RequestFeedback: true`). The Lead Orchestrator **MUST STOP** calling tools and await explicit user confirmation. Spawning subagents, modifying files, or executing tasks without the user's prior approval of the plan is **STRICTLY FORBIDDEN**.
+1. **Two-Tier Planning & Approval Gate:**
+   - **Full Pipeline (Mandatory Plan & Stop):** Required for new features, database/schema/JSONB/API contract changes, multi-module work, or architectural refactors. Inspect `@SPECIFICATION.md`, generate an **Implementation Plan** artifact (`RequestFeedback: true`, `UserFacing: true`), present it in Polish, and **STOP calling tools** until the user explicitly approves. Spawning subagents or editing code before approval is **STRICTLY FORBIDDEN**.
+   - **Fast Track (No Plan Artifact Required):** Allowed for small, isolated single-module fixes (typos, minor copy/CSS adjustments, isolated unit test fixes) with zero schema, API, or architectural impact. All Docker-only, typing, quality-gate, and Git release rules still apply.
 2. **Docker-Only Execution (NEVER Run on Host):**
-   - **STRICTLY FORBIDDEN on host:** `pip`, `uv`, `poetry`, `npm`, `npx`, `ruff`, `tsc`, `alembic`, or running dev servers directly on the host machine.
-   - All runtime environments, dependencies, database migrations, linters, and build steps MUST execute inside Docker containers via `docker compose exec <service> <command>` or `docker compose run --rm <service> <command>`.
+   - **STRICTLY FORBIDDEN on host:** `pip`, `uv`, `poetry`, `npm`, `npx`, `ruff`, `tsc`, `alembic`, `pytest`, `uvicorn`, `vite`, or running dev servers directly on the host machine (mechanically enforced via `.agents/hooks.json`).
+   - All runtime environments, dependencies, database migrations, linters, tests, and build steps MUST execute inside Docker containers via `docker compose exec <service> <command>` or `docker compose run --rm <service> <command>`.
    - Add new dependencies directly to `backend/pyproject.toml` or `frontend/package.json`, then rebuild via `docker compose build <service> && docker compose up -d <service>`.
 3. **Schema-First & Zero Raw Dicts for JSONB:**
    - Define all database schema changes and API payloads in Pydantic v2 schemas (`backend/app/schemas/`) BEFORE implementing frontend or extension logic.
-   - Using raw `dict`, `dict[str, Any]`, or `Any` for PostgreSQL `JSONB` columns (`raw_payload`, `structured_data`, `contact_info`, `sections`, `default_sections`, `layout_schema`) or TypeScript `any` / `Record<string, unknown>` is **STRICTLY FORBIDDEN**. Every JSONB structure requires explicit, nested Pydantic v2 models and 1:1 mirrored TypeScript interfaces.
+   - Using raw `dict`, `dict[str, Any]`, or `Any` for PostgreSQL `JSONB` columns or TypeScript `any` / `Record<string, unknown>` is **STRICTLY FORBIDDEN**. Every JSONB structure requires explicit, nested Pydantic v2 models and 1:1 mirrored TypeScript interfaces.
 4. **English Codebase & Polish UI:** All code, comments, documentation, database identifiers, and variable/function names must be in English. All user-facing web UI strings, extension UI labels, and default Polish CV templates must be in Polish.
 5. **No Secrets in Repo or Database:** Load `GEMINI_API_KEY`, `OPENAI_API_KEY`, and `EXTENSION_API_TOKEN` exclusively from `.env` via Pydantic `BaseSettings` (documented in `.env.example`). Never commit secrets or store them in the `app_settings` table.
 6. **License Compliance:** All contributions must comply with the GNU AGPLv3 license.
-7. **Controlled Git Commits & Pushes:** Subagents are strictly forbidden from executing `git commit` or `git push`. Only the **Lead Orchestrator** commits and pushes changes to the remote repository (`main` by default, or user-specified branch). Commits are executed **strictly upon explicit user approval**, featuring a structured multi-line message (Conventional Commits header + concise bulleted body in English).
+7. **Controlled Git Commits & Pushes:** Subagents are strictly forbidden from executing `git commit` or `git push`. Only the **Lead Orchestrator** commits and pushes changes to the remote repository (`main` by default, or user-specified branch), **strictly upon explicit user approval** via `@git-commit`.
 
 ## 2. Lead Orchestrator Scope
-- Root files (`docker-compose*.yml`, `.env.example`, `.github/`, `README.md`, `AGENTS.md`, `SPECIFICATION.md`) belong to the Lead Orchestrator scope.
+- Root files (`docker-compose*.yml`, `.env.example`, `.github/`, `README.md`, `AGENTS.md`, `SPECIFICATION.md`, `.agents/`) belong to the Lead Orchestrator scope.
 - Maintain parity between local development (`docker-compose.override.yml`) and production (`docker-compose.yml`).
 - Git version control operations (`commit`, `push`) are exclusively handled by the Lead Orchestrator.
 
-## 3. Interaction & Subagent Orchestration Workflow
+## 3. Interaction & Subagent Orchestration
 - **Single Point of Contact:** The user interacts exclusively with the **Lead Orchestrator** in the chat.
 - **Project Status & Diagnostics:** The Lead Orchestrator inspects `@SPECIFICATION.md`, git logs, and Docker container health to answer project status questions.
-- **Feature Requests & Bug Fixes (Three-Phase Workflow):**
-  - **Phase 1: Planning & Approval Gate (Mandatory Stop)**
-    1. The Lead Orchestrator performs impact analysis against `@SPECIFICATION.md` and generates an **Implementation Plan** artifact (with `RequestFeedback: true`).
-    2. The Lead Orchestrator presents the plan to the user, asks for approval, and **STOPS calling tools**. No subagents or modifications may run until the user confirms.
-  - **Phase 2: Execution & Subagent Delegation**
-    1. Once the user approves the plan, the Lead Orchestrator decomposes tasks and delegates them to specialized subagents (`.agents/agents/`):
-       - `backend-specialist` (Skills: `@schema-sync`, `@db-migration`, `@typst-cv`, `@docker-check`, `@test-runner`)
-       - `extension-specialist` (Skills: `@extractor-test`)
-       - `frontend-specialist` (Skills: `@docker-check`, TypeScript 1:1 mirroring, Polish UI, Light & Dark mode support)
-    2. Quality Gates are verified inside Docker after each subagent run.
-  - **Phase 3: Review & Git Release Gate (Interactive Modal)**
-    1. The Lead Orchestrator presents a unified summary of changes and verification results to the user.
-    2. The Lead Orchestrator prompts the user via the `ask_question` tool with interactive options:
-       - `(Recommended) Tak, wykonaj commit i push na gałąź main`
-       - `Wypchnij na inną gałąź (podam nazwę w odpowiedzi)`
-       - `Pomiń commit (pozostaw zmiany robocze lokalnie)`
-    3. Based on the user's selection:
-       - If option 1 is selected, invoke `@git-commit` to create a structured commit and push to `main`.
-       - If option 2 is selected, commit and push to the user-specified branch.
-       - If option 3 is selected, conclude the task without committing.
+- **Full Pipeline Orchestration:** For Full Pipeline tasks, follow the three-phase playbook in `@feature-pipeline`:
+  1. **Phase 1 — Planning Gate:** Inspect `@SPECIFICATION.md`, produce an Implementation Plan artifact (`RequestFeedback: true`), and yield the turn for user approval.
+  2. **Phase 2 — Specialist Delegation:** Delegate scoped work to `backend-specialist`, `extension-specialist`, and `frontend-specialist` (`.agents/agents/`), running independent `extension` and `frontend` tasks in parallel once backend schemas are finalized, and verifying all Docker quality gates.
+  3. **Phase 3 — Review & Git Release Gate:** Summarize changes and verification results in Polish, then prompt via `ask_question` before invoking `@git-commit`.

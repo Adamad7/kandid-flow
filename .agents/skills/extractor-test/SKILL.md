@@ -5,44 +5,32 @@ description: Validate and debug Chromium extension DOM extractors against sample
 
 # Extension DOM Extractor Testing & Validation Skill
 
-Use this skill when developing, refactoring, or fixing portal extractors (`extension/src/extractors/`).
+Use this skill when developing, refactoring, or fixing portal extractors in `extension/src/extractors/`.
 
-## 1. Extractors Architecture
-The extension uses the Strategy Pattern to extract job data without running network calls in the page context:
-- `extension/src/extractors/justjoin.js` (Just Join IT)
-- `extension/src/extractors/pracuj.js` (Pracuj.pl)
-- `extension/src/extractors/nofluffjobs.js` (No Fluff Jobs)
-- `extension/src/extractors/linkedin.js` (LinkedIn Jobs)
-- `extension/src/extractors/fallback.js` (Sanitizing fallback for any job board)
+## 1. Authoritative Sources
+- **Extractor Strategies:** `extension/src/extractors/` (one module per portal plus `fallback.js`), orchestrated by `extension/src/content.js` and declared in `extension/manifest.json`.
+- **HTML Regression Fixtures:** `extension/example_offers/` (named `<portal>_*.html`). When a portal alters its DOM layout, save a fresh HTML snapshot here as a regression benchmark.
+- **Payload Contract (Single Source of Truth):** Always inspect `ExtractedJobPayload` and `ExtractorDiagnosticMetadata` directly in `backend/app/schemas/inbox.py`. Do not rely on duplicated schema copies.
 
-## 2. Test Fixtures in `extension/example_offers/`
-Real-world HTML snapshots are maintained to test against regressions:
-- `justjoin_*.html`
-- `pracuj_*.html`
+## 2. Automated Verification Script
+Run the bundled static & registration checker (uses Python stdlib only — zero host packages):
+```bash
+python3 .agents/skills/extractor-test/scripts/check_extractors.py
+```
+This verifies:
+1. `extension/manifest.json` is valid JSON and all declared content scripts exist on disk.
+2. Every extractor in `extension/src/extractors/` (besides `fallback.js`) is wired into both `extension/manifest.json` and `extension/src/content.js`.
+3. Zero forbidden network APIs (`fetch`, `XMLHttpRequest`, `WebSocket`, `sendBeacon`) appear in `extension/src/content.js` or `extension/src/extractors/*.js`.
+4. Available HTML regression fixtures in `extension/example_offers/` are reported per portal.
 
-When a portal alters its DOM layout, save the new HTML snapshot into `extension/example_offers/` to debug and keep as a regression benchmark.
-
-## 3. Extractor Payload Contract Validation
-Every extractor output MUST strictly align with `ExtractedJobPayload` in `backend/app/schemas/inbox.py`:
-
-```typescript
-interface ExtractedJobPayload {
-  source_url: string;        // Canonical URL (tracking query params stripped)
-  source_portal: string;     // 'justjoin' | 'pracuj' | 'nofluffjobs' | 'linkedin' | 'generic'
-  title: string;             // Job title
-  company: string | null;    // Employer name
-  description_text: string;  // Sanitized text of the job description
-  work_model?: string | null;// 'remote' | 'hybrid' | 'onsite'
-  salary_min?: number | null;
-  salary_max?: number | null;
-  salary_currency?: string;  // e.g. 'PLN', 'EUR', 'USD'
-  locations?: string[];      // Array of city/location names
-  raw_metadata?: Record<string, string>;
-}
+### Validate an Extracted JSON Payload Against Pydantic (Docker-Only)
+When verifying a sample JSON payload emitted by an extractor, validate it directly against `ExtractedJobPayload` inside the `backend` container:
+```bash
+docker compose exec -T backend python -c "import sys, json; from app.schemas.inbox import ExtractedJobPayload; ExtractedJobPayload.model_validate(json.load(sys.stdin)); print('ExtractedJobPayload valid OK')" < payload.json
 ```
 
-## 4. Quality Rules for Extractors
-1. **URL Canonicalization:** Always strip query tracking parameters (`utm_*`, `searchId`, `trackingId`, `refId`, `trackingCode`, `spm`).
-2. **Noise Removal:** Extractors (and especially `fallback.js`) must strip `<script>`, `<style>`, `<nav>`, `<footer>`, cookie consent banners, and social sharing widgets before extracting text.
-3. **Resilience:** Use resilient selectors (prefer `data-test`, semantic tags `<article>`, `<main>`, aria labels, and fallback hierarchy over brittle auto-generated CSS hash classes).
-4. **No NPM/Node Modules:** Keep all extension code pure Vanilla JavaScript compatible with Chrome Manifest v3.
+## 3. Quality Rules for Extractors
+1. **URL Canonicalization:** Strip query tracking parameters (`utm_*`, `searchId`, `trackingId`, `refId`, `trackingCode`, `spm`) via `window.KandidFlow.utils`.
+2. **Noise Removal:** Strip `<script>`, `<style>`, `<nav>`, `<footer>`, cookie consent banners, and social widgets before extracting text.
+3. **Resilience:** Prefer `application/ld+json` (`JobPosting`), `data-test*`, semantic tags (`<article>`, `<main>`), and ARIA labels over brittle generated CSS hash classes.
+4. **Pure Vanilla JS:** Zero npm dependencies or bundlers; remain strictly Chrome Manifest v3 compliant.

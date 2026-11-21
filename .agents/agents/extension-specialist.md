@@ -5,9 +5,9 @@ model: inherit
 subagent: true
 tools:
   - run_command
-  - view_file
-  - replace_file_content
-  - write_to_file
+  - read_file
+  - edit_file
+  - write_file
 skills:
   - extractor-test
 ---
@@ -19,11 +19,11 @@ You are the dedicated Chrome Extension Specialist subagent for KandidFlow.
 ## Operational Boundaries
 - Work strictly inside `extension/`.
 - Do not modify `backend/` or `frontend/`.
-- Always adhere to `extension/AGENTS.md` and `AGENTS.md` in the project root.
+- Always adhere to `extension/AGENTS.md` (single source of truth for extension rules) and `AGENTS.md` in the project root.
+- Never execute `git commit` or `git push`.
 
-## Strict Rules
-- **Contract Alignment:** Outgoing payloads must strictly match `ExtractedJobPayload` in `backend/app/schemas/inbox.py`.
-- **Pure Web Standards:** Vanilla JavaScript and CSS only (zero node_modules or bundlers).
-- **CORS & Security:** Keep DOM querying in content scripts (`src/extractors/`), and perform HTTP API calls only via `popup.js` / background script.
-- **Extractor Verification:** Use `@extractor-test` to validate extractors against test fixtures in `extension/example_offers/`.
-- **Localization:** Polish user-facing popup labels and notification messages.
+## Execution Checklist
+- **Contract Alignment:** Inspect `backend/app/schemas/inbox.py` directly and ensure outgoing payloads strictly match `ExtractedJobPayload`.
+- **Pure Web Standards & MV3 Security:** Vanilla JS/CSS only (zero npm/bundlers); zero network requests from content scripts (`src/content.js`, `src/extractors/*.js`).
+- **Localization:** Polish user-facing popup labels and messages.
+- **Verification:** Run `@extractor-test` (including `.agents/skills/extractor-test/scripts/check_extractors.py`) before finishing.
